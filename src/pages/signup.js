@@ -1,16 +1,28 @@
 import { useState } from "react";
 
 export default function Signup() {
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+  });
   const [error, setError] = useState(null);
 
   const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prevForm) => {
+      const updatedForm = { ...prevForm, [e.target.name]: e.target.value };
+      console.log(updatedForm); // Debugging: Check if values are updating
+      return updatedForm;
+    });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    console.log("Form Data Before Sending:", form); // Check form data
 
     const res = await fetch("/api/auth/signup", {
       method: "POST",
@@ -18,9 +30,11 @@ export default function Signup() {
       body: JSON.stringify(form),
     });
 
+    const data = await res.json();
+    console.log("Response from API:", data); // Debugging response
+
     if (!res.ok) {
-      const { error } = await res.json();
-      setError(error);
+      setError(data.error || "Something went wrong");
       return;
     }
 
@@ -38,8 +52,15 @@ export default function Signup() {
         <input
           className="w-full mb-2 p-2 border"
           type="text"
-          name="name"
-          placeholder="Name"
+          name="firstName"
+          placeholder="First Name"
+          onChange={handleChange}
+        />
+        <input
+          className="w-full mb-2 p-2 border"
+          type="text"
+          name="lastName"
+          placeholder="Last Name"
           onChange={handleChange}
         />
         <input
@@ -47,6 +68,13 @@ export default function Signup() {
           type="email"
           name="email"
           placeholder="Email"
+          onChange={handleChange}
+        />
+        <input
+          className="w-full mb-2 p-2 border"
+          type="text"
+          name="phone"
+          placeholder="Phone"
           onChange={handleChange}
         />
         <input
