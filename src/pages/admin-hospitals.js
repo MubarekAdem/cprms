@@ -106,7 +106,7 @@ export default function HospitalsDashboard() {
       }
 
       // ✅ Store the full URL of the file
-      const proofDocumentUrl = `https://your-supabase-url/storage/v1/object/public/hospital-proof/${data.path}`;
+      const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/hospital-proof/${data.path}`;
 
       setHospitalForm((prev) => ({
         ...prev,
