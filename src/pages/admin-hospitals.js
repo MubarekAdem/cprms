@@ -65,6 +65,21 @@ export default function HospitalsDashboard() {
 
     fetchCities();
   }, []);
+  useEffect(() => {
+    const fetchHospitals = async () => {
+      const res = await fetch("/api/hospitals");
+      const data = await res.json();
+      console.log(data); // Check the response data
+
+      if (Array.isArray(data)) {
+        setHospitals(data);
+      } else {
+        console.error("Error: Data is not an array", data);
+      }
+    };
+
+    fetchHospitals();
+  }, []);
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -78,23 +93,27 @@ export default function HospitalsDashboard() {
   // Handle file upload
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
-    if (file) {
-      try {
-        const { data, error } = await supabase.storage
-          .from("hospital-proof") // Replace with your bucket name
-          .upload(`proof-documents/${file.name}`, file);
+    if (!file) return;
 
-        if (error) {
-          console.error("File upload error:", error);
-        } else {
-          setHospitalForm((prev) => ({
-            ...prev,
-            proofDocument: data?.path, // Store the URL or path of the uploaded file
-          }));
-        }
-      } catch (error) {
-        console.error("Error uploading file:", error.message);
+    try {
+      const { data, error } = await supabase.storage
+        .from("hospital-proof") // Your bucket name
+        .upload(`proof-documents/${Date.now()}_${file.name}`, file);
+
+      if (error) {
+        console.error("File upload error:", error);
+        return;
       }
+
+      // ✅ Store the full URL of the file
+      const proofDocumentUrl = `https://your-supabase-url/storage/v1/object/public/hospital-proof/${data.path}`;
+
+      setHospitalForm((prev) => ({
+        ...prev,
+        proofDocument: proofDocumentUrl, // Store the URL, not just path
+      }));
+    } catch (error) {
+      console.error("Error uploading file:", error.message);
     }
   };
 
@@ -124,6 +143,7 @@ export default function HospitalsDashboard() {
   if (!session) {
     return <p>Access denied</p>;
   }
+  console.log(hospitals); // Add this line to check the hospitals data
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-black">

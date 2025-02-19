@@ -1,10 +1,24 @@
-// Example schema for MongoDB (using Mongoose)
+import mongoose from "mongoose";
 
 const hospitalSchema = new mongoose.Schema({
-  name: String,
-  id: String,
-  location: String,
-  proofDocument: String, // URL to the uploaded file in Supabase
+  name: {
+    type: String,
+    required: true,
+  },
+  id: {
+    type: String,
+    required: true,
+  },
+  location: {
+    type: String,
+    required: true,
+  },
+  proofDocument: {
+    type: String, // You can store the URL for the proof document here if necessary
+  },
 });
 
-const Hospital = mongoose.model("Hospital", hospitalSchema);
+const Hospital =
+  mongoose.models.Hospital || mongoose.model("Hospital", hospitalSchema);
+
+export default Hospital;
