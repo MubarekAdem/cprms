@@ -17,6 +17,8 @@ export default function Navbar() {
     { icon: Building2, label: "ADMIN", href: "/admin" },
     { icon: Users, label: "PATIENTS", href: "/patients" },
     { icon: UserCog, label: "DOCTORS", href: "/admin-doctor" },
+    { icon: UserCog, label: "First Aids", href: "/admin-first-aid" },
+    { icon: UserCog, label: "Registrars", href: "/admin-registrar" },
     { icon: Hospital, label: "Hospitals", href: "/admin-hospitals" },
     { icon: MapPin, label: "Cities", href: "/admin-cities" },
     { icon: LayoutDashboard, label: "DASHBOARD", href: "/dashboard" },
