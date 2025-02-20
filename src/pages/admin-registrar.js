@@ -25,18 +25,18 @@ import {
 import { UserCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase"; // Import Supabase client for file uploads
 
-export default function DoctorsDashboard() {
+export default function RegistrarsDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const [doctors, setDoctors] = useState([]);
+  const [registrars, setRegistrars] = useState([]);
   const [hospitals, setHospitals] = useState([]);
-  const [doctorForm, setDoctorForm] = useState({
+  const [registrarForm, setRegistrarForm] = useState({
     name: "",
     email: "",
     phone: "",
     role: "",
     hospital: "",
-    doctorId: "",
+    registrarId: "",
     proofDocument: null,
   });
 
@@ -48,18 +48,18 @@ export default function DoctorsDashboard() {
     }
   }, [session, status, router]);
 
-  // Fetch doctors
+  // Fetch registrars
   useEffect(() => {
-    const fetchDoctors = async () => {
-      const res = await fetch("/api/doctors");
+    const fetchRegistrars = async () => {
+      const res = await fetch("/api/registrars");
       const data = await res.json();
       if (Array.isArray(data)) {
-        setDoctors(data);
+        setRegistrars(data);
       } else {
-        console.error("Error fetching doctors");
+        console.error("Error fetching registrars");
       }
     };
-    fetchDoctors();
+    fetchRegistrars();
   }, []);
 
   // Fetch hospitals
@@ -79,7 +79,7 @@ export default function DoctorsDashboard() {
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setDoctorForm((prev) => ({
+    setRegistrarForm((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -92,7 +92,7 @@ export default function DoctorsDashboard() {
 
     try {
       const { data, error } = await supabase.storage
-        .from("doctors")
+        .from("registrars")
         .upload(`proof-documents/${Date.now()}_${file.name}`, file);
 
       if (error) {
@@ -100,8 +100,8 @@ export default function DoctorsDashboard() {
         return;
       }
 
-      const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/doctors/${data.path}`;
-      setDoctorForm((prev) => ({
+      const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/registrars/${data.path}`;
+      setRegistrarForm((prev) => ({
         ...prev,
         proofDocument: proofDocumentUrl,
       }));
@@ -113,23 +113,23 @@ export default function DoctorsDashboard() {
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch("/api/doctors", {
+    const res = await fetch("/api/registrars", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(doctorForm),
+      body: JSON.stringify(registrarForm),
     });
     const data = await res.json();
     if (res.ok) {
-      setDoctors((prev) => [...prev, data.doctor]);
-      setDoctorForm({
+      setRegistrars((prev) => [...prev, data.registrar]);
+      setRegistrarForm({
         name: "",
         email: "",
         phone: "",
         role: "",
         hospital: "",
-        doctorId: "",
+        registrarId: "",
         proofDocument: null,
       });
     } else {
@@ -150,26 +150,26 @@ export default function DoctorsDashboard() {
       <Navbar />
       <div className="flex-1 p-6">
         <div className="grid gap-6 md:grid-cols-[1fr,400px]">
-          {/* Doctors Count Card */}
+          {/* Registrars Count Card */}
           <div className="space-y-6">
             <Card className="border border-blue-400">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium text-blue-700">
-                  Doctors
+                  Registrars
                 </CardTitle>
                 <UserCircle className="h-4 w-4 text-blue-500" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-blue-600">
-                  {doctors.length}
+                  {registrars.length}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Doctors Table */}
+            {/* Registrars Table */}
             <Card>
               <CardHeader>
-                <CardTitle>Doctors List</CardTitle>
+                <CardTitle>Registrars List</CardTitle>
               </CardHeader>
               <CardContent>
                 <Table>
@@ -183,20 +183,20 @@ export default function DoctorsDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {doctors.length > 0 ? (
-                      doctors.map((doctor, i) => (
+                    {registrars.length > 0 ? (
+                      registrars.map((registrar, i) => (
                         <TableRow key={i}>
-                          <TableCell>{doctor.name}</TableCell>
-                          <TableCell>{doctor.email}</TableCell>
-                          <TableCell>{doctor.phone}</TableCell>
-                          <TableCell>{doctor.role}</TableCell>
-                          <TableCell>{doctor.hospital}</TableCell>
+                          <TableCell>{registrar.name}</TableCell>
+                          <TableCell>{registrar.email}</TableCell>
+                          <TableCell>{registrar.phone}</TableCell>
+                          <TableCell>{registrar.role}</TableCell>
+                          <TableCell>{registrar.hospital}</TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
                         <TableCell colSpan="5" className="text-center">
-                          No doctors available.
+                          No registrars available.
                         </TableCell>
                       </TableRow>
                     )}
@@ -206,20 +206,20 @@ export default function DoctorsDashboard() {
             </Card>
           </div>
 
-          {/* Add Doctor Form */}
+          {/* Add Registrar Form */}
           <Card>
             <CardHeader>
-              <CardTitle>Add Doctor</CardTitle>
+              <CardTitle>Add Registrar</CardTitle>
             </CardHeader>
             <CardContent>
               <form className="space-y-4" onSubmit={handleSubmit}>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Doctor Name</label>
+                  <label className="text-sm font-medium">Registrar Name</label>
                   <Input
                     name="name"
-                    value={doctorForm.name}
+                    value={registrarForm.name}
                     onChange={handleInputChange}
-                    placeholder="Enter doctor name"
+                    placeholder="Enter registrar name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -227,7 +227,7 @@ export default function DoctorsDashboard() {
                   <Input
                     name="email"
                     type="email"
-                    value={doctorForm.email}
+                    value={registrarForm.email}
                     onChange={handleInputChange}
                     placeholder="Enter email"
                   />
@@ -236,7 +236,7 @@ export default function DoctorsDashboard() {
                   <label className="text-sm font-medium">Phone</label>
                   <Input
                     name="phone"
-                    value={doctorForm.phone}
+                    value={registrarForm.phone}
                     onChange={handleInputChange}
                     placeholder="Enter phone number"
                   />
@@ -245,9 +245,9 @@ export default function DoctorsDashboard() {
                   <label className="text-sm font-medium">Role</label>
                   <Select
                     name="role"
-                    value={doctorForm.role}
+                    value={registrarForm.role}
                     onValueChange={(value) =>
-                      setDoctorForm({ ...doctorForm, role: value })
+                      setRegistrarForm({ ...registrarForm, role: value })
                     }
                   >
                     <SelectTrigger>
@@ -255,6 +255,8 @@ export default function DoctorsDashboard() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="doctor">Doctor</SelectItem>
+                      <SelectItem value="first-aid">First Aid</SelectItem>
+                      <SelectItem value="registrar">Registrar</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -262,9 +264,9 @@ export default function DoctorsDashboard() {
                   <label className="text-sm font-medium">Hospital</label>
                   <Select
                     name="hospital"
-                    value={doctorForm.hospital}
+                    value={registrarForm.hospital}
                     onValueChange={(value) =>
-                      setDoctorForm({ ...doctorForm, hospital: value })
+                      setRegistrarForm({ ...registrarForm, hospital: value })
                     }
                   >
                     <SelectTrigger>
@@ -280,12 +282,12 @@ export default function DoctorsDashboard() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Doctor ID</label>
+                  <label className="text-sm font-medium">Registrar ID</label>
                   <Input
-                    name="doctorId"
-                    value={doctorForm.doctorId}
+                    name="registrarId"
+                    value={registrarForm.registrarId}
                     onChange={handleInputChange}
-                    placeholder="Enter doctor ID"
+                    placeholder="Enter registrar ID"
                   />
                 </div>
                 <div className="space-y-2">

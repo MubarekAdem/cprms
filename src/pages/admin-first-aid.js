@@ -100,7 +100,7 @@ export default function FirstAidDashboard() {
         return;
       }
 
-      const proofDocumentUrl = `https://your-supabase-url/storage/v1/object/public/first-aid/${data.path}`;
+      const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/first-aid/${data.path}`;
       setFirstAidForm((prev) => ({
         ...prev,
         proofDocument: proofDocumentUrl,
