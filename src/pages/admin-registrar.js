@@ -254,8 +254,6 @@ export default function RegistrarsDashboard() {
                       <SelectValue placeholder="Select Role" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="doctor">Doctor</SelectItem>
-                      <SelectItem value="first-aid">First Aid</SelectItem>
                       <SelectItem value="registrar">Registrar</SelectItem>
                     </SelectContent>
                   </Select>
