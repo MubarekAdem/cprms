@@ -1,5 +1,6 @@
 import { connectToDB } from "@/lib/mongodb";
 import User from "@/models/User";
+import bcrypt from "bcrypt";
 
 export default async function handler(req, res) {
   await connectToDB();
@@ -45,13 +46,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "User already registered" });
     }
 
-    // Create new user with role
+    // Hash the password before saving
+    const saltRounds = 10;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create new user with hashed password
     const newUser = await User.create({
       firstName,
       lastName,
       email,
       phone,
-      password, // Ensure hashing in production
+      password: hashedPassword, // Store the hashed password
       role,
     });
 
