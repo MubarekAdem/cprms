@@ -1,4 +1,19 @@
+"use client";
+
 import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
+import { Loader2, User, Mail, Phone, Lock } from "lucide-react";
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -8,84 +23,142 @@ export default function Signup() {
     phone: "",
     password: "",
   });
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {
-    setForm((prevForm) => {
-      const updatedForm = { ...prevForm, [e.target.name]: e.target.value };
-      console.log(updatedForm); // Debugging: Check if values are updating
-      return updatedForm;
-    });
+    setForm((prevForm) => ({
+      ...prevForm,
+      [e.target.name]: e.target.value,
+    }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError(null);
+    setIsLoading(true);
 
-    console.log("Form Data Before Sending:", form); // Check form data
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    const res = await fetch("/api/auth/signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+      const data = await res.json();
 
-    const data = await res.json();
-    console.log("Response from API:", data); // Debugging response
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
 
-    if (!res.ok) {
-      setError(data.error || "Something went wrong");
-      return;
+      toast.success("Signup successful! You can now log in.");
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
-
-    alert("Signup successful! You can now log in.");
   };
 
   return (
-    <div className="flex justify-center items-center h-screen bg-gray-100">
-      <form
-        onSubmit={handleSubmit}
-        className="bg-white p-6 rounded shadow-md w-80"
-      >
-        <h2 className="text-xl font-bold mb-4">Signup</h2>
-        {error && <p className="text-red-500">{error}</p>}
-        <input
-          className="w-full mb-2 p-2 border"
-          type="text"
-          name="firstName"
-          placeholder="First Name"
-          onChange={handleChange}
-        />
-        <input
-          className="w-full mb-2 p-2 border"
-          type="text"
-          name="lastName"
-          placeholder="Last Name"
-          onChange={handleChange}
-        />
-        <input
-          className="w-full mb-2 p-2 border"
-          type="email"
-          name="email"
-          placeholder="Email"
-          onChange={handleChange}
-        />
-        <input
-          className="w-full mb-2 p-2 border"
-          type="text"
-          name="phone"
-          placeholder="Phone"
-          onChange={handleChange}
-        />
-        <input
-          className="w-full mb-2 p-2 border"
-          type="password"
-          name="password"
-          placeholder="Password"
-          onChange={handleChange}
-        />
-        <button className="w-full bg-blue-500 text-white py-2">Sign Up</button>
-      </form>
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">
+            Sign Up
+          </CardTitle>
+          <CardDescription className="text-center">
+            Create an account to get started
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    placeholder="John"
+                    className="pl-10"
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    placeholder="Doe"
+                    className="pl-10"
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  className="pl-10"
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  placeholder="123-456-7890"
+                  className="pl-10"
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="pl-10"
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full" type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
+                </>
+              ) : (
+                "Sign Up"
+              )}
+            </Button>
+          </CardFooter>
+        </form>
+      </Card>
     </div>
   );
 }
