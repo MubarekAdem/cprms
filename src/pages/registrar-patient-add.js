@@ -1,13 +1,33 @@
+"use client";
+
 import { useSession } from "next-auth/react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "@/components/ui/select";
+import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 
 const RegistrarPatientAdd = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
-  const { name, id, birthDate } = router.query; // Get query parameters
+  const { name, id, birthDate } = router.query;
 
-  // Define state
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -25,47 +45,52 @@ const RegistrarPatientAdd = () => {
     hospitalName: "",
     doctorName: "",
     nationalId: "",
-    rawBirthDate: "", // To store the raw birthDate
-    rawId: "", // To store the raw ID
-    registeredBy: "", // Add registeredBy to the form data
+    rawBirthDate: "",
+    rawId: "",
+    registeredBy: "",
   });
 
-  // Fetch registrar data to populate hospital name and registrar's name
   useEffect(() => {
     if (session && session.user.role === "registrar") {
       const fetchRegistrarData = async () => {
         try {
           const res = await fetch(`/api/registrars`);
           const data = await res.json();
-
-          const registrar = data.find(
-            (registrar) => registrar.email === session.user.email
-          );
-
+          const registrar = data.find((r) => r.email === session.user.email);
           if (registrar) {
             setFormData((prev) => ({
               ...prev,
-              hospitalName: registrar.hospital, // Set hospital name from fetched data
-              nationalId: session.user.id, // Assuming national ID is in session
-              registeredBy: registrar.name || session.user.name, // Use the name from the registrar data or session
+              hospitalName: registrar.hospital,
+              nationalId: session.user.id,
+              registeredBy: registrar.name || session.user.name,
               name: name || prev.name,
-              rawBirthDate: birthDate || prev.rawBirthDate, // Store raw birthDate
-              rawId: id || prev.rawId, // Store raw ID
+              rawBirthDate: birthDate || prev.rawBirthDate,
+              rawId: id || prev.rawId,
             }));
           }
         } catch (error) {
           console.error("Error fetching registrar data:", error);
+          toast.error("Failed to fetch registrar data. Please try again.");
         }
       };
-
       fetchRegistrarData();
     }
   }, [session, name, id, birthDate]);
 
-  if (status === "loading")
-    return <p className="text-center mt-10">Loading...</p>;
+  if (status === "loading") {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <Loader2 className="h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   if (!session || session.user.role !== "registrar") {
-    return <p className="text-center text-red-500 mt-10">Unauthorized</p>;
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <p className="text-red-500 font-semibold">Unauthorized</p>
+      </div>
+    );
   }
 
   const handleInputChange = (e) => {
@@ -75,7 +100,7 @@ const RegistrarPatientAdd = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (formData.password !== formData.repeatPassword) {
-      alert("Passwords do not match!");
+      toast.error("Passwords do not match!");
       return;
     }
 
@@ -85,205 +110,241 @@ const RegistrarPatientAdd = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          registeredBy: formData.registeredBy, // Use the name from the form input
+          registeredBy: formData.registeredBy,
           registrarHospital: formData.hospitalName,
-          birthDate: formData.rawBirthDate, // Send raw birthDate to the backend
+          birthDate: formData.rawBirthDate,
         }),
       });
 
       if (res.ok) {
-        alert("Patient registered successfully!");
+        toast.success("Patient registered successfully!");
         router.push("/registrar-dashboard");
       } else {
         const errorData = await res.json();
-        alert(errorData.error);
+        toast.error(errorData.error);
       }
     } catch (error) {
       console.error("Error registering patient:", error);
+      toast.error("Failed to register patient. Please try again.");
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-full max-w-lg">
-        <h2 className="text-2xl font-bold text-gray-800 mb-4 text-center">
-          Add Patient
-        </h2>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Scanned Data (Read-Only) */}
-          <div className="grid grid-cols-2 gap-4">
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              readOnly
-              className="w-full p-2 border rounded bg-black"
-              placeholder="Name"
-            />
-          </div>
-          <input
-            type="text"
-            name="id"
-            value={formData.rawId} // Display the raw ID
-            readOnly
-            className="w-full p-2 border rounded bg-black"
-            placeholder="National ID"
-          />
-          <input
-            type="text"
-            name="birthDate"
-            value={formData.rawBirthDate} // Display the raw birthDate
-            readOnly
-            className="w-full p-2 border rounded bg-black"
-            placeholder="Birth Date"
-          />
-
-          {/* Additional Patient Info */}
-          <input
-            type="text"
-            name="phone"
-            value={formData.phone}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Phone"
-          />
-          <input
-            type="text"
-            name="address"
-            value={formData.address}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Address"
-          />
-          <input
-            type="text"
-            name="gender"
-            value={formData.gender}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Gender"
-          />
-          <input
-            type="text"
-            name="emergencyNumber"
-            value={formData.emergencyNumber}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Emergency Number"
-          />
-          <input
-            type="text"
-            name="bloodType"
-            value={formData.bloodType}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Blood Type"
-          />
-          <input
-            type="text"
-            name="otherDisease"
-            value={formData.otherDisease}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Other Disease"
-          />
-
-          {/* Medical Details */}
-          <input
-            type="text"
-            name="diseaseName"
-            value={formData.diseaseName}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Disease Name"
-          />
-          <input
-            type="text"
-            name="diseaseDescription"
-            value={formData.diseaseDescription}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Disease Description"
-          />
-          <input
-            type="text"
-            name="medication"
-            value={formData.medication}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Medication"
-          />
-          <input
-            type="date"
-            name="dateAdded"
-            value={formData.dateAdded}
-            readOnly
-            className="w-full p-2 border rounded bg-gray-200"
-          />
-
-          {/* Login Credentials */}
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Password"
-          />
-          <input
-            type="password"
-            name="repeatPassword"
-            value={formData.repeatPassword}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Repeat Password"
-          />
-
-          {/* Hospital & Doctor Info (Read-Only) */}
-          <input
-            type="text"
-            name="hospitalName"
-            value={formData.hospitalName}
-            readOnly
-            className="w-full p-2 border rounded bg-gray-200"
-            placeholder="Hospital Name"
-          />
-          <input
-            type="text"
-            name="doctorName"
-            value={formData.doctorName}
-            onChange={handleInputChange} // Allow the user to type in the field
-            className="w-full p-2 border rounded"
-            placeholder="Doctor Name"
-          />
-
-          {/* Registrar's Name (Editable) */}
-          <input
-            type="text"
-            name="registeredBy"
-            value={formData.registeredBy}
-            onChange={handleInputChange}
-            className="w-full p-2 border rounded"
-            placeholder="Registrar's Name"
-          />
-
-          <div className="flex justify-between mt-4">
-            <button
-              type="button"
-              className="px-4 py-2 bg-gray-600 text-white rounded"
-              onClick={() => router.push("/scan-qr")}
-            >
-              Scan QR Code
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-blue-600 text-white rounded"
-            >
-              Register Patient
-            </button>
-          </div>
-        </form>
-      </div>
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+      <Card className="w-full max-w-2xl shadow-xl">
+        <CardHeader>
+          <CardTitle className="text-2xl font-bold text-center text-primary">
+            Add Patient
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  readOnly
+                  className="bg-secondary/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rawId">National ID</Label>
+                <Input
+                  id="rawId"
+                  name="rawId"
+                  value={formData.rawId}
+                  readOnly
+                  className="bg-secondary/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="rawBirthDate">Birth Date</Label>
+                <Input
+                  id="rawBirthDate"
+                  name="rawBirthDate"
+                  value={formData.rawBirthDate}
+                  readOnly
+                  className="bg-secondary/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="gender">Gender</Label>
+                <Select
+                  name="gender"
+                  value={formData.gender}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, gender: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select gender" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Male</SelectItem>
+                    <SelectItem value="female">Female</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="emergencyNumber">Emergency Number</Label>
+                <Input
+                  id="emergencyNumber"
+                  name="emergencyNumber"
+                  value={formData.emergencyNumber}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="bloodType">Blood Type</Label>
+                <Select
+                  name="bloodType"
+                  value={formData.bloodType}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, bloodType: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select blood type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"].map(
+                      (type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="otherDisease">Other Disease</Label>
+                <Input
+                  id="otherDisease"
+                  name="otherDisease"
+                  value={formData.otherDisease}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="diseaseName">Disease Name</Label>
+                <Input
+                  id="diseaseName"
+                  name="diseaseName"
+                  value={formData.diseaseName}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="diseaseDescription">Disease Description</Label>
+                <Input
+                  id="diseaseDescription"
+                  name="diseaseDescription"
+                  value={formData.diseaseDescription}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="medication">Medication</Label>
+                <Input
+                  id="medication"
+                  name="medication"
+                  value={formData.medication}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dateAdded">Date Added</Label>
+                <Input
+                  id="dateAdded"
+                  name="dateAdded"
+                  type="date"
+                  value={formData.dateAdded}
+                  readOnly
+                  className="bg-secondary/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={formData.password}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="repeatPassword">Repeat Password</Label>
+                <Input
+                  id="repeatPassword"
+                  name="repeatPassword"
+                  type="password"
+                  value={formData.repeatPassword}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="hospitalName">Hospital Name</Label>
+                <Input
+                  id="hospitalName"
+                  name="hospitalName"
+                  value={formData.hospitalName}
+                  readOnly
+                  className="bg-secondary/10"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="doctorName">Doctor Name</Label>
+                <Input
+                  id="doctorName"
+                  name="doctorName"
+                  value={formData.doctorName}
+                  onChange={handleInputChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="registeredBy">Registrar's Name</Label>
+                <Input
+                  id="registeredBy"
+                  name="registeredBy"
+                  value={formData.registeredBy}
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
+          </form>
+        </CardContent>
+        <CardFooter className="flex justify-between">
+          <Button variant="outline" onClick={() => router.push("/scan-qr")}>
+            Scan QR Code
+          </Button>
+          <Button type="submit" onClick={handleSubmit}>
+            Register Patient
+          </Button>
+        </CardFooter>
+      </Card>
     </div>
   );
 };
