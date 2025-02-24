@@ -147,7 +147,7 @@ const RegistrarPatientAdd = () => {
                   name="name"
                   value={formData.name}
                   readOnly
-                  className="bg-secondary/10"
+                  className="bg-gray-200"
                 />
               </div>
               <div className="space-y-2">
@@ -157,7 +157,7 @@ const RegistrarPatientAdd = () => {
                   name="rawId"
                   value={formData.rawId}
                   readOnly
-                  className="bg-secondary/10"
+                  className="bg-gray-200"
                 />
               </div>
               <div className="space-y-2">
@@ -167,7 +167,7 @@ const RegistrarPatientAdd = () => {
                   name="rawBirthDate"
                   value={formData.rawBirthDate}
                   readOnly
-                  className="bg-secondary/10"
+                  className="bg-gray-200"
                 />
               </div>
               <div className="space-y-2">
@@ -282,7 +282,7 @@ const RegistrarPatientAdd = () => {
                   type="date"
                   value={formData.dateAdded}
                   readOnly
-                  className="bg-secondary/10"
+                  className="bg-gray-200"
                 />
               </div>
               <div className="space-y-2">
@@ -312,7 +312,7 @@ const RegistrarPatientAdd = () => {
                   name="hospitalName"
                   value={formData.hospitalName}
                   readOnly
-                  className="bg-secondary/10"
+                  className="bg-gray-200"
                 />
               </div>
               <div className="space-y-2">
@@ -330,7 +330,7 @@ const RegistrarPatientAdd = () => {
                   id="registeredBy"
                   name="registeredBy"
                   value={formData.registeredBy}
-                  onChange={handleInputChange}
+                  className="bg-gray-200"
                 />
               </div>
             </div>
