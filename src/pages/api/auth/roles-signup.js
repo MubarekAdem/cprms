@@ -1,7 +1,6 @@
 import { connectToDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcrypt";
-
 export default async function handler(req, res) {
   await connectToDB();
 
@@ -9,7 +8,16 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const { firstName, lastName, email, phone, password, role } = req.body;
+  const {
+    firstName,
+    lastName,
+    email,
+    phone,
+    password,
+    role,
+    hospital, // Added hospital
+    registrarId, // Added registrarId
+  } = req.body;
 
   if (!firstName || !lastName || !email || !phone || !password || !role) {
     return res.status(400).json({ error: "Missing required fields" });
@@ -50,7 +58,7 @@ export default async function handler(req, res) {
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create new user with hashed password
+    // Create new user with hashed password and additional fields
     const newUser = await User.create({
       firstName,
       lastName,
@@ -58,6 +66,8 @@ export default async function handler(req, res) {
       phone,
       password: hashedPassword, // Store the hashed password
       role,
+      hospital, // Store the hospital field
+      registrarId, // Store the registrarId field
     });
 
     return res.status(201).json({ user: newUser });

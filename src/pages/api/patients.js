@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     try {
       const {
         name,
-        age,
+        birthDate, // Store raw birthDate
         phone,
         address,
         gender,
@@ -29,7 +29,7 @@ export default async function handler(req, res) {
 
       if (
         !name ||
-        !age ||
+        !birthDate ||
         !phone ||
         !address ||
         !gender ||
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
 
       const newPatient = new Patient({
         name,
-        age,
+        birthDate, // Save raw birthDate
         phone,
         address,
         gender,

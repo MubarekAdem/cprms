@@ -1,4 +1,6 @@
+// models/Patient.js
 import mongoose from "mongoose";
+
 const PatientSchema = new mongoose.Schema(
   {
     name: { type: String, required: true },
@@ -22,3 +24,8 @@ const PatientSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+const Patient =
+  mongoose.models.Patient || mongoose.model("Patient", PatientSchema);
+
+export default Patient;

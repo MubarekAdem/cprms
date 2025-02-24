@@ -27,20 +27,38 @@ const RegistrarPatientAdd = () => {
     nationalId: "",
     rawBirthDate: "", // To store the raw birthDate
     rawId: "", // To store the raw ID
+    registeredBy: "", // Add registeredBy to the form data
   });
 
-  // Autofill session and scanned QR data
+  // Fetch registrar data to populate hospital name and registrar's name
   useEffect(() => {
     if (session && session.user.role === "registrar") {
-      setFormData((prev) => ({
-        ...prev,
-        hospitalName: session.user.hospital,
-        doctorName: session.user.name, // Registrar as doctor
-        nationalId: session.user.id, // Assuming national ID is in session
-        name: name || prev.name,
-        rawBirthDate: birthDate || prev.rawBirthDate, // Store raw birthDate
-        rawId: id || prev.rawId, // Store raw ID
-      }));
+      const fetchRegistrarData = async () => {
+        try {
+          const res = await fetch(`/api/registrars`);
+          const data = await res.json();
+
+          const registrar = data.find(
+            (registrar) => registrar.email === session.user.email
+          );
+
+          if (registrar) {
+            setFormData((prev) => ({
+              ...prev,
+              hospitalName: registrar.hospital, // Set hospital name from fetched data
+              nationalId: session.user.id, // Assuming national ID is in session
+              registeredBy: registrar.name || session.user.name, // Use the name from the registrar data or session
+              name: name || prev.name,
+              rawBirthDate: birthDate || prev.rawBirthDate, // Store raw birthDate
+              rawId: id || prev.rawId, // Store raw ID
+            }));
+          }
+        } catch (error) {
+          console.error("Error fetching registrar data:", error);
+        }
+      };
+
+      fetchRegistrarData();
     }
   }, [session, name, id, birthDate]);
 
@@ -67,8 +85,9 @@ const RegistrarPatientAdd = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          registeredBy: session.user.name,
-          registrarHospital: session.user.hospital,
+          registeredBy: formData.registeredBy, // Use the name from the form input
+          registrarHospital: formData.hospitalName,
+          birthDate: formData.rawBirthDate, // Send raw birthDate to the backend
         }),
       });
 
@@ -233,9 +252,19 @@ const RegistrarPatientAdd = () => {
             type="text"
             name="doctorName"
             value={formData.doctorName}
-            readOnly
-            className="w-full p-2 border rounded bg-gray-200"
+            onChange={handleInputChange} // Allow the user to type in the field
+            className="w-full p-2 border rounded"
             placeholder="Doctor Name"
+          />
+
+          {/* Registrar's Name (Editable) */}
+          <input
+            type="text"
+            name="registeredBy"
+            value={formData.registeredBy}
+            onChange={handleInputChange}
+            className="w-full p-2 border rounded"
+            placeholder="Registrar's Name"
           />
 
           <div className="flex justify-between mt-4">

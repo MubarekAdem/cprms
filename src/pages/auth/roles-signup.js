@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -21,8 +21,42 @@ export default function RolesSignup() {
     phone: "",
     password: "",
     role: "",
+    hospital: "", // This will be populated for registrars
+    registrarId: "", // This will be populated for registrars
   });
   const [error, setError] = useState("");
+
+  useEffect(() => {
+    if (form.role === "registrar") {
+      // Fetch the registrars data from the API once 'registrar' role is selected
+      const fetchRegistrarData = async () => {
+        const res = await fetch("/api/registrars");
+        const data = await res.json();
+
+        if (res.ok) {
+          // Find the registrar info based on the email (you may change this logic based on how it's stored)
+          const registrar = data.find(
+            (registrar) => registrar.email === form.email
+          );
+          if (registrar) {
+            setForm((prev) => ({
+              ...prev,
+              hospital: registrar.hospital, // Assuming the API provides a hospital field
+              registrarId: registrar.registrarId, // Assuming the API provides a registrarId
+            }));
+          } else {
+            setError("Registrar not found with this email.");
+          }
+        } else {
+          setError("Failed to fetch registrar data.");
+        }
+      };
+
+      if (form.email) {
+        fetchRegistrarData();
+      }
+    }
+  }, [form.role, form.email]); // Re-run the effect if role or email changes
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -99,6 +133,27 @@ export default function RolesSignup() {
               <SelectItem value="registrar">Registrar</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Show hospital and registrarId fields when the role is registrar */}
+          {form.role === "registrar" && (
+            <>
+              <Input
+                name="hospital"
+                placeholder="Hospital Name"
+                value={form.hospital}
+                onChange={handleChange}
+                disabled // Disabled since it's fetched automatically
+              />
+              <Input
+                name="registrarId"
+                placeholder="Registrar ID"
+                value={form.registrarId}
+                onChange={handleChange}
+                disabled // Disabled since it's fetched automatically
+              />
+            </>
+          )}
+
           <Button className="w-full" type="submit">
             Signup
           </Button>
