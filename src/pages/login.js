@@ -22,7 +22,17 @@ export default function Login() {
       return;
     }
 
-    router.push("/admin-doctor");
+    // Fetch the user session after login
+    const sessionRes = await fetch("/api/auth/session");
+    const session = await sessionRes.json();
+
+    if (session?.user?.role === "admin") {
+      router.push("/admin-doctor");
+    } else if (session?.user?.role === "registrar") {
+      router.push("/registrar-patient-add");
+    } else {
+      router.push("/"); // Default route if role is not recognized
+    }
   };
 
   return (
@@ -39,6 +49,7 @@ export default function Login() {
           name="email"
           placeholder="Email"
           onChange={handleChange}
+          required
         />
         <input
           className="w-full mb-2 p-2 border"
@@ -46,6 +57,7 @@ export default function Login() {
           name="password"
           placeholder="Password"
           onChange={handleChange}
+          required
         />
         <button className="w-full bg-blue-500 text-white py-2">Login</button>
       </form>
