@@ -78,7 +78,7 @@ export default function Signup() {
                   <Input
                     id="firstName"
                     name="firstName"
-                    placeholder="John"
+                    placeholder="Abebe"
                     className="pl-10"
                     onChange={handleChange}
                     required
@@ -92,7 +92,7 @@ export default function Signup() {
                   <Input
                     id="lastName"
                     name="lastName"
-                    placeholder="Doe"
+                    placeholder="kebede"
                     className="pl-10"
                     onChange={handleChange}
                     required

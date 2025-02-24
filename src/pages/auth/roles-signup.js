@@ -2,8 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectTrigger,
@@ -11,6 +20,17 @@ import {
   SelectItem,
   SelectValue,
 } from "@/components/ui/select";
+import { toast } from "sonner";
+import {
+  Loader2,
+  User,
+  Mail,
+  Phone,
+  Lock,
+  Briefcase,
+  Hospital,
+  BadgeIcon as IdCard,
+} from "lucide-react";
 
 export default function RolesSignup() {
   const router = useRouter();
@@ -21,42 +41,42 @@ export default function RolesSignup() {
     phone: "",
     password: "",
     role: "",
-    hospital: "", // This will be populated for registrars
-    registrarId: "", // This will be populated for registrars
+    hospital: "",
+    registrarId: "",
   });
-  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (form.role === "registrar") {
-      // Fetch the registrars data from the API once 'registrar' role is selected
+    if (form.role === "registrar" && form.email) {
       const fetchRegistrarData = async () => {
-        const res = await fetch("/api/registrars");
-        const data = await res.json();
+        try {
+          const res = await fetch("/api/registrars");
+          const data = await res.json();
 
-        if (res.ok) {
-          // Find the registrar info based on the email (you may change this logic based on how it's stored)
-          const registrar = data.find(
-            (registrar) => registrar.email === form.email
-          );
-          if (registrar) {
-            setForm((prev) => ({
-              ...prev,
-              hospital: registrar.hospital, // Assuming the API provides a hospital field
-              registrarId: registrar.registrarId, // Assuming the API provides a registrarId
-            }));
+          if (res.ok) {
+            const registrar = data.find(
+              (registrar) => registrar.email === form.email
+            );
+            if (registrar) {
+              setForm((prev) => ({
+                ...prev,
+                hospital: registrar.hospital,
+                registrarId: registrar.registrarId,
+              }));
+            } else {
+              toast.error("Registrar not found with this email.");
+            }
           } else {
-            setError("Registrar not found with this email.");
+            throw new Error("Failed to fetch registrar data.");
           }
-        } else {
-          setError("Failed to fetch registrar data.");
+        } catch (error) {
+          toast.error(error.message);
         }
       };
 
-      if (form.email) {
-        fetchRegistrarData();
-      }
+      fetchRegistrarData();
     }
-  }, [form.role, form.email]); // Re-run the effect if role or email changes
+  }, [form.role, form.email]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,96 +89,187 @@ export default function RolesSignup() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
+    setIsLoading(true);
 
-    const res = await fetch("/api/auth/roles-signup", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(form),
-    });
+    try {
+      const res = await fetch("/api/auth/roles-signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(form),
+      });
 
-    const data = await res.json();
-    if (!res.ok) {
-      setError(data.error);
-    } else {
-      router.push("/login");
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error);
+      }
+
+      toast.success("Signup successful! Redirecting to login...");
+      setTimeout(() => router.push("/login"), 2000);
+    } catch (error) {
+      toast.error(error.message);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gray-100">
-      <div className="bg-white p-6 rounded-lg shadow-md w-96">
-        <h2 className="text-xl font-bold text-center mb-4">Signup</h2>
-        {error && <p className="text-red-500 text-center">{error}</p>}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            name="firstName"
-            placeholder="First Name"
-            value={form.firstName}
-            onChange={handleChange}
-          />
-          <Input
-            name="lastName"
-            placeholder="Last Name"
-            value={form.lastName}
-            onChange={handleChange}
-          />
-          <Input
-            name="email"
-            type="email"
-            placeholder="Email"
-            value={form.email}
-            onChange={handleChange}
-          />
-          <Input
-            name="phone"
-            placeholder="Phone"
-            value={form.phone}
-            onChange={handleChange}
-          />
-          <Input
-            name="password"
-            type="password"
-            placeholder="Password"
-            value={form.password}
-            onChange={handleChange}
-          />
-          <Select onValueChange={handleRoleChange}>
-            <SelectTrigger>
-              <SelectValue placeholder="Select Role" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="doctor">Doctor</SelectItem>
-              <SelectItem value="first-aid">First Aid Responder</SelectItem>
-              <SelectItem value="registrar">Registrar</SelectItem>
-            </SelectContent>
-          </Select>
-
-          {/* Show hospital and registrarId fields when the role is registrar */}
-          {form.role === "registrar" && (
-            <>
-              <Input
-                name="hospital"
-                placeholder="Hospital Name"
-                value={form.hospital}
-                onChange={handleChange}
-                disabled // Disabled since it's fetched automatically
-              />
-              <Input
-                name="registrarId"
-                placeholder="Registrar ID"
-                value={form.registrarId}
-                onChange={handleChange}
-                disabled // Disabled since it's fetched automatically
-              />
-            </>
-          )}
-
-          <Button className="w-full" type="submit">
-            Signup
-          </Button>
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
+      <Card className="w-full max-w-md">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold text-center">
+            Sign Up
+          </CardTitle>
+          <CardDescription className="text-center">
+            Create an account with your role
+          </CardDescription>
+        </CardHeader>
+        <form onSubmit={handleSubmit}>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="firstName"
+                    name="firstName"
+                    placeholder="Abebe"
+                    className="pl-10"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <div className="relative">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="lastName"
+                    name="lastName"
+                    placeholder="kebede"
+                    className="pl-10"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  placeholder="john@example.com"
+                  className="pl-10"
+                  value={form.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="phone"
+                  name="phone"
+                  placeholder="123-456-7890"
+                  className="pl-10"
+                  value={form.phone}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="password">Password</Label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  placeholder="••••••••"
+                  className="pl-10"
+                  value={form.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="role">Role</Label>
+              <div className="relative">
+                <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                <Select onValueChange={handleRoleChange} value={form.role}>
+                  <SelectTrigger className="pl-10">
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="doctor">Doctor</SelectItem>
+                    <SelectItem value="first-aid">
+                      First Aid Responder
+                    </SelectItem>
+                    <SelectItem value="registrar">Registrar</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {form.role === "registrar" && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="hospital">Hospital</Label>
+                  <div className="relative">
+                    <Hospital className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="hospital"
+                      name="hospital"
+                      placeholder="Hospital Name"
+                      className="pl-10"
+                      value={form.hospital}
+                      onChange={handleChange}
+                      disabled
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="registrarId">Registrar ID</Label>
+                  <div className="relative">
+                    <IdCard className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="registrarId"
+                      name="registrarId"
+                      placeholder="Registrar ID"
+                      className="pl-10"
+                      value={form.registrarId}
+                      onChange={handleChange}
+                      disabled
+                    />
+                  </div>
+                </div>
+              </>
+            )}
+          </CardContent>
+          <CardFooter>
+            <Button className="w-full" type="submit" disabled={isLoading}>
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
+                </>
+              ) : (
+                "Sign Up"
+              )}
+            </Button>
+          </CardFooter>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }
