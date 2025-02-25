@@ -9,7 +9,7 @@ export default async function handler(req, res) {
     try {
       const {
         name,
-        birthDate, // Store raw birthDate
+        birthDate,
         phone,
         address,
         gender,
@@ -53,7 +53,7 @@ export default async function handler(req, res) {
 
       const newPatient = new Patient({
         name,
-        birthDate, // Save raw birthDate
+        birthDate,
         phone,
         address,
         gender,
@@ -75,6 +75,13 @@ export default async function handler(req, res) {
       return res
         .status(201)
         .json({ message: "Patient registered successfully" });
+    } catch (error) {
+      return res.status(500).json({ error: error.message });
+    }
+  } else if (req.method === "GET") {
+    try {
+      const patients = await Patient.find().select("-password"); // Exclude password for security
+      return res.status(200).json(patients);
     } catch (error) {
       return res.status(500).json({ error: error.message });
     }

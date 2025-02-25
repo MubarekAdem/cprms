@@ -45,7 +45,7 @@ export default function Login() {
       if (session?.user?.role === "admin") {
         router.push("/admin-doctor");
       } else if (session?.user?.role === "registrar") {
-        router.push("/registrar-patient-add");
+        router.push("/registrar");
       } else {
         router.push("/"); // Default route if role is not recognized
       }
