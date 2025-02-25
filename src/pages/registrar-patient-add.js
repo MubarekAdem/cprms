@@ -61,7 +61,7 @@ const RegistrarPatientAdd = () => {
             setFormData((prev) => ({
               ...prev,
               hospitalName: registrar.hospital,
-              nationalId: session.user.id,
+              nationalId: formData.rawId,
               registeredBy: registrar.name || session.user.name,
               name: name || prev.name,
               rawBirthDate: birthDate || prev.rawBirthDate,
