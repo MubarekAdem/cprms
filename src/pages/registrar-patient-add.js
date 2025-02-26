@@ -24,6 +24,8 @@ import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
 const RegistrarPatientAdd = () => {
+  const [patientExists, setPatientExists] = useState(false);
+
   const { data: session, status } = useSession();
   const router = useRouter();
   const { name, id, birthDate } = router.query;
@@ -48,6 +50,31 @@ const RegistrarPatientAdd = () => {
     rawId: "",
     registeredBy: "",
   });
+  const checkPatientExists = async (nationalId) => {
+    try {
+      const res = await fetch(`/api/patients/${nationalId}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.patientExists) {
+          setPatientExists(true);
+          // Pre-fill existing data (excluding sensitive fields)
+          setFormData((prevData) => ({
+            ...prevData,
+            ...data.data,
+            rawId: data.data.nationalId,
+            rawBirthDate: data.data.birthDate,
+          }));
+        } else {
+          setPatientExists(false);
+        }
+      } else {
+        setPatientExists(false);
+      }
+    } catch (error) {
+      console.error("Error checking patient:", error);
+      toast.error("Failed to check patient existence. Please try again.");
+    }
+  };
 
   useEffect(() => {
     if (session && session.user.role === "registrar") {

@@ -25,6 +25,7 @@ export default function RegistrarComponent() {
         if (!res.ok) throw new Error("Failed to fetch patients");
 
         const data = await res.json();
+        console.log("Fetched patient data:", data); // Log the data to check the structure
         setPatients(data);
       } catch (error) {
         console.error("Error fetching patients:", error);
@@ -159,20 +160,33 @@ export default function RegistrarComponent() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div className="text-gray-500">Disease Name</div>
-                  <div>{selectedPatient.diseaseName}</div>
-                  <div className="text-gray-500">Disease Description</div>
-                  <div>{selectedPatient.diseaseDescription}</div>
-                  <div className="text-gray-500">Medication</div>
-                  <div>{selectedPatient.medication}</div>
-                  <div className="text-gray-500">Other Diseases</div>
-                  <div>{selectedPatient.otherDisease}</div>
-                  <div className="text-gray-500">Hospital</div>
-                  <div>{selectedPatient.hospitalName}</div>
-                  <div className="text-gray-500">Doctor</div>
-                  <div>{selectedPatient.doctorName}</div>
-                </div>
+                {selectedPatient.medicalRecords &&
+                selectedPatient.medicalRecords.length > 0 ? (
+                  selectedPatient.medicalRecords.map((record, index) => (
+                    <div key={index} className="space-y-2">
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div className="text-gray-500">Disease Name</div>
+                        <div>{record.diseaseName || "N/A"}</div>
+
+                        <div className="text-gray-500">Disease Description</div>
+                        <div>{record.diseaseDescription || "N/A"}</div>
+
+                        <div className="text-gray-500">Medication</div>
+                        <div>{record.medication || "N/A"}</div>
+
+                        <div className="text-gray-500">Hospital</div>
+                        <div>{record.hospitalName || "N/A"}</div>
+
+                        <div className="text-gray-500">Doctor</div>
+                        <div>{record.doctorName || "N/A"}</div>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-center text-gray-500">
+                    No medical records available.
+                  </p>
+                )}
               </CardContent>
             </Card>
           </div>

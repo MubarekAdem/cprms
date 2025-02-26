@@ -57,11 +57,9 @@ export default async function handler(req, res) {
           !password
         ) {
           console.log("Missing new patient fields:", req.body);
-          return res
-            .status(400)
-            .json({
-              error: "Missing required fields for new patient registration",
-            });
+          return res.status(400).json({
+            error: "Missing required fields for new patient registration",
+          });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -109,9 +107,32 @@ export default async function handler(req, res) {
     }
   } else if (req.method === "GET") {
     try {
+      // Fetch all patients from the Patient collection (excluding password field)
       const patients = await Patient.find().select("-password");
-      return res.status(200).json(patients);
+
+      // Create an array to hold patients with their medical records
+      const patientsWithRecords = [];
+
+      // Fetch and populate the medical records for each patient
+      for (let patient of patients) {
+        const medicalRecords = await MedicalRecord.find({
+          patientId: patient._id,
+        }).select("-patientId");
+
+        // Convert patient document to a plain object
+        const patientObject = patient.toObject();
+
+        // Attach the medical records to the patient object
+        patientObject.medicalRecords = medicalRecords;
+
+        // Add the patient with records to the array
+        patientsWithRecords.push(patientObject);
+      }
+
+      // Return all patients with their attached medical records
+      return res.status(200).json(patientsWithRecords);
     } catch (error) {
+      console.error("Error fetching patients and medical records:", error);
       return res.status(500).json({ error: error.message });
     }
   } else {

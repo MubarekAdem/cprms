@@ -1,10 +1,11 @@
+// models/MedicalRecord.js
 import mongoose from "mongoose";
 
 const MedicalRecordSchema = new mongoose.Schema(
   {
     patientId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Patient",
+      ref: "Patient", // Reference to the Patient model
       required: true,
     },
     nationalId: { type: String, required: true },
