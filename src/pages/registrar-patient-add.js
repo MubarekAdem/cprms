@@ -98,25 +98,35 @@ const RegistrarPatientAdd = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (formData.password !== formData.repeatPassword) {
-      toast.error("Passwords do not match!");
-      return;
-    }
 
     try {
       const res = await fetch("/api/patients", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          ...formData,
-          registeredBy: formData.registeredBy,
-          registrarHospital: formData.hospitalName,
+          nationalId: formData.rawId,
+          name: formData.name,
+          phone: formData.phone,
+          address: formData.address,
+          gender: formData.gender,
+          emergencyNumber: formData.emergencyNumber,
+          bloodType: formData.bloodType,
           birthDate: formData.rawBirthDate,
+          otherDisease: formData.otherDisease,
+          password: formData.password, // Make sure this is included
+          diseaseName: formData.diseaseName,
+          diseaseDescription: formData.diseaseDescription,
+          medication: formData.medication,
+          hospitalName: formData.hospitalName,
+          doctorName: formData.doctorName,
+          dateAdded: formData.dateAdded,
+          registeredBy: formData.registeredBy,
+          registrarHospital: formData.hospitalName, // Add this line
         }),
       });
 
       if (res.ok) {
-        toast.success("Patient registered successfully!");
+        toast.success("Patient record updated successfully!");
         router.push("/registrar-dashboard");
       } else {
         const errorData = await res.json();
