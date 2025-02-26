@@ -163,23 +163,35 @@ export default function RegistrarComponent() {
                 {selectedPatient.medicalRecords &&
                 selectedPatient.medicalRecords.length > 0 ? (
                   selectedPatient.medicalRecords.map((record, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div className="text-gray-500">Disease Name</div>
-                        <div>{record.diseaseName || "N/A"}</div>
+                    <div key={index} className="space-y-4">
+                      {/* Display each medical record inside its own card */}
+                      <Card className="border-gray-300">
+                        <CardHeader>
+                          <CardTitle className="text-black">
+                            Record {index + 1}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div className="text-gray-500">Disease Name</div>
+                            <div>{record.diseaseName || "N/A"}</div>
 
-                        <div className="text-gray-500">Disease Description</div>
-                        <div>{record.diseaseDescription || "N/A"}</div>
+                            <div className="text-gray-500">
+                              Disease Description
+                            </div>
+                            <div>{record.diseaseDescription || "N/A"}</div>
 
-                        <div className="text-gray-500">Medication</div>
-                        <div>{record.medication || "N/A"}</div>
+                            <div className="text-gray-500">Medication</div>
+                            <div>{record.medication || "N/A"}</div>
 
-                        <div className="text-gray-500">Hospital</div>
-                        <div>{record.hospitalName || "N/A"}</div>
+                            <div className="text-gray-500">Hospital</div>
+                            <div>{record.hospitalName || "N/A"}</div>
 
-                        <div className="text-gray-500">Doctor</div>
-                        <div>{record.doctorName || "N/A"}</div>
-                      </div>
+                            <div className="text-gray-500">Doctor</div>
+                            <div>{record.doctorName || "N/A"}</div>
+                          </div>
+                        </CardContent>
+                      </Card>
                     </div>
                   ))
                 ) : (
