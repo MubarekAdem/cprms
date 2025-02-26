@@ -7,13 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, QrCode } from "lucide-react";
+import AIChatModal from "@/components/AIChatModal"; // Create this modal component
 
-export default function DoctorComponent() {
+export default function DoctorComponent({ initialPatient }) {
+  const [isChatOpen, setIsChatOpen] = useState(false);
+
   const { data: session, status } = useSession();
   const router = useRouter();
   const [patients, setPatients] = useState([]);
   const [searchId, setSearchId] = useState(""); // National ID input
-  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedPatient, setSelectedPatient] = useState(initialPatient); // Use initialPatient as initial value
 
   // Fetch all patients
   useEffect(() => {
@@ -125,6 +128,23 @@ export default function DoctorComponent() {
                     <CardTitle className="text-black">
                       {selectedPatient.name}
                     </CardTitle>
+                  </div>
+                  {/* Chat with AI Button */}
+                  <div>
+                    <Button
+                      className="bg-blue-500 text-white"
+                      onClick={() => setIsChatOpen(true)}
+                    >
+                      Chat with AI
+                    </Button>
+
+                    {/* AI Chat Modal */}
+                    {isChatOpen && (
+                      <AIChatModal
+                        patientData={selectedPatient} // Your patient object from the API
+                        onClose={() => setIsChatOpen(false)}
+                      />
+                    )}
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-2">
