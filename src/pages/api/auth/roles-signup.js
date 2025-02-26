@@ -1,8 +1,12 @@
 import { connectToDB } from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcrypt";
+
 export default async function handler(req, res) {
+  console.log("Received request:", req.method, req.body); // Debugging
+
   await connectToDB();
+  console.log("Connected to DB"); // Debugging
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -15,11 +19,12 @@ export default async function handler(req, res) {
     phone,
     password,
     role,
-    hospital, // Added hospital
-    registrarId, // Added registrarId
+    hospital,
+    registrarId,
   } = req.body;
 
   if (!firstName || !lastName || !email || !phone || !password || !role) {
+    console.error("Missing required fields");
     return res.status(400).json({ error: "Missing required fields" });
   }
 
@@ -30,19 +35,22 @@ export default async function handler(req, res) {
     else if (role === "registrar") roleApi = "/api/registrars";
     else return res.status(400).json({ error: "Invalid role" });
 
-    // Ensure we are using the correct base URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    console.log(`Fetching role data from: ${baseUrl}${roleApi}`); // Debugging
 
     const roleRes = await fetch(`${baseUrl}${roleApi}`);
+    console.log("Role API Response Status:", roleRes.status); // Debugging
 
     if (!roleRes.ok) {
       return res.status(500).json({ error: `Failed to fetch ${role} data` });
     }
 
     const roleData = await roleRes.json();
-    const matchedRecord = roleData.find((record) => record.email === email);
+    console.log("Fetched role data:", roleData); // Debugging
 
+    const matchedRecord = roleData.find((record) => record.email === email);
     if (!matchedRecord) {
+      console.error(`No pre-registered ${role} found with this email`);
       return res
         .status(400)
         .json({ error: `No pre-registered ${role} found with this email` });
@@ -51,27 +59,31 @@ export default async function handler(req, res) {
     // Check if the user already exists
     const existingUser = await User.findOne({ email });
     if (existingUser) {
+      console.error("User already registered:", email);
       return res.status(400).json({ error: "User already registered" });
     }
 
     // Hash the password before saving
+    console.log("Hashing password...");
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
-    // Create new user with hashed password and additional fields
+    console.log("Creating new user...");
     const newUser = await User.create({
       firstName,
       lastName,
       email,
       phone,
-      password: hashedPassword, // Store the hashed password
+      password: hashedPassword,
       role,
-      hospital, // Store the hospital field
-      registrarId, // Store the registrarId field
+      hospital,
+      registrarId,
     });
 
+    console.log("User created successfully:", newUser);
     return res.status(201).json({ user: newUser });
   } catch (error) {
+    console.error("Error:", error);
     return res
       .status(500)
       .json({ error: `Failed to register user: ${error.message}` });

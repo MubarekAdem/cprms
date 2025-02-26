@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, QrCode } from "lucide-react";
 
-export default function RegistrarComponent() {
+export default function DoctorComponent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [patients, setPatients] = useState([]);
@@ -17,7 +17,7 @@ export default function RegistrarComponent() {
 
   // Fetch all patients
   useEffect(() => {
-    if (!session || session.user.role !== "registrar") return;
+    if (!session || session.user.role !== "doctor") return;
 
     const fetchPatients = async () => {
       try {
@@ -25,7 +25,7 @@ export default function RegistrarComponent() {
         if (!res.ok) throw new Error("Failed to fetch patients");
 
         const data = await res.json();
-        console.log("Fetched patient data:", data); // Log the data to check the structure
+        console.log("Fetched patient data:", data);
         setPatients(data);
       } catch (error) {
         console.error("Error fetching patients:", error);
@@ -53,19 +53,19 @@ export default function RegistrarComponent() {
 
   if (status === "loading")
     return <p className="text-center mt-10">Loading...</p>;
-  if (!session || session.user.role !== "registrar")
+  if (!session || session.user.role !== "doctor")
     return <p className="text-center text-red-500 mt-10">Unauthorized</p>;
 
   return (
     <div className="flex">
       {/* Sidebar */}
       <div className="w-1/5 bg-gray-800 h-screen text-white p-6">
-        <h2 className="text-xl font-bold mb-6">Registrar</h2>
+        <h2 className="text-xl font-bold mb-6">Doctor</h2>
         <ul className="space-y-4">
           <li>
             <Button
               className="w-full bg-gray-700"
-              onClick={() => router.push("/registrar-dashboard")}
+              onClick={() => router.push("/doctor-dashboard")}
             >
               Dashboard
             </Button>
@@ -73,15 +73,7 @@ export default function RegistrarComponent() {
           <li>
             <Button
               className="w-full bg-gray-700"
-              onClick={() => router.push("/registrar-patient-add")}
-            >
-              Add Patient
-            </Button>
-          </li>
-          <li>
-            <Button
-              className="w-full bg-gray-700"
-              onClick={() => router.push("/registrar-manage-patients")}
+              onClick={() => router.push("/doctor-manage-patients")}
             >
               Manage Patients
             </Button>
