@@ -5,24 +5,17 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, QrCode, History, Pill, Search } from "lucide-react";
+import { Search, QrCode } from "lucide-react";
 
 export default function RegistrarComponent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [patients, setPatients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [searchId, setSearchId] = useState(""); // National ID input
+  const [selectedPatient, setSelectedPatient] = useState(null);
 
+  // Fetch all patients
   useEffect(() => {
     if (!session || session.user.role !== "registrar") return;
 
@@ -35,22 +28,32 @@ export default function RegistrarComponent() {
         setPatients(data);
       } catch (error) {
         console.error("Error fetching patients:", error);
-      } finally {
-        setLoading(false);
       }
     };
 
     fetchPatients();
   }, [session]);
 
-  // Handle loading & unauthorized access
+  // If a QR code is scanned, find the patient from the router query
+  useEffect(() => {
+    if (router.query.id && patients.length > 0) {
+      const foundPatient = patients.find(
+        (p) => p.nationalId === router.query.id
+      );
+      if (foundPatient) setSelectedPatient(foundPatient);
+    }
+  }, [router.query.id, patients]);
+
+  // Search function
+  const handleSearch = () => {
+    const foundPatient = patients.find((p) => p.nationalId === searchId);
+    setSelectedPatient(foundPatient || null);
+  };
+
   if (status === "loading")
     return <p className="text-center mt-10">Loading...</p>;
-  if (!session || session.user.role !== "registrar") {
+  if (!session || session.user.role !== "registrar")
     return <p className="text-center text-red-500 mt-10">Unauthorized</p>;
-  }
-
-  const firstPatient = patients.length > 0 ? patients[0] : null;
 
   return (
     <div className="flex">
@@ -60,7 +63,7 @@ export default function RegistrarComponent() {
         <ul className="space-y-4">
           <li>
             <Button
-              className="w-full bg-gray-700 hover:bg-gray-600"
+              className="w-full bg-gray-700"
               onClick={() => router.push("/registrar-dashboard")}
             >
               Dashboard
@@ -68,7 +71,7 @@ export default function RegistrarComponent() {
           </li>
           <li>
             <Button
-              className="w-full bg-gray-700 hover:bg-gray-600"
+              className="w-full bg-gray-700"
               onClick={() => router.push("/registrar-patient-add")}
             >
               Add Patient
@@ -76,7 +79,7 @@ export default function RegistrarComponent() {
           </li>
           <li>
             <Button
-              className="w-full bg-gray-700 hover:bg-gray-600"
+              className="w-full bg-gray-700"
               onClick={() => router.push("/registrar-manage-patients")}
             >
               Manage Patients
@@ -87,85 +90,94 @@ export default function RegistrarComponent() {
 
       {/* Main Content */}
       <div className="container mx-auto p-6 flex-1 bg-white">
+        {/* Search & QR Scanner */}
         <div className="flex items-center gap-4 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
-            <Input placeholder="Search patients..." className="pl-8" />
+            <Input
+              placeholder="Search by National ID..."
+              className="pl-8"
+              value={searchId}
+              onChange={(e) => setSearchId(e.target.value)}
+            />
           </div>
           <Button
-            variant="outline"
-            className="gap-2 border-green-500 text-green-600 hover:bg-green-100"
+            onClick={handleSearch}
+            className="bg-blue-500 text-white hover:bg-blue-600"
+          >
+            Search
+          </Button>
+          <Button
+            onClick={() => router.push("/scan-qr")}
+            className="border-green-500 text-green-600 hover:bg-green-100"
           >
             <QrCode className="h-4 w-4 text-green-600" />
             Scan QR
           </Button>
         </div>
 
-        {/* Patient Profile (First Patient) */}
-        {loading ? (
-          <p className="text-center mt-10">Loading patients...</p>
-        ) : firstPatient ? (
+        {/* Patient Details */}
+        {selectedPatient ? (
           <div className="grid md:grid-cols-[350px,1fr] gap-6 mt-6">
-            <div className="space-y-6">
-              <Card className="border-green-500">
-                <CardHeader className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
-                      <span className="text-green-700 font-semibold">
-                        {firstPatient.name[0]}
-                      </span>
-                    </div>
-                    <CardTitle className="text-black">
-                      {firstPatient.name}
-                    </CardTitle>
+            {/* Basic Info */}
+            <Card className="border-green-500">
+              <CardHeader className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-green-700 font-semibold">
+                      {selectedPatient.name[0]}
+                    </span>
                   </div>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="text-gray-500">Gender</div>
-                    <div>{firstPatient.gender}</div>
-                    <div className="text-gray-500">Blood Type</div>
-                    <div>{firstPatient.bloodType}</div>
-                    <div className="text-gray-500">Location</div>
-                    <div>{firstPatient.address}</div>
-                    <div className="text-gray-500">Phone</div>
-                    <div>{firstPatient.phone}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Patient History Table */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
-                <CardTitle className="text-black">Patient History</CardTitle>
+                  <CardTitle className="text-black">
+                    {selectedPatient.name}
+                  </CardTitle>
+                </div>
               </CardHeader>
-              <CardContent>
-                <Table>
-                  <TableHeader className="bg-green-100 text-green-700">
-                    <TableRow>
-                      <TableHead className="w-[400px]">Description</TableHead>
-                      <TableHead>Date</TableHead>
-                      <TableHead>Doctor</TableHead>
-                      <TableHead>Hospital</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    <TableRow>
-                      <TableCell className="font-medium">
-                        {firstPatient.diseaseDescription}
-                      </TableCell>
-                      <TableCell>{new Date().toLocaleDateString()}</TableCell>
-                      <TableCell>{firstPatient.doctorName}</TableCell>
-                      <TableCell>{firstPatient.hospitalName}</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
+              <CardContent className="space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-gray-500">Gender</div>
+                  <div>{selectedPatient.gender}</div>
+                  <div className="text-gray-500">Blood Type</div>
+                  <div>{selectedPatient.bloodType}</div>
+                  <div className="text-gray-500">Birth Date</div>
+                  <div>{selectedPatient.birthDate}</div>
+                  <div className="text-gray-500">Phone</div>
+                  <div>{selectedPatient.phone}</div>
+                  <div className="text-gray-500">Emergency Contact</div>
+                  <div>{selectedPatient.emergencyNumber}</div>
+                  <div className="text-gray-500">Address</div>
+                  <div>{selectedPatient.address}</div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Medical Info */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-black">
+                  Medical Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="text-gray-500">Disease Name</div>
+                  <div>{selectedPatient.diseaseName}</div>
+                  <div className="text-gray-500">Disease Description</div>
+                  <div>{selectedPatient.diseaseDescription}</div>
+                  <div className="text-gray-500">Medication</div>
+                  <div>{selectedPatient.medication}</div>
+                  <div className="text-gray-500">Other Diseases</div>
+                  <div>{selectedPatient.otherDisease}</div>
+                  <div className="text-gray-500">Hospital</div>
+                  <div>{selectedPatient.hospitalName}</div>
+                  <div className="text-gray-500">Doctor</div>
+                  <div>{selectedPatient.doctorName}</div>
+                </div>
               </CardContent>
             </Card>
           </div>
         ) : (
-          <p className="text-center mt-10 text-gray-500">No patients found.</p>
+          <p className="text-center mt-10 text-gray-500">No patient found.</p>
         )}
       </div>
     </div>

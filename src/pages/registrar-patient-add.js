@@ -27,7 +27,6 @@ const RegistrarPatientAdd = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { name, id, birthDate } = router.query;
-
   const [formData, setFormData] = useState({
     name: "",
     phone: "",
@@ -337,7 +336,10 @@ const RegistrarPatientAdd = () => {
           </form>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => router.push("/scan-qr")}>
+          <Button
+            variant="outline"
+            onClick={() => router.push("/scan-qr-registrar")}
+          >
             Scan QR Code
           </Button>
           <Button type="submit" onClick={handleSubmit}>
