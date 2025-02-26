@@ -109,7 +109,7 @@ export default function RegistrarComponent() {
             Search
           </Button>
           <Button
-            onClick={() => router.push("/scan-qr")}
+            onClick={() => router.push("/scan-qr-registrar")}
             className="border-green-500 text-green-600 hover:bg-green-100"
           >
             <QrCode className="h-4 w-4 text-green-600" />
