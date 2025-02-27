@@ -27,6 +27,7 @@ import {
   Building2,
   CheckCircle,
   FileText,
+  Hospital,
   Loader2,
   Mail,
   MoreHorizontal,
@@ -296,7 +297,7 @@ export default function DoctorsDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-md">
+          {/* <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
                 <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
@@ -311,7 +312,7 @@ export default function DoctorsDashboard() {
                 Fully verified credentials
               </p>
             </CardContent>
-          </Card>
+          </Card> */}
 
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
@@ -438,7 +439,7 @@ export default function DoctorsDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No doctors found matching "{searchTerm}"</p>
+                              <p>No doctors found matching `{searchTerm}`</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -623,17 +624,22 @@ export default function DoctorsDashboard() {
         {/* Edit Doctor Modal */}
         {isEditModalOpen && (
           <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg">
               <DialogHeader>
-                <DialogTitle className="flex items-center text-xl font-semibold">
-                  <FileText className="mr-2 h-5 w-5 text-primary" />
+                <DialogTitle className="flex items-center text-xl font-semibold text-black">
+                  <FileText className="mr-2 h-5 w-5 text-black" />
                   Edit Doctor
                 </DialogTitle>
               </DialogHeader>
 
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-name">Name</Label>
+                  <Label
+                    htmlFor="edit-name"
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4 text-white" /> Name
+                  </Label>
                   <Input
                     id="edit-name"
                     name="name"
@@ -642,11 +648,17 @@ export default function DoctorsDashboard() {
                       setEditDoctor({ ...editDoctor, name: e.target.value })
                     }
                     placeholder="Doctor name"
+                    className="bg-white text-black"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-email">Email</Label>
+                  <Label
+                    htmlFor="edit-email"
+                    className="flex items-center gap-2"
+                  >
+                    <Mail className="h-4 w-4 text-white" /> Email
+                  </Label>
                   <Input
                     id="edit-email"
                     name="email"
@@ -656,11 +668,17 @@ export default function DoctorsDashboard() {
                       setEditDoctor({ ...editDoctor, email: e.target.value })
                     }
                     placeholder="Email address"
+                    className="bg-white text-black"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-phone">Phone</Label>
+                  <Label
+                    htmlFor="edit-phone"
+                    className="flex items-center gap-2"
+                  >
+                    <Phone className="h-4 w-4 text-white" /> Phone
+                  </Label>
                   <Input
                     id="edit-phone"
                     name="phone"
@@ -669,23 +687,36 @@ export default function DoctorsDashboard() {
                       setEditDoctor({ ...editDoctor, phone: e.target.value })
                     }
                     placeholder="Phone number"
+                    className="bg-white text-black"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="edit-hospital">Hospital</Label>
+                  <Label
+                    htmlFor="edit-hospital"
+                    className="flex items-center gap-2"
+                  >
+                    <Hospital className="h-4 w-4 text-white" /> Hospital
+                  </Label>
                   <Select
                     value={editDoctor.hospital}
                     onValueChange={(value) =>
                       setEditDoctor({ ...editDoctor, hospital: value })
                     }
                   >
-                    <SelectTrigger id="edit-hospital">
+                    <SelectTrigger
+                      id="edit-hospital"
+                      className="bg-white text-black"
+                    >
                       <SelectValue placeholder="Select Hospital" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-white text-black">
                       {hospitals.map((hospital) => (
-                        <SelectItem key={hospital._id} value={hospital.name}>
+                        <SelectItem
+                          key={hospital._id}
+                          value={hospital.name}
+                          className="text-black"
+                        >
                           {hospital.name}
                         </SelectItem>
                       ))}
@@ -698,12 +729,13 @@ export default function DoctorsDashboard() {
                 <Button
                   variant="outline"
                   onClick={() => setIsEditModalOpen(false)}
+                  className="border-black text-blavk hover:bg-gray-500"
                 >
                   Cancel
                 </Button>
                 <Button
                   onClick={handleEditSave}
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-white text-black hover:bg-gray-300"
                 >
                   Save Changes
                 </Button>
