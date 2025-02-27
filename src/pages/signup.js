@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+
 import { Loader2, User, Mail, Phone, Lock } from "lucide-react";
 
 export default function Signup() {
@@ -24,6 +26,7 @@ export default function Signup() {
     password: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const handleChange = (e) => {
     setForm((prevForm) => ({
@@ -50,6 +53,7 @@ export default function Signup() {
       }
 
       toast.success("Signup successful! You can now log in.");
+      router.push("/login");
     } catch (error) {
       toast.error(error.message);
     } finally {
