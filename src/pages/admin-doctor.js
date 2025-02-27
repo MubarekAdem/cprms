@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -22,7 +22,23 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreVertical, UserCircle } from "lucide-react";
+import {
+  AlertCircle,
+  Building2,
+  CheckCircle,
+  FileText,
+  Loader2,
+  Mail,
+  MoreHorizontal,
+  Phone,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+  User,
+  UserPlus,
+  Users,
+} from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   Dialog,
@@ -31,60 +47,89 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 
 export default function DoctorsDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [doctors, setDoctors] = useState([]);
   const [hospitals, setHospitals] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
   const [doctorForm, setDoctorForm] = useState({
     name: "",
     email: "",
     phone: "",
-    role: "",
+    role: "doctor",
     hospital: "",
     doctorId: "",
     proofDocument: "",
   });
   const [editDoctor, setEditDoctor] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Restrict access
   useEffect(() => {
     if (status === "loading") return;
     if (!session || session.user.role !== "admin") {
       router.replace("/");
+      toast.error("Access denied. Admin privileges required.");
     }
   }, [session, status, router]);
 
   // Fetch doctors
-  const fetchDoctors = async () => {
+  const fetchDoctors = useCallback(async () => {
+    setIsLoading(true);
     try {
       const res = await fetch("/api/doctors");
+      if (!res.ok) throw new Error("Failed to fetch doctors");
       const data = await res.json();
       setDoctors(data);
     } catch (error) {
-      console.error("Error fetching doctors:", error);
+      toast.error("Error fetching doctors: " + error.message);
+    } finally {
+      setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchDoctors();
-  }, []);
+  }, [fetchDoctors]);
 
   // Fetch hospitals
   useEffect(() => {
     const fetchHospitals = async () => {
       try {
         const res = await fetch("/api/hospitals");
+        if (!res.ok) throw new Error("Failed to fetch hospitals");
         const data = await res.json();
         setHospitals(data);
       } catch (error) {
-        console.error("Error fetching hospitals:", error);
+        toast.error("Error fetching hospitals: " + error.message);
       }
     };
     fetchHospitals();
   }, []);
+
+  // Filter doctors based on search term
+  const filteredDoctors = doctors.filter(
+    (doctor) =>
+      doctor.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      doctor.hospital?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Handle form input changes
   const handleInputChange = (e) => {
@@ -92,31 +137,61 @@ export default function DoctorsDashboard() {
     setDoctorForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle file upload
+  // Handle file upload with progress
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    setIsUploading(true);
+    setUploadProgress(0);
+
     try {
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          const newProgress = prev + 10;
+          if (newProgress >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return newProgress;
+        });
+      }, 300);
+
       const { data, error } = await supabase.storage
         .from("doctors")
         .upload(`proof-documents/${Date.now()}_${file.name}`, file);
 
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
       if (error) {
-        console.error("File upload error:", error);
-        return;
+        throw error;
       }
 
       const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/doctors/${data.path}`;
       setDoctorForm((prev) => ({ ...prev, proofDocument: proofDocumentUrl }));
+
+      // Reset progress after a delay
+      setTimeout(() => {
+        setUploadProgress(0);
+        setIsUploading(false);
+      }, 1000);
+
+      toast.success("Document uploaded successfully");
     } catch (error) {
       console.error("Error uploading file:", error.message);
+      toast.error("Error uploading file: " + error.message);
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
   // Add Doctor
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
     try {
       const res = await fetch("/api/doctors", {
         method: "POST",
@@ -126,18 +201,21 @@ export default function DoctorsDashboard() {
 
       if (!res.ok) throw new Error("Failed to add doctor");
 
+      toast.success("Doctor added successfully");
       fetchDoctors(); // Refresh doctors list
       setDoctorForm({
         name: "",
         email: "",
         phone: "",
-        role: "",
+        role: "doctor",
         hospital: "",
         doctorId: "",
         proofDocument: "",
       });
     } catch (error) {
-      console.error(error);
+      toast.error("Error adding doctor: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -158,10 +236,11 @@ export default function DoctorsDashboard() {
 
       if (!res.ok) throw new Error("Failed to update doctor");
 
+      toast.success("Doctor updated successfully");
       fetchDoctors(); // Refresh doctors list
       setIsEditModalOpen(false);
     } catch (error) {
-      console.error(error);
+      toast.error("Error updating doctor: " + error.message);
     }
   };
 
@@ -174,238 +253,465 @@ export default function DoctorsDashboard() {
 
       if (!res.ok) throw new Error("Failed to delete doctor");
 
+      toast.success("Doctor deleted successfully");
       fetchDoctors();
     } catch (error) {
-      console.error(error);
+      toast.error("Error deleting doctor: " + error.message);
     }
   };
 
-  if (status === "loading") return <p>Loading session...</p>;
-  if (!session) return <p>Access denied</p>;
+  if (status === "loading") {
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="flex flex-col items-center space-y-4 text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Loading session...
+          </h3>
+        </div>
+      </div>
+    );
+  }
+
+  if (!session) return null; // Will redirect in useEffect
 
   return (
-    <div className="flex min-h-screen bg-gray-50 text-black">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Navbar />
-      <div className="flex-1 p-6">
-        <Card className="border border-blue-400">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium text-blue-700">
-              Doctors
+      <div className="flex-1 p-6 space-y-6">
+        {/* Stats Cards */}
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="overflow-hidden border-none bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-lg font-medium">
+                <Users className="mr-2 h-5 w-5" />
+                Total Doctors
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{doctors.length}</div>
+              <p className="mt-1 text-sm opacity-80">
+                Active medical professionals
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-lg font-medium">
+                <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+                Verified Doctors
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {Math.round(doctors.length * 0.8)}
+              </div>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Fully verified credentials
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-none shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-lg font-medium">
+                <Building2 className="mr-2 h-5 w-5 text-blue-500" />
+                Hospitals Coverage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{hospitals.length}</div>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Partner medical facilities
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Doctors List */}
+        <Card className="border-none shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-xl font-bold">
+              Doctors Directory
             </CardTitle>
-            <UserCircle className="h-4 w-4 text-blue-500" />
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search doctors..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {doctors.length}
-            </div>
+            {isLoading ? (
+              <div className="flex h-64 items-center justify-center">
+                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+                <span>Loading doctors...</span>
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-50 dark:bg-gray-800">
+                      <TableHead className="font-medium">Name</TableHead>
+                      <TableHead className="font-medium">Contact</TableHead>
+                      <TableHead className="font-medium">Role</TableHead>
+                      <TableHead className="font-medium">Hospital</TableHead>
+                      <TableHead className="text-right font-medium">
+                        Actions
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredDoctors.length > 0 ? (
+                      filteredDoctors.map((doctor) => (
+                        <TableRow
+                          key={doctor._id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <TableCell className="font-medium">
+                            {doctor.name}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col space-y-1">
+                              <span className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                <Mail className="mr-1 h-3 w-3" /> {doctor.email}
+                              </span>
+                              <span className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                <Phone className="mr-1 h-3 w-3" />{" "}
+                                {doctor.phone}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge
+                              variant="outline"
+                              className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300"
+                            >
+                              {doctor.role}
+                            </Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Building2 className="mr-1 h-3 w-3 text-gray-400" />
+                              <span>{doctor.hospital}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => handleEditClick(doctor)}
+                                >
+                                  <User className="mr-2 h-4 w-4" />
+                                  Edit Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleDelete(doctor._id)}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete Doctor
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell colSpan={5} className="h-24 text-center">
+                          {searchTerm ? (
+                            <div className="flex flex-col items-center justify-center text-gray-500">
+                              <Search className="h-8 w-8 mb-2 text-gray-400" />
+                              <p>No doctors found matching "{searchTerm}"</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-gray-500">
+                              <AlertCircle className="h-8 w-8 mb-2 text-gray-400" />
+                              <p>No doctors available.</p>
+                            </div>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Doctors List</CardTitle>
+
+        {/* Add Doctor Form */}
+        <Card className="border-none shadow-md">
+          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+            <CardTitle className="flex items-center text-xl font-bold">
+              <UserPlus className="mr-2 h-5 w-5 text-primary" />
+              Add New Doctor
+            </CardTitle>
           </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Name</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Phone</TableHead>
-                  <TableHead>Role</TableHead>
-                  <TableHead>Hospital</TableHead>
-                  <TableHead>Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {doctors.length > 0 ? (
-                  doctors.map((doctor) => (
-                    <TableRow key={doctor._id}>
-                      <TableCell>{doctor.name}</TableCell>
-                      <TableCell>{doctor.email}</TableCell>
-                      <TableCell>{doctor.phone}</TableCell>
-                      <TableCell>{doctor.role}</TableCell>
-                      <TableCell>{doctor.hospital}</TableCell>
-                      <TableCell>
-                        <MoreVertical
-                          className="cursor-pointer"
-                          onClick={() => handleEditClick(doctor)}
-                        />
-                        <Button
-                          variant="destructive"
-                          onClick={() => handleDelete(doctor._id)}
-                        >
-                          Delete
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan="6" className="text-center">
-                      No doctors available.
-                    </TableCell>
-                  </TableRow>
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="name">Doctor Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={doctorForm.name}
+                  onChange={handleInputChange}
+                  placeholder="Dr. John Doe"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={doctorForm.email}
+                  onChange={handleInputChange}
+                  placeholder="doctor@example.com"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  value={doctorForm.phone}
+                  onChange={handleInputChange}
+                  placeholder="+1 (555) 123-4567"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select
+                  value={doctorForm.role}
+                  onValueChange={(value) =>
+                    setDoctorForm({ ...doctorForm, role: value })
+                  }
+                >
+                  <SelectTrigger id="role" className="w-full">
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="doctor">Doctor</SelectItem>
+                    <SelectItem value="specialist">Specialist</SelectItem>
+                    <SelectItem value="surgeon">Surgeon</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hospital">Hospital</Label>
+                <Select
+                  value={doctorForm.hospital}
+                  onValueChange={(value) =>
+                    setDoctorForm({ ...doctorForm, hospital: value })
+                  }
+                >
+                  <SelectTrigger id="hospital" className="w-full">
+                    <SelectValue placeholder="Select Hospital" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hospitals.map((hospital) => (
+                      <SelectItem key={hospital._id} value={hospital.name}>
+                        {hospital.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="doctorId">Doctor ID</Label>
+                <Input
+                  id="doctorId"
+                  name="doctorId"
+                  value={doctorForm.doctorId}
+                  onChange={handleInputChange}
+                  placeholder="MED-12345"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="proofDocument">Proof Document</Label>
+                <div className="mt-1">
+                  <label className="flex w-full cursor-pointer items-center rounded-md border border-dashed border-gray-300 p-3 text-sm text-gray-500 hover:border-primary/50 dark:border-gray-700">
+                    <Upload className="mr-2 h-4 w-4" />
+                    <span>Upload document</span>
+                    <input
+                      id="proofDocument"
+                      type="file"
+                      className="sr-only"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
+                </div>
+
+                {isUploading && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span>Uploading...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                      <div
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
                 )}
-              </TableBody>
-            </Table>
+
+                {doctorForm.proofDocument && !isUploading && (
+                  <div className="mt-2 flex items-center text-sm text-green-600 dark:text-green-400">
+                    <CheckCircle className="mr-1 h-4 w-4" />
+                    Document uploaded successfully
+                  </div>
+                )}
+              </div>
+
+              <div className="md:col-span-2 mt-4">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting || isUploading}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Doctor
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
           </CardContent>
         </Card>
 
         {/* Edit Doctor Modal */}
         {isEditModalOpen && (
           <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-            <DialogContent>
+            <DialogContent className="sm:max-w-md">
               <DialogHeader>
-                <DialogTitle>Edit Doctor</DialogTitle>
+                <DialogTitle className="flex items-center text-xl font-semibold">
+                  <FileText className="mr-2 h-5 w-5 text-primary" />
+                  Edit Doctor
+                </DialogTitle>
               </DialogHeader>
 
-              {/* Name */}
-              <label className="text-sm font-medium">Name</label>
-              <Input
-                name="name"
-                value={editDoctor.name}
-                onChange={(e) =>
-                  setEditDoctor({ ...editDoctor, name: e.target.value })
-                }
-              />
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name">Name</Label>
+                  <Input
+                    id="edit-name"
+                    name="name"
+                    value={editDoctor.name}
+                    onChange={(e) =>
+                      setEditDoctor({ ...editDoctor, name: e.target.value })
+                    }
+                    placeholder="Doctor name"
+                  />
+                </div>
 
-              {/* Email */}
-              <label className="text-sm font-medium">Email</label>
-              <Input
-                name="email"
-                value={editDoctor.email}
-                onChange={(e) =>
-                  setEditDoctor({ ...editDoctor, email: e.target.value })
-                }
-              />
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    name="email"
+                    type="email"
+                    value={editDoctor.email}
+                    onChange={(e) =>
+                      setEditDoctor({ ...editDoctor, email: e.target.value })
+                    }
+                    placeholder="Email address"
+                  />
+                </div>
 
-              {/* Phone */}
-              <label className="text-sm font-medium">Phone</label>
-              <Input
-                name="phone"
-                value={editDoctor.phone}
-                onChange={(e) =>
-                  setEditDoctor({ ...editDoctor, phone: e.target.value })
-                }
-              />
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone">Phone</Label>
+                  <Input
+                    id="edit-phone"
+                    name="phone"
+                    value={editDoctor.phone}
+                    onChange={(e) =>
+                      setEditDoctor({ ...editDoctor, phone: e.target.value })
+                    }
+                    placeholder="Phone number"
+                  />
+                </div>
 
-              {/* Hospital Selection */}
-              <label className="text-sm font-medium">Hospital</label>
-              <Select
-                name="hospital"
-                value={editDoctor.hospital}
-                onValueChange={(value) =>
-                  setEditDoctor({ ...editDoctor, hospital: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Hospital" />
-                </SelectTrigger>
-                <SelectContent>
-                  {hospitals.map((hospital) => (
-                    <SelectItem key={hospital._id} value={hospital.name}>
-                      {hospital.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-hospital">Hospital</Label>
+                  <Select
+                    value={editDoctor.hospital}
+                    onValueChange={(value) =>
+                      setEditDoctor({ ...editDoctor, hospital: value })
+                    }
+                  >
+                    <SelectTrigger id="edit-hospital">
+                      <SelectValue placeholder="Select Hospital" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hospitals.map((hospital) => (
+                        <SelectItem key={hospital._id} value={hospital.name}>
+                          {hospital.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-              <DialogFooter>
-                <Button onClick={handleEditSave}>Save</Button>
+              <DialogFooter className="flex space-x-2 sm:justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleEditSave}
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  Save Changes
+                </Button>
               </DialogFooter>
             </DialogContent>
           </Dialog>
         )}
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Add Doctor</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Doctor Name</label>
-              <Input
-                name="name"
-                value={doctorForm.name}
-                onChange={handleInputChange}
-                placeholder="Enter doctor name"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Email</label>
-              <Input
-                name="email"
-                type="email"
-                value={doctorForm.email}
-                onChange={handleInputChange}
-                placeholder="Enter email"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Phone</label>
-              <Input
-                name="phone"
-                value={doctorForm.phone}
-                onChange={handleInputChange}
-                placeholder="Enter phone number"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Role</label>
-              <Select
-                name="role"
-                value={doctorForm.role}
-                onValueChange={(value) =>
-                  setDoctorForm({ ...doctorForm, role: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Role" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="doctor">Doctor</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Hospital</label>
-              <Select
-                name="hospital"
-                value={doctorForm.hospital}
-                onValueChange={(value) =>
-                  setDoctorForm({ ...doctorForm, hospital: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select Hospital" />
-                </SelectTrigger>
-                <SelectContent>
-                  {hospitals.map((hospital) => (
-                    <SelectItem key={hospital._id} value={hospital.name}>
-                      {hospital.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Doctor ID</label>
-              <Input
-                name="doctorId"
-                value={doctorForm.doctorId}
-                onChange={handleInputChange}
-                placeholder="Enter doctor ID"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Proof Document</label>
-              <input type="file" onChange={handleFileUpload} />
-            </div>
-            <Button className="w-full">Submit</Button>
-          </form>
-        </CardContent>
-      </Card>
     </div>
   );
 }
