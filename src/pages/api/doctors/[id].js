@@ -16,19 +16,24 @@ export default async function handler(req, res) {
     } catch (error) {
       return res.status(500).json({ error: "Server error" });
     }
-  } else if (req.method === "PUT") {
+  } else {
+    req.method === "PUT";
     try {
-      const updatedDoctor = await Doctor.findByIdAndUpdate(id, req.body, {
-        new: true,
-      });
+      const { name, email, phone, hospital } = req.body;
+
+      const updatedDoctor = await Doctor.findByIdAndUpdate(
+        id,
+        { name, email, phone, hospital },
+        { new: true }
+      );
 
       if (!updatedDoctor) {
         return res.status(404).json({ error: "Doctor not found" });
       }
 
-      return res.status(200).json(updatedDoctor);
+      res.json(updatedDoctor);
     } catch (error) {
-      return res.status(500).json({ error: "Server error" });
+      res.status(500).json({ error: "Error updating doctor" });
     }
   }
 

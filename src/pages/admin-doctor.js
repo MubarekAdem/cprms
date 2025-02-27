@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { MoreVertical } from "lucide-react";
+import { MoreVertical, UserCircle } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   Dialog,
@@ -187,6 +187,19 @@ export default function DoctorsDashboard() {
     <div className="flex min-h-screen bg-gray-50 text-black">
       <Navbar />
       <div className="flex-1 p-6">
+        <Card className="border border-blue-400">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-blue-700">
+              Doctors
+            </CardTitle>
+            <UserCircle className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-600">
+              {doctors.length}
+            </div>
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader>
             <CardTitle>Doctors List</CardTitle>
@@ -245,6 +258,9 @@ export default function DoctorsDashboard() {
               <DialogHeader>
                 <DialogTitle>Edit Doctor</DialogTitle>
               </DialogHeader>
+
+              {/* Name */}
+              <label className="text-sm font-medium">Name</label>
               <Input
                 name="name"
                 value={editDoctor.name}
@@ -252,6 +268,9 @@ export default function DoctorsDashboard() {
                   setEditDoctor({ ...editDoctor, name: e.target.value })
                 }
               />
+
+              {/* Email */}
+              <label className="text-sm font-medium">Email</label>
               <Input
                 name="email"
                 value={editDoctor.email}
@@ -259,6 +278,38 @@ export default function DoctorsDashboard() {
                   setEditDoctor({ ...editDoctor, email: e.target.value })
                 }
               />
+
+              {/* Phone */}
+              <label className="text-sm font-medium">Phone</label>
+              <Input
+                name="phone"
+                value={editDoctor.phone}
+                onChange={(e) =>
+                  setEditDoctor({ ...editDoctor, phone: e.target.value })
+                }
+              />
+
+              {/* Hospital Selection */}
+              <label className="text-sm font-medium">Hospital</label>
+              <Select
+                name="hospital"
+                value={editDoctor.hospital}
+                onValueChange={(value) =>
+                  setEditDoctor({ ...editDoctor, hospital: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Hospital" />
+                </SelectTrigger>
+                <SelectContent>
+                  {hospitals.map((hospital) => (
+                    <SelectItem key={hospital._id} value={hospital.name}>
+                      {hospital.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <DialogFooter>
                 <Button onClick={handleEditSave}>Save</Button>
               </DialogFooter>
