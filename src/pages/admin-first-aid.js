@@ -22,283 +22,700 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserCircle } from "lucide-react";
-import { supabase } from "@/lib/supabase"; // Import Supabase client for file uploads
+import {
+  AlertCircle,
+  Building2,
+  CheckCircle,
+  FileText,
+  Loader2,
+  Mail,
+  MoreHorizontal,
+  Phone,
+  Plus,
+  Search,
+  Trash2,
+  Upload,
+  User,
+  UserPlus,
+  Users,
+} from "lucide-react";
+import { supabase } from "@/lib/supabase";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 
 export default function FirstAidDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [firstAids, setFirstAids] = useState([]);
   const [hospitals, setHospitals] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [editForm, setEditForm] = useState({
+    id: "",
+    name: "",
+    email: "",
+    phone: "",
+    hospital: "",
+  });
   const [firstAidForm, setFirstAidForm] = useState({
     name: "",
     email: "",
     phone: "",
-    role: "",
+    role: "first-aid",
     hospital: "",
     firstAidId: "",
-    proofDocument: null,
+    proofDocument: "",
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   // Restrict access
   useEffect(() => {
     if (status === "loading") return;
     if (!session || session.user.role !== "admin") {
-      router.replace("/"); // Redirect if not admin
+      router.replace("/");
+      toast.error("Access denied. Admin privileges required.");
     }
   }, [session, status, router]);
 
-  // Fetch first aids
-  useEffect(() => {
-    const fetchFirstAids = async () => {
+  // Fetch first aid responders
+  const fetchFirstAids = async () => {
+    setIsLoading(true);
+    try {
       const res = await fetch("/api/first-aid");
+      if (!res.ok) throw new Error("Failed to fetch first aid responders");
       const data = await res.json();
       if (Array.isArray(data)) {
         setFirstAids(data);
       } else {
-        console.error("Error fetching first aids");
+        throw new Error("Invalid data format");
       }
-    };
+    } catch (error) {
+      toast.error("Error fetching first aid responders: " + error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchFirstAids();
   }, []);
 
   // Fetch hospitals
   useEffect(() => {
     const fetchHospitals = async () => {
-      const res = await fetch("/api/hospitals");
-      const data = await res.json();
-      if (Array.isArray(data)) {
-        setHospitals(data);
-      } else {
-        console.error("Error fetching hospitals");
+      try {
+        const res = await fetch("/api/hospitals");
+        if (!res.ok) throw new Error("Failed to fetch hospitals");
+        const data = await res.json();
+        if (Array.isArray(data)) {
+          setHospitals(data);
+        } else {
+          throw new Error("Invalid data format");
+        }
+      } catch (error) {
+        toast.error("Error fetching hospitals: " + error.message);
       }
     };
     fetchHospitals();
   }, []);
 
+  // Filter first aid responders based on search term
+  const filteredFirstAids = firstAids.filter(
+    (responder) =>
+      responder.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      responder.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      responder.hospital?.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  // Delete first aid responder
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this first aid responder?"))
+      return;
+
+    try {
+      const res = await fetch(`/api/first-aid/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete first aid responder");
+      setFirstAids(firstAids.filter((responder) => responder._id !== id));
+      toast.success("First aid responder deleted successfully");
+    } catch (error) {
+      toast.error("Error deleting first aid responder: " + error.message);
+    }
+  };
+
+  // Open edit modal
+  const openEditModal = (responder) => {
+    setEditForm({
+      id: responder._id,
+      name: responder.name,
+      email: responder.email,
+      phone: responder.phone,
+      hospital: responder.hospital,
+    });
+    setEditModalOpen(true);
+  };
+
+  // Handle edit form input
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Update first aid responder
+  const handleEditSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const res = await fetch(`/api/first-aid/${editForm.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) throw new Error("Failed to update first aid responder");
+      await fetchFirstAids();
+      setEditModalOpen(false);
+      toast.success("First aid responder updated successfully");
+    } catch (error) {
+      toast.error("Error updating first aid responder: " + error.message);
+    }
+  };
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
-    setFirstAidForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setFirstAidForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle file upload
+  // Handle file upload with progress
   const handleFileUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
 
+    setIsUploading(true);
+    setUploadProgress(0);
+
     try {
+      // Simulate upload progress
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          const newProgress = prev + 10;
+          if (newProgress >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return newProgress;
+        });
+      }, 300);
+
       const { data, error } = await supabase.storage
         .from("first-aid")
         .upload(`proof-documents/${Date.now()}_${file.name}`, file);
 
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
       if (error) {
-        console.error("File upload error:", error);
-        return;
+        throw error;
       }
 
       const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/first-aid/${data.path}`;
-      setFirstAidForm((prev) => ({
-        ...prev,
-        proofDocument: proofDocumentUrl,
-      }));
+      setFirstAidForm((prev) => ({ ...prev, proofDocument: proofDocumentUrl }));
+
+      // Reset progress after a delay
+      setTimeout(() => {
+        setUploadProgress(0);
+        setIsUploading(false);
+      }, 1000);
+
+      toast.success("Document uploaded successfully");
     } catch (error) {
       console.error("Error uploading file:", error.message);
+      toast.error("Error uploading file: " + error.message);
+      setIsUploading(false);
+      setUploadProgress(0);
     }
   };
 
-  // Handle form submission
+  // Add First Aid Responder
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const res = await fetch("/api/first-aid", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(firstAidForm),
-    });
-    const data = await res.json();
-    if (res.ok) {
-      setFirstAids((prev) => [...prev, data.firstAid]);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/first-aid", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(firstAidForm),
+      });
+
+      if (!res.ok) throw new Error("Failed to add first aid responder");
+
+      toast.success("First aid responder added successfully");
+      fetchFirstAids(); // Refresh first aid responders list
       setFirstAidForm({
         name: "",
         email: "",
         phone: "",
-        role: "",
+        role: "first-aid",
         hospital: "",
         firstAidId: "",
-        proofDocument: null,
+        proofDocument: "",
       });
-    } else {
-      console.error(data.error);
+    } catch (error) {
+      toast.error("Error adding first aid responder: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   if (status === "loading") {
-    return <p>Loading session...</p>;
+    return (
+      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="flex flex-col items-center space-y-4 text-center">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
+            Loading session...
+          </h3>
+        </div>
+      </div>
+    );
   }
 
-  if (!session) {
-    return <p>Access denied</p>;
-  }
+  if (!session) return null; // Will redirect in useEffect
 
   return (
-    <div className="flex min-h-screen bg-gray-50 text-black">
+    <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Navbar />
-      <div className="flex-1 p-6">
-        <div className="grid gap-6 md:grid-cols-[1fr,400px]">
-          {/* First Aid Count Card */}
-          <div className="space-y-6">
-            <Card className="border border-blue-400">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium text-blue-700">
-                  First Aid
-                </CardTitle>
-                <UserCircle className="h-4 w-4 text-blue-500" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {firstAids.length}
-                </div>
-              </CardContent>
-            </Card>
+      <div className="flex-1 p-6 space-y-6">
+        {/* Stats Cards */}
+        <div className="grid gap-6 md:grid-cols-3">
+          <Card className="overflow-hidden border-none bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-lg font-medium">
+                <Users className="mr-2 h-5 w-5" />
+                Total Responders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{firstAids.length}</div>
+              <p className="mt-1 text-sm opacity-80">
+                Active first aid professionals
+              </p>
+            </CardContent>
+          </Card>
 
-            {/* First Aid Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>First Aid List</CardTitle>
-              </CardHeader>
-              <CardContent>
+          {/* <Card className="border-none shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-lg font-medium">
+                <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+                Certified Responders
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {Math.round(firstAids.length * 0.9)}
+              </div>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Fully certified professionals
+              </p>
+            </CardContent>
+          </Card> */}
+
+          <Card className="border-none shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-lg font-medium">
+                <Building2 className="mr-2 h-5 w-5 text-blue-500" />
+                Hospitals Coverage
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">{hospitals.length}</div>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Partner medical facilities
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* First Aid Responders List */}
+        <Card className="border-none shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
+            <CardTitle className="text-xl font-bold">
+              First Aid Responders Directory
+            </CardTitle>
+            <div className="relative w-64">
+              <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search responders..."
+                className="pl-8"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
+          </CardHeader>
+          <CardContent>
+            {isLoading ? (
+              <div className="flex h-64 items-center justify-center">
+                <Loader2 className="mr-2 h-6 w-6 animate-spin text-primary" />
+                <span>Loading responders...</span>
+              </div>
+            ) : (
+              <div className="rounded-md border">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead>Name</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Role</TableHead>
-                      <TableHead>Hospital</TableHead>
+                    <TableRow className="bg-gray-50 dark:bg-gray-800">
+                      <TableHead className="font-medium">Name</TableHead>
+                      <TableHead className="font-medium">Contact</TableHead>
+                      <TableHead className="font-medium">Hospital</TableHead>
+                      <TableHead className="text-right font-medium">
+                        Actions
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {firstAids.length > 0 ? (
-                      firstAids.map((firstAid, i) => (
-                        <TableRow key={i}>
-                          <TableCell>{firstAid.name}</TableCell>
-                          <TableCell>{firstAid.email}</TableCell>
-                          <TableCell>{firstAid.phone}</TableCell>
-                          <TableCell>{firstAid.role}</TableCell>
-                          <TableCell>{firstAid.hospital}</TableCell>
+                    {filteredFirstAids.length > 0 ? (
+                      filteredFirstAids.map((responder) => (
+                        <TableRow
+                          key={responder._id}
+                          className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                        >
+                          <TableCell className="font-medium">
+                            {responder.name}
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col space-y-1">
+                              <span className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                <Mail className="mr-1 h-3 w-3" />{" "}
+                                {responder.email}
+                              </span>
+                              <span className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+                                <Phone className="mr-1 h-3 w-3" />{" "}
+                                {responder.phone}
+                              </span>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center">
+                              <Building2 className="mr-1 h-3 w-3 text-gray-400" />
+                              <span>{responder.hospital}</span>
+                            </div>
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                >
+                                  <span className="sr-only">Open menu</span>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem
+                                  onClick={() => openEditModal(responder)}
+                                >
+                                  <User className="mr-2 h-4 w-4" />
+                                  Edit Details
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  onClick={() => handleDelete(responder._id)}
+                                  className="text-red-600 focus:text-red-600"
+                                >
+                                  <Trash2 className="mr-2 h-4 w-4" />
+                                  Delete Responder
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan="5" className="text-center">
-                          No first aid responders available.
+                        <TableCell colSpan={4} className="h-24 text-center">
+                          {searchTerm ? (
+                            <div className="flex flex-col items-center justify-center text-gray-500">
+                              <Search className="h-8 w-8 mb-2 text-gray-400" />
+                              <p>No responders found matching "{searchTerm}"</p>
+                            </div>
+                          ) : (
+                            <div className="flex flex-col items-center justify-center text-gray-500">
+                              <AlertCircle className="h-8 w-8 mb-2 text-gray-400" />
+                              <p>No first aid responders available.</p>
+                            </div>
+                          )}
                         </TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Add First Aid Form */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Add First Aid Responder</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4" onSubmit={handleSubmit}>
-                {/* Similar form fields like in the Doctor's dashboard */}
-                {/* Name, Email, Phone, Role, Hospital, First Aid ID, Proof Document */}
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Name</label>
-                  <Input
-                    name="name"
-                    value={firstAidForm.name}
-                    onChange={handleInputChange}
-                    placeholder="Enter first aid responder name"
-                  />
+        {/* Add First Aid Responder Form */}
+        <Card className="border-none shadow-md">
+          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+            <CardTitle className="flex items-center text-xl font-bold">
+              <UserPlus className="mr-2 h-5 w-5 text-primary" />
+              Add First Aid Responder
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="name">Responder Name</Label>
+                <Input
+                  id="name"
+                  name="name"
+                  value={firstAidForm.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter first aid responder name"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="email">Email Address</Label>
+                <Input
+                  id="email"
+                  name="email"
+                  type="email"
+                  value={firstAidForm.email}
+                  onChange={handleInputChange}
+                  placeholder="Enter email"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="phone">Phone Number</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  value={firstAidForm.phone}
+                  onChange={handleInputChange}
+                  placeholder="Enter phone number"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="role">Role</Label>
+                <Select
+                  value={firstAidForm.role}
+                  onValueChange={(value) =>
+                    setFirstAidForm({ ...firstAidForm, role: value })
+                  }
+                >
+                  <SelectTrigger id="role" className="w-full">
+                    <SelectValue placeholder="Select Role" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="first-aid">First Aid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="hospital">Hospital</Label>
+                <Select
+                  value={firstAidForm.hospital}
+                  onValueChange={(value) =>
+                    setFirstAidForm({ ...firstAidForm, hospital: value })
+                  }
+                >
+                  <SelectTrigger id="hospital" className="w-full">
+                    <SelectValue placeholder="Select Hospital" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hospitals.map((hospital) => (
+                      <SelectItem key={hospital._id} value={hospital.name}>
+                        {hospital.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="firstAidId">First Aid ID</Label>
+                <Input
+                  id="firstAidId"
+                  name="firstAidId"
+                  value={firstAidForm.firstAidId}
+                  onChange={handleInputChange}
+                  placeholder="Enter first aid ID"
+                  required
+                  className="w-full"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="proofDocument">Proof Document</Label>
+                <div className="mt-1">
+                  <label className="flex w-full cursor-pointer items-center rounded-md border border-dashed border-gray-300 p-3 text-sm text-gray-500 hover:border-primary/50 dark:border-gray-700">
+                    <Upload className="mr-2 h-4 w-4" />
+                    <span>Upload document</span>
+                    <input
+                      id="proofDocument"
+                      type="file"
+                      className="sr-only"
+                      onChange={handleFileUpload}
+                    />
+                  </label>
                 </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Email</label>
-                  <Input
-                    name="email"
-                    type="email"
-                    value={firstAidForm.email}
-                    onChange={handleInputChange}
-                    placeholder="Enter email"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Phone</label>
-                  <Input
-                    name="phone"
-                    value={firstAidForm.phone}
-                    onChange={handleInputChange}
-                    placeholder="Enter phone number"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Role</label>
-                  <Select
-                    name="role"
-                    value={firstAidForm.role}
-                    onValueChange={(value) =>
-                      setFirstAidForm({ ...firstAidForm, role: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="first-aid">First Aid</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Hospital</label>
-                  <Select
-                    name="hospital"
-                    value={firstAidForm.hospital}
-                    onValueChange={(value) =>
-                      setFirstAidForm({ ...firstAidForm, hospital: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select Hospital" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hospitals.map((hospital) => (
-                        <SelectItem key={hospital._id} value={hospital.name}>
-                          {hospital.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">First Aid ID</label>
-                  <Input
-                    name="firstAidId"
-                    value={firstAidForm.firstAidId}
-                    onChange={handleInputChange}
-                    placeholder="Enter first aid ID"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Proof Document</label>
-                  <input type="file" onChange={handleFileUpload} />
-                </div>
-                <Button className="w-full">Submit</Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+
+                {isUploading && (
+                  <div className="mt-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span>Uploading...</span>
+                      <span>{uploadProgress}%</span>
+                    </div>
+                    <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200 dark:bg-gray-700">
+                      <div
+                        className="h-full bg-primary transition-all duration-300"
+                        style={{ width: `${uploadProgress}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
+                {firstAidForm.proofDocument && !isUploading && (
+                  <div className="mt-2 flex items-center text-sm text-green-600 dark:text-green-400">
+                    <CheckCircle className="mr-1 h-4 w-4" />
+                    Document uploaded successfully
+                  </div>
+                )}
+              </div>
+
+              <div className="md:col-span-2 mt-4">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isSubmitting || isUploading}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add First Aid Responder
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        {/* Edit First Aid Responder Modal */}
+        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-xl font-semibold">
+                <FileText className="mr-2 h-5 w-5 text-primary" />
+                Edit First Aid Responder
+              </DialogTitle>
+            </DialogHeader>
+
+            <form onSubmit={handleEditSubmit} className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name">Name</Label>
+                <Input
+                  id="edit-name"
+                  name="name"
+                  value={editForm.name}
+                  onChange={handleEditChange}
+                  placeholder="Responder name"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-email">Email</Label>
+                <Input
+                  id="edit-email"
+                  name="email"
+                  type="email"
+                  value={editForm.email}
+                  onChange={handleEditChange}
+                  placeholder="Email address"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-phone">Phone</Label>
+                <Input
+                  id="edit-phone"
+                  name="phone"
+                  value={editForm.phone}
+                  onChange={handleEditChange}
+                  placeholder="Phone number"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-hospital">Hospital</Label>
+                <Select
+                  value={editForm.hospital}
+                  onValueChange={(value) =>
+                    setEditForm({ ...editForm, hospital: value })
+                  }
+                >
+                  <SelectTrigger id="edit-hospital">
+                    <SelectValue placeholder="Select Hospital" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {hospitals.map((hospital) => (
+                      <SelectItem key={hospital._id} value={hospital.name}>
+                        {hospital.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <DialogFooter className="flex space-x-2 sm:justify-end">
+                <Button
+                  variant="outline"
+                  onClick={() => setEditModalOpen(false)}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-primary hover:bg-primary/90"
+                >
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

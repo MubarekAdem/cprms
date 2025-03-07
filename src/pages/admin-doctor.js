@@ -520,8 +520,6 @@ export default function DoctorsDashboard() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="doctor">Doctor</SelectItem>
-                    <SelectItem value="specialist">Specialist</SelectItem>
-                    <SelectItem value="surgeon">Surgeon</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
