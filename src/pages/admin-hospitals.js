@@ -30,12 +30,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { supabase } from "@/lib/supabase"; // Import Supabase client for file uploads
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"; // Import modal
 
 export default function HospitalsDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [cities, setCities] = useState([]);
   const [hospitals, setHospitals] = useState([]);
+  const [editHospital, setEditHospital] = useState(null); // State for editing
   const [hospitalForm, setHospitalForm] = useState({
     name: "",
     id: "",
@@ -43,15 +50,13 @@ export default function HospitalsDashboard() {
     proofDocument: null,
   });
 
-  // Check session and role for access control
   useEffect(() => {
     if (status === "loading") return;
     if (!session || session.user.role !== "admin") {
-      router.replace("/"); // Redirect unauthorized users
+      router.replace("/");
     }
   }, [session, status, router]);
 
-  // Fetch list of cities
   useEffect(() => {
     const fetchCities = async () => {
       const res = await fetch("/api/cities");
@@ -65,11 +70,11 @@ export default function HospitalsDashboard() {
 
     fetchCities();
   }, []);
+
   useEffect(() => {
     const fetchHospitals = async () => {
       const res = await fetch("/api/hospitals");
       const data = await res.json();
-      console.log(data); // Check the response data
 
       if (Array.isArray(data)) {
         setHospitals(data);
@@ -81,7 +86,7 @@ export default function HospitalsDashboard() {
     fetchHospitals();
   }, []);
 
-  // Handle form input changes
+  // Handle input change
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setHospitalForm((prev) => ({
@@ -90,49 +95,55 @@ export default function HospitalsDashboard() {
     }));
   };
 
-  // Handle file upload
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      const { data, error } = await supabase.storage
-        .from("hospital-proof") // Your bucket name
-        .upload(`proof-documents/${Date.now()}_${file.name}`, file);
-
-      if (error) {
-        console.error("File upload error:", error);
-        return;
-      }
-
-      // ✅ Store the full URL of the file
-      const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/hospital-proof/${data.path}`;
-
-      setHospitalForm((prev) => ({
-        ...prev,
-        proofDocument: proofDocumentUrl, // Store the URL, not just path
-      }));
-    } catch (error) {
-      console.error("Error uploading file:", error.message);
-    }
+  // Open Edit Modal
+  const openEditModal = (hospital) => {
+    setEditHospital(hospital);
+    setHospitalForm({ name: hospital.name, location: hospital.location });
   };
 
-  // Handle hospital form submission
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const res = await fetch("/api/hospitals", {
-      method: "POST",
+  // Close Edit Modal
+  const closeEditModal = () => {
+    setEditHospital(null);
+    setHospitalForm({ name: "", location: "" });
+  };
+
+  // Update Hospital
+  const handleUpdateHospital = async () => {
+    const res = await fetch(`/api/hospitals/${editHospital.id}`, {
+      method: "PUT",
       headers: {
         "Content-Type": "application/json",
       },
-      body: JSON.stringify(hospitalForm),
+      body: JSON.stringify({
+        name: hospitalForm.name,
+        location: hospitalForm.location,
+      }),
     });
-    const data = await res.json();
+
     if (res.ok) {
-      setHospitals((prevHospitals) => [...prevHospitals, data.hospital]);
-      setHospitalForm({ name: "", id: "", location: "", proofDocument: null }); // Reset the form
+      setHospitals((prev) =>
+        prev.map((h) =>
+          h.id === editHospital.id ? { ...h, ...hospitalForm } : h
+        )
+      );
+      closeEditModal();
     } else {
-      console.error(data.error);
+      console.error("Error updating hospital");
+    }
+  };
+
+  // Delete Hospital
+  const handleDeleteHospital = async (id) => {
+    if (!confirm("Are you sure you want to delete this hospital?")) return;
+
+    const res = await fetch(`/api/hospitals/${id}`, {
+      method: "DELETE",
+    });
+
+    if (res.ok) {
+      setHospitals((prev) => prev.filter((h) => h.id !== id));
+    } else {
+      console.error("Error deleting hospital");
     }
   };
 
@@ -143,7 +154,6 @@ export default function HospitalsDashboard() {
   if (!session) {
     return <p>Access denied</p>;
   }
-  console.log(hospitals); // Add this line to check the hospitals data
 
   return (
     <div className="flex min-h-screen bg-gray-50 text-black">
@@ -180,7 +190,7 @@ export default function HospitalsDashboard() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {hospitals && hospitals.length > 0 ? (
+                    {hospitals.length > 0 ? (
                       hospitals.map((hospital, i) => (
                         <TableRow key={i}>
                           <TableCell className="font-medium text-blue-800">
@@ -200,12 +210,18 @@ export default function HospitalsDashboard() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  View Details
+                                <DropdownMenuItem
+                                  onClick={() => openEditModal(hospital)}
+                                >
+                                  Edit
                                 </DropdownMenuItem>
-                                <DropdownMenuItem>Edit</DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive">
-                                  Remove
+                                <DropdownMenuItem
+                                  className="text-destructive"
+                                  onClick={() =>
+                                    handleDeleteHospital(hospital.id)
+                                  }
+                                >
+                                  Delete
                                 </DropdownMenuItem>
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -227,62 +243,36 @@ export default function HospitalsDashboard() {
               </CardContent>
             </Card>
           </div>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Add Hospital</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form className="space-y-4" onSubmit={handleSubmit}>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Hospital Name</label>
-                  <Input
-                    name="name"
-                    value={hospitalForm.name}
-                    onChange={handleInputChange}
-                    placeholder="Enter hospital name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Hospital ID</label>
-                  <Input
-                    name="id"
-                    value={hospitalForm.id}
-                    onChange={handleInputChange}
-                    placeholder="Enter hospital ID"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Location</label>
-                  <Select
-                    name="location"
-                    value={hospitalForm.location}
-                    onValueChange={(value) =>
-                      setHospitalForm({ ...hospitalForm, location: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a city" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {cities.map((city) => (
-                        <SelectItem key={city.id} value={city.name}>
-                          {city.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Proof Document</label>
-                  <input type="file" onChange={handleFileUpload} />
-                </div>
-                <Button className="w-full">Submit</Button>
-              </form>
-            </CardContent>
-          </Card>
         </div>
       </div>
+
+      {/* Edit Hospital Modal */}
+      {editHospital && (
+        <Dialog open={true} onOpenChange={closeEditModal}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Hospital</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <Input
+                name="name"
+                value={hospitalForm.name}
+                onChange={handleInputChange}
+                placeholder="Enter hospital name"
+              />
+              <Input
+                name="location"
+                value={hospitalForm.location}
+                onChange={handleInputChange}
+                placeholder="Enter hospital location"
+              />
+              <Button className="w-full" onClick={handleUpdateHospital}>
+                Save Changes
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }
