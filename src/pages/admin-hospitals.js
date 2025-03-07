@@ -23,6 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { MapPin as CityIcon, MoreVertical } from "lucide-react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -87,13 +88,6 @@ export default function HospitalsDashboard() {
   }, []);
 
   // Handle input change
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setHospitalForm((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
 
   // Open Edit Modal
   const openEditModal = (hospital) => {
@@ -129,6 +123,59 @@ export default function HospitalsDashboard() {
       closeEditModal();
     } else {
       console.error("Error updating hospital");
+    }
+  };
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setHospitalForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Handle file upload
+  const handleFileUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    try {
+      const { data, error } = await supabase.storage
+        .from("hospital-proof") // Your bucket name
+        .upload(`proof-documents/${Date.now()}_${file.name}`, file);
+
+      if (error) {
+        console.error("File upload error:", error);
+        return;
+      }
+
+      // ✅ Store the full URL of the file
+      const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/hospital-proof/${data.path}`;
+
+      setHospitalForm((prev) => ({
+        ...prev,
+        proofDocument: proofDocumentUrl, // Store the URL, not just path
+      }));
+    } catch (error) {
+      console.error("Error uploading file:", error.message);
+    }
+  };
+
+  // Handle hospital form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const res = await fetch("/api/hospitals", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(hospitalForm),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setHospitals((prevHospitals) => [...prevHospitals, data.hospital]);
+      setHospitalForm({ name: "", id: "", location: "", proofDocument: null }); // Reset the form
+    } else {
+      console.error(data.error);
     }
   };
 
@@ -260,12 +307,26 @@ export default function HospitalsDashboard() {
                 onChange={handleInputChange}
                 placeholder="Enter hospital name"
               />
-              <Input
-                name="location"
+
+              {/* Location Dropdown */}
+              <Select
                 value={hospitalForm.location}
-                onChange={handleInputChange}
-                placeholder="Enter hospital location"
-              />
+                onValueChange={(value) =>
+                  setHospitalForm((prev) => ({ ...prev, location: value }))
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a city" />
+                </SelectTrigger>
+                <SelectContent>
+                  {cities.map((city, index) => (
+                    <SelectItem key={index} value={city.name}>
+                      {city.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
               <Button className="w-full" onClick={handleUpdateHospital}>
                 Save Changes
               </Button>
@@ -273,6 +334,54 @@ export default function HospitalsDashboard() {
           </DialogContent>
         </Dialog>
       )}
+      <CardContent>
+        <form className="space-y-4" onSubmit={handleSubmit}>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Hospital Name</label>
+            <Input
+              name="name"
+              value={hospitalForm.name}
+              onChange={handleInputChange}
+              placeholder="Enter hospital name"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Hospital ID</label>
+            <Input
+              name="id"
+              value={hospitalForm.id}
+              onChange={handleInputChange}
+              placeholder="Enter hospital ID"
+            />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Location</label>
+            <Select
+              name="location"
+              value={hospitalForm.location}
+              onValueChange={(value) =>
+                setHospitalForm({ ...hospitalForm, location: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select a city" />
+              </SelectTrigger>
+              <SelectContent>
+                {cities.map((city) => (
+                  <SelectItem key={city.id} value={city.name}>
+                    {city.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Proof Document</label>
+            <input type="file" onChange={handleFileUpload} />
+          </div>
+          <Button className="w-full">Submit</Button>
+        </form>
+      </CardContent>
     </div>
   );
 }
