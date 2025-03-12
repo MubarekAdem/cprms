@@ -21,7 +21,7 @@ export default function Navbar() {
     { icon: UserCog, label: "Registrars", href: "/admin-registrar" },
     { icon: Hospital, label: "Hospitals", href: "/admin-hospitals" },
     { icon: MapPin, label: "Cities", href: "/admin-cities" },
-    { icon: LayoutDashboard, label: "DASHBOARD", href: "/dashboard" },
+    { icon: LayoutDashboard, label: "DASHBOARD", href: "/admin-dashboard" },
   ];
 
   return (
