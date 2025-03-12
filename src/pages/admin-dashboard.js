@@ -1,3 +1,4 @@
+import { useSession } from "next-auth/react";
 import DashboardHeader from "@/components/admin-dashboard/dashboard-header";
 import DashboardStats from "@/components/admin-dashboard/dashboard-stats";
 import HospitalDistributionChart from "@/components/admin-dashboard/hospital-distribution-chart";
@@ -8,12 +9,20 @@ import HospitalMap from "@/components/admin-dashboard/hospital-map";
 import DashboardSidebar from "@/components/admin-dashboard/dashboard-sidebar";
 
 export default function Dashboard() {
+  const { data: session, status } = useSession();
+
+  if (status === "loading") {
+    return <p>Loading...</p>;
+  }
+
+  if (!session || session.user.role !== "admin") {
+    return <p className="text-center text-red-500 text-xl">Unauthorized</p>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardSidebar />
       <main className="md:ml-64">
-        {" "}
-        {/* Add margin-left to account for sidebar width */}
         <div className="p-6 md:p-8">
           <DashboardHeader />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
