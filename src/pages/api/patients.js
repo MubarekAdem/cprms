@@ -4,12 +4,20 @@ import MedicalRecord from "@/models/MedicalRecord";
 import bcrypt from "bcrypt";
 
 export default async function handler(req, res) {
+  // Set CORS headers for all responses
+  res.setHeader("Access-Control-Allow-Origin", "*"); // Or "http://localhost:49495" for Flutter web
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Accept");
+
   await connectToDB();
+
+  if (req.method === "OPTIONS") {
+    res.status(200).end();
+    return;
+  }
 
   if (req.method === "POST") {
     try {
-      console.log("Received Request:", req.body);
-
       const {
         name,
         birthDate,
@@ -38,15 +46,12 @@ export default async function handler(req, res) {
         !hospitalName ||
         !doctorName
       ) {
-        console.log("Missing Required Fields:", req.body);
         return res.status(400).json({ error: "Missing required fields" });
       }
 
       let patient = await Patient.findOne({ nationalId });
 
       if (!patient) {
-        console.log("Registering new patient:", nationalId);
-
         if (
           !birthDate ||
           !phone ||
@@ -56,14 +61,12 @@ export default async function handler(req, res) {
           !bloodType ||
           !password
         ) {
-          console.log("Missing new patient fields:", req.body);
           return res.status(400).json({
             error: "Missing required fields for new patient registration",
           });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-
         patient = new Patient({
           name,
           birthDate,
@@ -80,10 +83,7 @@ export default async function handler(req, res) {
         });
 
         await patient.save();
-        console.log("New patient saved:", patient);
       }
-
-      console.log("Adding Medical Record for:", patient._id);
 
       const newMedicalRecord = new MedicalRecord({
         patientId: patient._id,
@@ -96,46 +96,38 @@ export default async function handler(req, res) {
       });
 
       await newMedicalRecord.save();
-      console.log("Medical Record saved:", newMedicalRecord);
 
-      return res
+      res
         .status(201)
         .json({ message: "Patient registered or updated successfully" });
     } catch (error) {
       console.error("API Error:", error);
-      return res.status(500).json({ error: error.message });
+      res.status(500).json({ error: error.message });
     }
-  } else if (req.method === "GET") {
-    try {
-      // Fetch all patients from the Patient collection (excluding password field)
-      const patients = await Patient.find().select("-password");
+    return;
+  }
 
-      // Create an array to hold patients with their medical records
+  if (req.method === "GET") {
+    try {
+      const patients = await Patient.find().select("-password");
       const patientsWithRecords = [];
 
-      // Fetch and populate the medical records for each patient
       for (let patient of patients) {
         const medicalRecords = await MedicalRecord.find({
           patientId: patient._id,
         }).select("-patientId");
-
-        // Convert patient document to a plain object
         const patientObject = patient.toObject();
-
-        // Attach the medical records to the patient object
         patientObject.medicalRecords = medicalRecords;
-
-        // Add the patient with records to the array
         patientsWithRecords.push(patientObject);
       }
 
-      // Return all patients with their attached medical records
-      return res.status(200).json(patientsWithRecords);
+      res.status(200).json(patientsWithRecords);
     } catch (error) {
-      console.error("Error fetching patients and medical records:", error);
-      return res.status(500).json({ error: error.message });
+      console.error("Error fetching patients:", error);
+      res.status(500).json({ error: error.message });
     }
-  } else {
-    return res.status(405).json({ error: "Method Not Allowed" });
+    return;
   }
+
+  res.status(405).json({ error: "Method Not Allowed" });
 }
