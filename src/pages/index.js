@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Heart,
@@ -6,12 +9,15 @@ import {
   Users,
   LogIn,
   Menu,
+  X,
   Phone,
   Mail,
   ChevronRight,
 } from "lucide-react";
 
 export default function Home() {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50">
       {/* Navigation Bar */}
@@ -70,12 +76,70 @@ export default function Home() {
 
             {/* Mobile menu button */}
             <div className="md:hidden">
-              <Button variant="ghost" size="icon" className="text-gray-600">
-                <Menu className="h-6 w-6" />
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-gray-600"
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              >
+                {mobileMenuOpen ? (
+                  <X className="h-6 w-6" />
+                ) : (
+                  <Menu className="h-6 w-6" />
+                )}
               </Button>
             </div>
           </div>
         </div>
+
+        {/* Mobile Navigation */}
+        {mobileMenuOpen && (
+          <div className="md:hidden bg-white border-t border-indigo-100 shadow-sm px-4 py-4 space-y-3">
+            <Link
+              href="/features"
+              className="block text-gray-700 hover:text-indigo-600"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Features
+            </Link>
+            <Link
+              href="/pricing"
+              className="block text-gray-700 hover:text-indigo-600"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Pricing
+            </Link>
+            <Link
+              href="/about"
+              className="block text-gray-700 hover:text-indigo-600"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              About
+            </Link>
+            <Link
+              href="/contact"
+              className="block text-gray-700 hover:text-indigo-600"
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Contact
+            </Link>
+            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+              <Button
+                variant="ghost"
+                className="w-full justify-start text-indigo-600"
+              >
+                <LogIn className="mr-2 h-4 w-4" />
+                Login
+              </Button>
+            </Link>
+            <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+              <Button className="w-full justify-start bg-indigo-600 hover:bg-indigo-700 text-white">
+                <UserPlus className="mr-2 h-4 w-4" />
+                Sign Up
+              </Button>
+            </Link>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -109,7 +173,7 @@ export default function Home() {
                   className="w-full md:w-auto text-base py-6 px-8 border-indigo-200 text-indigo-700 hover:bg-indigo-50 transition-all duration-300"
                 >
                   <Users className="mr-2 h-5 w-5" />
-                  Roles Signup{" "}
+                  Roles Signup
                 </Button>
               </Link>
             </div>
@@ -134,41 +198,8 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Right Image/Illustration */}
+          {/* Right Content - Illustrations or images can go here */}
           <div className="md:w-1/2 relative">
-            {/* <div className="bg-white rounded-2xl shadow-xl p-6 md:p-8 relative z-10"> */}
-            {/* <div className="bg-indigo-600 rounded-xl h-64 md:h-80 flex items-center justify-center mb-6">
-                <Heart className="h-24 w-24 text-white opacity-50" />
-              </div> */}
-            {/* <div className="grid grid-cols-3 gap-4">
-                <div className="bg-indigo-50 rounded-lg p-4 flex flex-col items-center">
-                  <div className="bg-white rounded-full p-2 mb-2">
-                    <Heart className="h-6 w-6 text-indigo-600" />
-                  </div>
-                  <span className="text-xs text-center text-gray-700">
-                    Health Tracking
-                  </span>
-                </div>
-                <div className="bg-purple-50 rounded-lg p-4 flex flex-col items-center">
-                  <div className="bg-white rounded-full p-2 mb-2">
-                    <Phone className="h-6 w-6 text-purple-600" />
-                  </div>
-                  <span className="text-xs text-center text-gray-700">
-                    Telemedicine
-                  </span>
-                </div>
-                <div className="bg-pink-50 rounded-lg p-4 flex flex-col items-center">
-                  <div className="bg-white rounded-full p-2 mb-2">
-                    <Mail className="h-6 w-6 text-pink-600" />
-                  </div>
-                  <span className="text-xs text-center text-gray-700">
-                    Notifications
-                  </span>
-                </div>
-              </div> */}
-            {/* </div> */}
-
-            {/* Decorative elements */}
             <div className="absolute top-1/2 -right-4 transform -translate-y-1/2 w-24 h-24 bg-indigo-200 rounded-full opacity-30 blur-xl"></div>
             <div className="absolute bottom-1/4 -left-8 w-32 h-32 bg-purple-200 rounded-full opacity-30 blur-xl"></div>
           </div>
