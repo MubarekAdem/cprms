@@ -1,5 +1,5 @@
 import { connectToDB } from "@/lib/mongodb";
-import Registrar from "@/models/registrar";
+import Registrar from "@/models/Registrar";
 import { ObjectId } from "mongodb";
 
 export default async function handler(req, res) {
