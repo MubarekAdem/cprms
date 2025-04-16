@@ -154,7 +154,7 @@ const RegistrarPatientAdd = () => {
 
       if (res.ok) {
         toast.success("Patient record updated successfully!");
-        router.push("/registrar-dashboard");
+        router.push("/registrar");
       } else {
         const errorData = await res.json();
         toast.error(errorData.error);
