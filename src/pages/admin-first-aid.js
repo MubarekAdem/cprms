@@ -382,6 +382,9 @@ export default function FirstAidDashboard() {
                       <TableHead className="font-medium">Name</TableHead>
                       <TableHead className="font-medium">Contact</TableHead>
                       <TableHead className="font-medium">Hospital</TableHead>
+                      <TableHead className="font-medium">
+                        Proof Document
+                      </TableHead>
                       <TableHead className="text-right font-medium">
                         Actions
                       </TableHead>
@@ -414,6 +417,23 @@ export default function FirstAidDashboard() {
                               <Building2 className="mr-1 h-3 w-3 text-gray-400" />
                               <span>{responder.hospital}</span>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            {responder.proofDocument ? (
+                              <a
+                                href={responder.proofDocument}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                <FileText className="mr-1 h-4 w-4" />
+                                View Document
+                              </a>
+                            ) : (
+                              <span className="text-gray-500 dark:text-gray-400">
+                                No document
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
