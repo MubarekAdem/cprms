@@ -9,9 +9,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "next-auth/react";
+import UserNav from "./UserNav";
 
 export default function Navbar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const navItems = [
     { icon: Building2, label: "ADMIN", href: "/admin" },
@@ -25,8 +28,11 @@ export default function Navbar() {
   ];
 
   return (
-    <aside className="w-64 border-r bg-background p-6">
-      <div className="space-y-4">
+    <aside className="w-64 border-r bg-background p-6 flex flex-col h-full">
+      <div className="flex items-center justify-center mb-6">
+        <UserNav user={session?.user} />
+      </div>
+      <div className="space-y-4 flex-grow">
         {navItems.map((item) => (
           <Link key={item.label} href={item.href}>
             <Button
@@ -38,6 +44,11 @@ export default function Navbar() {
             </Button>
           </Link>
         ))}
+      </div>
+      <div className="mt-auto pt-4 border-t">
+        <p className="text-sm text-muted-foreground truncate">
+          {session?.user?.email || "No email"}
+        </p>
       </div>
     </aside>
   );

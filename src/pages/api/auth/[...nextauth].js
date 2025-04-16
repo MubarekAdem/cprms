@@ -7,6 +7,7 @@ import bcrypt from "bcryptjs";
 export const authOptions = {
   session: {
     strategy: "jwt",
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   providers: [
     CredentialsProvider({
@@ -32,10 +33,11 @@ export const authOptions = {
 
         return {
           id: user._id,
-          firstName: user.firstName,
-          lastName: user.lastName,
+          name: user.name,
           email: user.email,
           phone: user.phone,
+          address: user.address,
+          bio: user.bio,
           role: user.role,
         };
       },
@@ -45,21 +47,28 @@ export const authOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
-        token.firstName = user.firstName;
-        token.lastName = user.lastName;
+        token.name = user.name;
+        token.email = user.email;
         token.phone = user.phone;
+        token.address = user.address;
+        token.bio = user.bio;
         token.role = user.role;
       }
       return token;
     },
     async session({ session, token }) {
       session.user.id = token.id;
-      session.user.firstName = token.firstName;
-      session.user.lastName = token.lastName;
+      session.user.name = token.name;
+      session.user.email = token.email;
       session.user.phone = token.phone;
+      session.user.address = token.address;
+      session.user.bio = token.bio;
       session.user.role = token.role;
       return session;
     },
+  },
+  pages: {
+    signIn: "/login",
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
