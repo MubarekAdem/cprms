@@ -38,6 +38,11 @@ export default function Navbar() {
 
   const registrarNavItems = [
     { icon: UserPlus, label: "ADD PATIENT", href: "/registrar-patient-add" },
+    {
+      icon: UserPlus,
+      label: "ADD EXISTING USER",
+      href: "/registrar-existing-add",
+    },
     { icon: LayoutDashboard, label: "DASHBOARD", href: "/registrar-dashboard" },
   ];
 

@@ -153,7 +153,7 @@ const RegistrarPatientAdd = () => {
       });
 
       if (res.ok) {
-        toast.success("Patient record updated successfully!");
+        toast.success("Patient registered successfully!");
         router.push("/registrar");
       } else {
         const errorData = await res.json();
@@ -373,10 +373,7 @@ const RegistrarPatientAdd = () => {
           </form>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <Button
-            variant="outline"
-            onClick={() => router.push("/scan-qr-registrar")}
-          >
+          <Button variant="outline" onClick={() => router.push("/scan-qr")}>
             Scan QR Code
           </Button>
           <Button type="submit" onClick={handleSubmit}>
