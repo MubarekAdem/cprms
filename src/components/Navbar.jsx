@@ -6,15 +6,20 @@ import {
   Hospital,
   MapPin,
   LayoutDashboard,
+  User,
+  LogOut,
+  UserPlus,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import UserNav from "./UserNav";
+import { useRouter } from "next/navigation";
 
 export default function Navbar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const router = useRouter();
 
   const navItems = [
     { icon: Building2, label: "ADMIN", href: "/admin" },
@@ -27,13 +32,43 @@ export default function Navbar() {
     { icon: LayoutDashboard, label: "DASHBOARD", href: "/admin-dashboard" },
   ];
 
+  const doctorNavItems = [
+    // Removed Patients and Dashboard items
+  ];
+
+  const registrarNavItems = [
+    { icon: UserPlus, label: "ADD PATIENT", href: "/registrar-patient-add" },
+    { icon: LayoutDashboard, label: "DASHBOARD", href: "/registrar-dashboard" },
+  ];
+
+  const getNavItems = () => {
+    switch (session?.user?.role) {
+      case "admin":
+        return navItems;
+      case "doctor":
+        return doctorNavItems;
+      case "registrar":
+        return registrarNavItems;
+      default:
+        return [];
+    }
+  };
+
   return (
     <aside className="w-64 border-r bg-background p-6 flex flex-col h-full">
-      <div className="flex items-center justify-center mb-6">
+      <div className="flex items-center justify-between mb-6">
         <UserNav user={session?.user} />
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => router.push("/profile")}
+          className="text-gray-600 hover:text-primary"
+        >
+          <User className="h-5 w-5" />
+        </Button>
       </div>
       <div className="space-y-4 flex-grow">
-        {navItems.map((item) => (
+        {getNavItems().map((item) => (
           <Link key={item.label} href={item.href}>
             <Button
               variant={pathname === item.href ? "secondary" : "ghost"}
@@ -46,9 +81,19 @@ export default function Navbar() {
         ))}
       </div>
       <div className="mt-auto pt-4 border-t">
-        <p className="text-sm text-muted-foreground truncate">
-          {session?.user?.email || "No email"}
-        </p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm text-muted-foreground truncate">
+            {session?.user?.email || "No email"}
+          </p>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/api/auth/signout")}
+            className="text-gray-600 hover:text-red-500"
+          >
+            <LogOut className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
     </aside>
   );

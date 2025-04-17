@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, QrCode } from "lucide-react";
 import AIChatModal from "@/components/AIChatModal"; // Create this modal component
+import Navbar from "@/components/Navbar";
 
 export default function DoctorComponent({ initialPatient }) {
   const [isChatOpen, setIsChatOpen] = useState(false);
@@ -60,34 +61,11 @@ export default function DoctorComponent({ initialPatient }) {
     return <p className="text-center text-red-500 mt-10">Unauthorized</p>;
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <div className="w-1/5 bg-gray-800 h-screen text-white p-6">
-        <h2 className="text-xl font-bold mb-6">Doctor</h2>
-        <ul className="space-y-4">
-          <li>
-            <Button
-              className="w-full bg-gray-700"
-              onClick={() => router.push("/doctor-dashboard")}
-            >
-              Dashboard
-            </Button>
-          </li>
-          <li>
-            <Button
-              className="w-full bg-gray-700"
-              onClick={() => router.push("/doctor-manage-patients")}
-            >
-              Manage Patients
-            </Button>
-          </li>
-        </ul>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto p-6 flex-1 bg-white">
+    <div className="flex min-h-screen bg-white">
+      <Navbar />
+      <div className="flex-1 p-6">
         {/* Search & QR Scanner */}
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap mb-6">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
             <Input
@@ -114,7 +92,7 @@ export default function DoctorComponent({ initialPatient }) {
 
         {/* Patient Details */}
         {selectedPatient ? (
-          <div className="grid md:grid-cols-[350px,1fr] gap-6 mt-6">
+          <div className="grid md:grid-cols-[350px,1fr] gap-6">
             {/* Basic Info */}
             <div>
               <Card className="border-green-500">

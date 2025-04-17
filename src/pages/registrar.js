@@ -7,13 +7,14 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Search, QrCode } from "lucide-react";
+import Navbar from "@/components/Navbar";
 
-export default function RegistrarComponent() {
+export default function RegistrarComponent({ initialPatient }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [patients, setPatients] = useState([]);
   const [searchId, setSearchId] = useState(""); // National ID input
-  const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedPatient, setSelectedPatient] = useState(initialPatient);
 
   // Fetch all patients
   useEffect(() => {
@@ -57,42 +58,11 @@ export default function RegistrarComponent() {
     return <p className="text-center text-red-500 mt-10">Unauthorized</p>;
 
   return (
-    <div className="flex">
-      {/* Sidebar */}
-      <div className="w-1/5 bg-gray-800 h-screen text-white p-6">
-        <h2 className="text-xl font-bold mb-6">Registrar</h2>
-        <ul className="space-y-4">
-          <li>
-            <Button
-              className="w-full bg-gray-700"
-              onClick={() => router.push("/registrar-dashboard")}
-            >
-              Dashboard
-            </Button>
-          </li>
-          <li>
-            <Button
-              className="w-full bg-gray-700"
-              onClick={() => router.push("/registrar-patient-add")}
-            >
-              Add Patient
-            </Button>
-          </li>
-          <li>
-            <Button
-              className="w-full bg-gray-700"
-              onClick={() => router.push("/registrar-manage-patients")}
-            >
-              Manage Patients
-            </Button>
-          </li>
-        </ul>
-      </div>
-
-      {/* Main Content */}
-      <div className="container mx-auto p-6 flex-1 bg-white">
+    <div className="flex min-h-screen bg-white">
+      <Navbar />
+      <div className="flex-1 p-6">
         {/* Search & QR Scanner */}
-        <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-4 flex-wrap mb-6">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
             <Input
@@ -119,7 +89,7 @@ export default function RegistrarComponent() {
 
         {/* Patient Details */}
         {selectedPatient ? (
-          <div className="grid md:grid-cols-[350px,1fr] gap-6 mt-6">
+          <div className="grid md:grid-cols-[350px,1fr] gap-6">
             {/* Basic Info */}
             <div>
               <Card className="border-green-500">
