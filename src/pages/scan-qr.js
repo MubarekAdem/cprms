@@ -3,7 +3,6 @@
 import { Html5Qrcode } from "html5-qrcode";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import jsQR from "jsqr";
 
 export default function ScanQR() {
   const router = useRouter();
@@ -56,10 +55,10 @@ export default function ScanQR() {
       await html5QrCodeRef.current.start(
         selectedCamera,
         {
-          fps: 10,
+          fps: 1,
           qrbox: { width: 300, height: 300 },
           aspectRatio: 1.0,
-          width: 1280,
+          width: 1920,
         },
         () => {},
         (error) => console.warn("QR Scan Error:", error)
@@ -121,6 +120,7 @@ export default function ScanQR() {
         return;
       }
 
+      // Create canvas with the same dimensions as the video
       const canvas = document.createElement("canvas");
       canvas.width = videoElement.videoWidth;
       canvas.height = videoElement.videoHeight;
@@ -130,64 +130,50 @@ export default function ScanQR() {
         setErrorMessage("Failed to process camera image.");
         return;
       }
+
+      // Draw the video frame to canvas
       context.imageSmoothingEnabled = true;
       context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
-      const imageUrl = canvas.toDataURL("image/png", 1.0);
-      setCapturedImage(imageUrl);
-      console.log("Captured image (open in browser to inspect):", imageUrl);
-
+      // Convert canvas to blob (raw image data)
       canvas.toBlob(
         async (blob) => {
           if (!blob) {
             console.error("Failed to create image blob");
-            setErrorMessage("Failed to capture image from camera.");
+            setErrorMessage("Failed to process captured image.");
             return;
           }
 
-          // Convert Blob to File
-          const file = new File([blob], "captured-image.png", {
-            type: "image/png",
+          // Create a File object from the blob, just like file upload
+          const file = new File([blob], "captured-image.jpg", {
+            type: "image/jpeg",
           });
 
-          console.log("Scanning with html5-qrcode");
+          console.log("Scanning captured file:", file.name);
+          console.log(
+            "Captured image resolution:",
+            `${canvas.width}x${canvas.height}`
+          );
+
           try {
+            // Stop the camera before scanning
+            await html5QrCodeRef.current.stop();
+            setIsCameraStarted(false);
+
+            // Scan the captured image
             const result = await html5QrCodeRef.current.scanFile(file, true);
-            console.log("QR code scan result (html5-qrcode):", result);
-            processScanResult(result);
+            console.log("QR code scan result:", result);
+            await processScanResult(result);
           } catch (err) {
-            console.error("html5-qrcode scan failed:", err);
-            console.log("Scanning with jsQR");
-            try {
-              const imageData = context.getImageData(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-              );
-              const code = jsQR(
-                imageData.data,
-                imageData.width,
-                imageData.height,
-                {
-                  inversionAttempts: "dontInvert",
-                }
-              );
-              if (code && code.data) {
-                console.log("QR code scan result (jsQR):", code.data);
-                processScanResult(code.data);
-              } else {
-                throw new Error("No QR code found by jsQR");
-              }
-            } catch (jsqrErr) {
-              console.error("jsQR scan failed:", jsqrErr);
-              setErrorMessage(
-                "No valid QR code detected. Ensure the QR code is centered, clear, and compatible with standard QR readers."
-              );
-            }
+            console.warn("QR code scan failed:", err);
+            setErrorMessage(
+              "No QR code detected. Ensure the QR code fills the scan area (white square), is sharp, well-lit, and not too small or large."
+            );
+            // Restart the camera if scan fails
+            await startCamera();
           }
         },
-        "image/png",
+        "image/jpeg",
         1.0
       );
     } catch (err) {
@@ -217,6 +203,11 @@ export default function ScanQR() {
       const context = canvas.getContext("2d");
       context.drawImage(img, 0, 0, img.width, img.height);
 
+      console.log(
+        "Uploaded image resolution for scanning:",
+        `${canvas.width}x${canvas.height}`
+      );
+
       canvas.toBlob(
         async (blob) => {
           const fileFromBlob = new File([blob], "uploaded-image.png", {
@@ -228,38 +219,11 @@ export default function ScanQR() {
               fileFromBlob,
               true
             );
-            console.log("QR code scan result (html5-qrcode):", result);
-            processScanResult(result);
+            console.log("QR code scan result:", result);
+            await processScanResult(result);
           } catch (err) {
-            console.error("html5-qrcode scan failed:", err);
-            console.log("Scanning with jsQR");
-            try {
-              const imageData = context.getImageData(
-                0,
-                0,
-                canvas.width,
-                canvas.height
-              );
-              const code = jsQR(
-                imageData.data,
-                imageData.width,
-                imageData.height,
-                {
-                  inversionAttempts: "dontInvert",
-                }
-              );
-              if (code && code.data) {
-                console.log("QR code scan result (jsQR):", code.data);
-                processScanResult(code.data);
-              } else {
-                throw new Error("No QR code found by jsQR");
-              }
-            } catch (jsqrErr) {
-              console.error("jsQR scan failed:", jsqrErr);
-              setErrorMessage(
-                "No valid QR code detected in the uploaded image."
-              );
-            }
+            console.warn("QR code scan failed:", err);
+            setErrorMessage("No QR code detected in the uploaded image.");
           }
         },
         "image/png",
@@ -300,11 +264,11 @@ export default function ScanQR() {
         return parsed;
       }
 
-      const parts = data.split(":");
-      const name = parts[2] || "";
-      const idIndex = parts.indexOf("A") + 1;
+    const parts = data.split(":");
+    const name = parts[2] || "";
+    const idIndex = parts.indexOf("A") + 1;
       const id = idIndex > 0 && idIndex < parts.length ? parts[idIndex] : "";
-      const dobIndex = parts.indexOf("D") + 1;
+    const dobIndex = parts.indexOf("D") + 1;
       const dob =
         dobIndex > 0 && dobIndex < parts.length ? parts[dobIndex] : "";
       const parsed = { name, id, birthDate: dob };
@@ -329,7 +293,7 @@ export default function ScanQR() {
             <img
               src={capturedImage}
               alt="Captured QR code"
-              className="w-full rounded border"
+              className="w-full max-w-xs mx-auto rounded border"
             />
           </div>
         )}
