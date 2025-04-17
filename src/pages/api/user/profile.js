@@ -4,55 +4,74 @@ import { connectToDB } from "@/lib/mongodb";
 import User from "@/models/User";
 
 export default async function handler(req, res) {
-  if (req.method !== "PUT") {
-    return res.status(405).json({ error: "Method not allowed" });
+  if (req.method === "GET") {
+    try {
+      const { email } = req.query;
+
+      if (!email) {
+        return res.status(400).json({ error: "Email is required" });
+      }
+
+      await connectToDB();
+      const user = await User.findOne({ email }).select("-password");
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      return res.status(200).json(user);
+    } catch (error) {
+      console.error("Error fetching user profile:", error);
+      return res.status(500).json({ error: "Failed to fetch user profile" });
+    }
   }
 
-  try {
-    const session = await getServerSession(req, res, authOptions);
+  if (req.method === "PUT") {
+    try {
+      const session = await getServerSession(req, res, authOptions);
 
-    if (!session) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
+      if (!session) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
 
-    await connectToDB();
+      await connectToDB();
 
-    const { name, email, phone, address, bio } = req.body;
-    const userId = session.user.id;
+      const { firstName, lastName, phone, email } = req.body;
 
-    // Find the user first to ensure they exist
-    const existingUser = await User.findById(userId);
-    if (!existingUser) {
-      return res.status(404).json({ error: "User not found" });
-    }
+      // Find the user by email
+      const existingUser = await User.findOne({ email });
+      if (!existingUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
 
-    // Update the user
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      {
-        $set: {
-          name,
-          email,
-          phone,
-          address,
-          bio,
-          updatedAt: new Date(),
+      // Update the user
+      const updatedUser = await User.findOneAndUpdate(
+        { email },
+        {
+          $set: {
+            firstName,
+            lastName,
+            phone,
+            updatedAt: new Date(),
+          },
         },
-      },
-      { new: true }
-    ).select("-password");
+        { new: true }
+      ).select("-password");
 
-    if (!updatedUser) {
-      return res.status(500).json({ error: "Failed to update user" });
+      if (!updatedUser) {
+        return res.status(500).json({ error: "Failed to update user" });
+      }
+
+      // Return the updated user data
+      return res.status(200).json({
+        message: "Profile updated successfully",
+        user: updatedUser,
+      });
+    } catch (error) {
+      console.error("Profile update error:", error);
+      return res.status(500).json({ error: "Failed to update profile" });
     }
-
-    // Return the updated user data
-    res.status(200).json({
-      message: "Profile updated successfully",
-      user: updatedUser,
-    });
-  } catch (error) {
-    console.error("Profile update error:", error);
-    res.status(500).json({ error: "Failed to update profile" });
   }
+
+  return res.status(405).json({ error: "Method not allowed" });
 }
