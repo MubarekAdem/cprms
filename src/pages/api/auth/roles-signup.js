@@ -3,10 +3,10 @@ import User from "@/models/User";
 import bcrypt from "bcrypt";
 
 export default async function handler(req, res) {
-  console.log("Received request:", req.method, req.body); // Debugging
+  console.log("Received request:", req.method, req.body);
 
   await connectToDB();
-  console.log("Connected to DB"); // Debugging
+  console.log("Connected to DB");
 
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
@@ -36,17 +36,17 @@ export default async function handler(req, res) {
     else return res.status(400).json({ error: "Invalid role" });
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
-    console.log(`Fetching role data from: ${baseUrl}${roleApi}`); // Debugging
+    console.log(`Fetching role data from: ${baseUrl}${roleApi}`);
 
     const roleRes = await fetch(`${baseUrl}${roleApi}`);
-    console.log("Role API Response Status:", roleRes.status); // Debugging
+    console.log("Role API Response Status:", roleRes.status);
 
     if (!roleRes.ok) {
       return res.status(500).json({ error: `Failed to fetch ${role} data` });
     }
 
     const roleData = await roleRes.json();
-    console.log("Fetched role data:", roleData); // Debugging
+    console.log("Fetched role data:", roleData);
 
     const matchedRecord = roleData.find((record) => record.email === email);
     if (!matchedRecord) {
@@ -63,15 +63,17 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "User already registered" });
     }
 
-    // Hash the password before saving
+    // Hash the password
     console.log("Hashing password...");
     const saltRounds = 10;
     const hashedPassword = await bcrypt.hash(password, saltRounds);
 
+    // Combine firstName and lastName into name
+    const name = `${firstName} ${lastName}`;
+
     console.log("Creating new user...");
     const newUser = await User.create({
-      firstName,
-      lastName,
+      name,
       email,
       phone,
       password: hashedPassword,
