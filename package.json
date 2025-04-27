@@ -27,6 +27,7 @@
     "bcryptjs": "^3.0.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "cors": "^2.8.5",
     "html5-qrcode": "^2.3.8",
     "jsonwebtoken": "^9.0.2",
     "jsqr": "^1.4.0",
