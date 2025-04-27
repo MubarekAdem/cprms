@@ -63,7 +63,7 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
-      <Navbar showBackButton={true} />
+      {/* <Navbar showBackButton={true} /> */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
           <Card className="w-full max-w-md">
