@@ -8,13 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -22,29 +15,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  AlertCircle,
-  Loader2,
-  Mail,
-  MoreHorizontal,
-  Search,
-  User,
-  Users,
-} from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { Label } from "@/components/ui/label";
+import { AlertCircle, Loader2, Mail, Search, User, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -55,9 +26,7 @@ export default function SuperAdminDashboard() {
   const [admins, setAdmins] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editUser, setEditUser] = useState(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [selectedRole, setSelectedRole] = useState("super-admin"); // Default to first role
+  const [selectedRole, setSelectedRole] = useState("super-admin");
 
   console.log("SuperAdminDashboard - Status:", status, "Session:", session);
   console.log("Session user role:", session?.user?.role);
@@ -117,28 +86,22 @@ export default function SuperAdminDashboard() {
       user?.email?.toLowerCase()?.includes(searchTerm.toLowerCase())
   );
 
-  const handleEditClick = (user) => {
-    setEditUser({ ...user, role: user.role || "None" });
-    setIsEditModalOpen(true);
-  };
-
-  const handleEditSave = async () => {
+  const handleMakeAdmin = async (userId) => {
     try {
-      console.log("Updating user role for:", editUser._id);
-      const res = await fetch(`/api/users/${editUser._id}/role`, {
+      console.log("Making user admin for:", userId);
+      const res = await fetch(`/api/users/${userId}/role`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: editUser.role }),
+        body: JSON.stringify({ role: "admin" }),
       });
 
       if (!res.ok) throw new Error(`Failed to update user role: ${res.status}`);
-      toast.success("User role updated successfully");
+      toast.success("User role updated to admin successfully");
       fetchUsers();
       fetchAdmins();
-      setIsEditModalOpen(false);
     } catch (error) {
-      console.error("Error updating user role:", error);
-      toast.error("Error updating user role: " + error.message);
+      console.error("Error making user admin:", error);
+      toast.error("Error making user admin: " + error.message);
     }
   };
 
@@ -326,30 +289,21 @@ export default function SuperAdminDashboard() {
                                       </Badge>
                                     </TableCell>
                                     <TableCell className="text-right">
-                                      <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                          <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-8 w-8"
-                                          >
-                                            <span className="sr-only">
-                                              Open menu
-                                            </span>
-                                            <MoreHorizontal className="h-4 w-4" />
-                                          </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                          <DropdownMenuItem
-                                            onClick={() =>
-                                              handleEditClick(user)
-                                            }
-                                          >
-                                            <User className="mr-2 h-4 w-4" />
-                                            Change Role
-                                          </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                      </DropdownMenu>
+                                      <Button
+                                        variant="outline"
+                                        size="sm"
+                                        onClick={() =>
+                                          handleMakeAdmin(user._id)
+                                        }
+                                        disabled={user.role === "admin"}
+                                        className={
+                                          user.role === "admin"
+                                            ? "opacity-50 cursor-not-allowed"
+                                            : ""
+                                        }
+                                      >
+                                        Make Admin
+                                      </Button>
                                     </TableCell>
                                   </TableRow>
                                 )
@@ -376,68 +330,6 @@ export default function SuperAdminDashboard() {
             )}
           </CardContent>
         </Card>
-        {isEditModalOpen && (
-          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-            <DialogContent className="sm:max-w-md">
-              <DialogHeader>
-                <DialogTitle className="flex items-center text-xl font-semibold">
-                  <User className="mr-2 h-5 w-5" />
-                  Change User Role
-                </DialogTitle>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="edit-name">Name</Label>
-                  <Input
-                    id="edit-name"
-                    value={editUser?.name || "N/A"}
-                    disabled
-                    className="bg-gray-100"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-email">Email</Label>
-                  <Input
-                    id="edit-email"
-                    value={editUser?.email || "N/A"}
-                    disabled
-                    className="bg-gray-100"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-role">Role</Label>
-                  <Select
-                    value={editUser?.role || "None"}
-                    onValueChange={(value) =>
-                      setEditUser({ ...editUser, role: value })
-                    }
-                  >
-                    <SelectTrigger id="edit-role">
-                      <SelectValue placeholder="Select Role" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="None">None</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                      <SelectItem value="doctor">Doctor</SelectItem>
-                      <SelectItem value="first-aid">First Aid</SelectItem>
-                      <SelectItem value="registrar">Registrar</SelectItem>
-                      <SelectItem value="super-admin">Super Admin</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <DialogFooter className="flex space-x-2 sm:justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditModalOpen(false)}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleEditSave}>Save Changes</Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        )}
       </div>
       <style jsx>{`
         .transition-transform {
