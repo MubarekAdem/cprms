@@ -57,6 +57,7 @@ export default function SuperAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [editUser, setEditUser] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedRole, setSelectedRole] = useState("super-admin"); // Default to first role
 
   console.log("SuperAdminDashboard - Status:", status, "Session:", session);
   console.log("Session user role:", session?.user?.role);
@@ -159,6 +160,18 @@ export default function SuperAdminDashboard() {
     "None",
   ];
 
+  // Filter roles that have users
+  const availableRoles = roleOrder.filter(
+    (role) => (groupedUsers[role] || []).length > 0
+  );
+
+  // Ensure selectedRole is valid
+  useEffect(() => {
+    if (!availableRoles.includes(selectedRole) && availableRoles.length > 0) {
+      setSelectedRole(availableRoles[0]);
+    }
+  }, [groupedUsers, selectedRole, availableRoles]);
+
   if (status === "loading") {
     return <p className="text-center mt-10">Loading...</p>;
   }
@@ -225,103 +238,140 @@ export default function SuperAdminDashboard() {
                 <span>Loading users...</span>
               </div>
             ) : (
-              <div className="space-y-8">
-                {roleOrder.map((role) => {
-                  const usersInRole = groupedUsers[role] || [];
-                  if (usersInRole.length === 0) return null;
-                  return (
-                    <div key={role} className="space-y-4">
-                      <h3 className="text-lg font-semibold capitalize">
-                        {role === "None" ? "No Role" : role.replace("-", " ")}
-                      </h3>
-                      <div className="rounded-md border">
-                        <Table>
-                          <TableHeader>
-                            <TableRow className="bg-gray-50 dark:bg-gray-800">
-                              <TableHead className="font-medium">
-                                Name
-                              </TableHead>
-                              <TableHead className="font-medium">
-                                Email
-                              </TableHead>
-                              <TableHead className="font-medium">
-                                Role
-                              </TableHead>
-                              <TableHead className="text-right font-medium">
-                                Actions
-                              </TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {usersInRole.map((user) => (
-                              <TableRow
-                                key={user._id}
-                                className="hover:bg-gray-50 dark:hover:bg-gray-800"
-                              >
-                                <TableCell className="font-medium">
-                                  {user.name || "N/A"}
-                                </TableCell>
-                                <TableCell>
-                                  <div className="flex items-center">
-                                    <Mail className="mr-1 h-3 w-3 text-gray-400" />
-                                    {user.email || "N/A"}
-                                  </div>
-                                </TableCell>
-                                <TableCell>
-                                  <Badge
-                                    variant="outline"
-                                    className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300"
-                                  >
-                                    {user.role || "None"}
-                                  </Badge>
-                                </TableCell>
-                                <TableCell className="text-right">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                      >
-                                        <span className="sr-only">
-                                          Open menu
-                                        </span>
-                                        <MoreHorizontal className="h-4 w-4" />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                      <DropdownMenuItem
-                                        onClick={() => handleEditClick(user)}
-                                      >
-                                        <User className="mr-2 h-4 w-4" />
-                                        Change Role
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </TableCell>
-                              </TableRow>
-                            ))}
-                          </TableBody>
-                        </Table>
-                      </div>
+              <div className="flex">
+                {/* Sidebar for role navigation */}
+                <div className="w-48 bg-gray-100 dark:bg-gray-800 p-4 rounded-l-md">
+                  <h3 className="text-sm font-semibold mb-2 text-gray-600 dark:text-gray-300">
+                    Roles
+                  </h3>
+                  <ul className="space-y-1">
+                    {availableRoles.map((role) => (
+                      <li key={role}>
+                        <button
+                          onClick={() => setSelectedRole(role)}
+                          className={`w-full text-left px-3 py-2 rounded-md text-sm font-medium capitalize transition-colors ${
+                            selectedRole === role
+                              ? "bg-blue-500 text-white"
+                              : "text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-700"
+                          }`}
+                        >
+                          {role === "None" ? "No Role" : role.replace("-", " ")}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                {/* Main content with sliding effect */}
+                <div className="flex-1 pl-4 overflow-hidden">
+                  {availableRoles.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                      {searchTerm ? (
+                        <>
+                          <Search className="h-8 w-8 mb-2 text-gray-400" />
+                          <p>No users found matching `{searchTerm}`</p>
+                        </>
+                      ) : (
+                        <>
+                          <AlertCircle className="h-8 w-8 mb-2 text-gray-400" />
+                          <p>No users available.</p>
+                        </>
+                      )}
                     </div>
-                  );
-                })}
-                {Object.keys(groupedUsers).length === 0 && (
-                  <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-                    {searchTerm ? (
-                      <>
-                        <Search className="h-8 w-8 mb-2 text-gray-400" />
-                        <p>No users found matching `{searchTerm}`</p>
-                      </>
-                    ) : (
-                      <>
-                        <AlertCircle className="h-8 w-8 mb-2 text-gray-400" />
-                        <p>No users available.</p>
-                      </>
-                    )}
-                  </div>
-                )}
+                  ) : (
+                    <div
+                      className="transition-transform duration-300 ease-in-out"
+                      style={{ transform: `translateX(0)` }}
+                    >
+                      {selectedRole && (
+                        <div className="rounded-md border">
+                          <Table>
+                            <TableHeader>
+                              <TableRow className="bg-gray-50 dark:bg-gray-800">
+                                <TableHead className="font-medium">
+                                  Name
+                                </TableHead>
+                                <TableHead className="font-medium">
+                                  Email
+                                </TableHead>
+                                <TableHead className="font-medium">
+                                  Role
+                                </TableHead>
+                                <TableHead className="text-right font-medium">
+                                  Actions
+                                </TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {(groupedUsers[selectedRole] || []).map(
+                                (user) => (
+                                  <TableRow
+                                    key={user._id}
+                                    className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                  >
+                                    <TableCell className="font-medium">
+                                      {user.name || "N/A"}
+                                    </TableCell>
+                                    <TableCell>
+                                      <div className="flex items-center">
+                                        <Mail className="mr-1 h-3 w-3 text-gray-400" />
+                                        {user.email || "N/A"}
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge
+                                        variant="outline"
+                                        className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300"
+                                      >
+                                        {user.role || "None"}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button
+                                            variant="ghost"
+                                            size="icon"
+                                            className="h-8 w-8"
+                                          >
+                                            <span className="sr-only">
+                                              Open menu
+                                            </span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          <DropdownMenuItem
+                                            onClick={() =>
+                                              handleEditClick(user)
+                                            }
+                                          >
+                                            <User className="mr-2 h-4 w-4" />
+                                            Change Role
+                                          </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    </TableCell>
+                                  </TableRow>
+                                )
+                              )}
+                              {(groupedUsers[selectedRole] || []).length ===
+                                0 && (
+                                <TableRow>
+                                  <TableCell
+                                    colSpan={4}
+                                    className="h-24 text-center text-gray-500"
+                                  >
+                                    No users in this role.
+                                  </TableCell>
+                                </TableRow>
+                              )}
+                            </TableBody>
+                          </Table>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </CardContent>
@@ -389,6 +439,11 @@ export default function SuperAdminDashboard() {
           </Dialog>
         )}
       </div>
+      <style jsx>{`
+        .transition-transform {
+          transition: transform 0.3s ease-in-out;
+        }
+      `}</style>
     </div>
   );
 }
