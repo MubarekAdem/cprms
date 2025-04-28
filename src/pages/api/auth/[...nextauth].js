@@ -31,13 +31,18 @@ export const authOptions = {
           throw new Error("Invalid email or password");
         }
 
-        return {
+        console.log("Authorized user:", {
           id: user._id,
+          email: user.email,
+          role: user.role,
           name: user.name,
+        });
+
+        return {
+          id: user._id.toString(),
+          name: user.name || "Unknown",
           email: user.email,
           phone: user.phone,
-          address: user.address,
-          bio: user.bio,
           role: user.role,
         };
       },
@@ -50,10 +55,9 @@ export const authOptions = {
         token.name = user.name;
         token.email = user.email;
         token.phone = user.phone;
-        token.address = user.address;
-        token.bio = user.bio;
         token.role = user.role;
       }
+      console.log("JWT token:", token);
       return token;
     },
     async session({ session, token }) {
@@ -61,10 +65,13 @@ export const authOptions = {
       session.user.name = token.name;
       session.user.email = token.email;
       session.user.phone = token.phone;
-      session.user.address = token.address;
-      session.user.bio = token.bio;
       session.user.role = token.role;
+      console.log("Session:", session);
       return session;
+    },
+    async signIn({ user }) {
+      console.log("signIn callback - User:", user);
+      return true; // No special redirects anymore
     },
   },
   pages: {

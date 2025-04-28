@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { signIn, useSession } from "next-auth/react";
+import { useRouter } from "next/router"; // Match registrar.js
 import {
   Card,
   CardContent,
@@ -16,54 +16,64 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Lock, Mail } from "lucide-react";
-import Navbar from "@/components/Navbar";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const { data: session, status } = useSession();
   const router = useRouter();
 
-  const handleChange = (e) => {
-    setForm({ ...form, [e.target.name]: e.target.value });
-  };
+  console.log("Login - Session status:", status, "Session:", session);
+  console.log("NEXT_PUBLIC_BASE_URL:", process.env.NEXT_PUBLIC_BASE_URL);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      console.log("Authenticated user:", session.user);
+      const redirectPath =
+        session.user.role === "super-admin"
+          ? "/super-admin"
+          : session.user.role === "registrar"
+          ? "/registrar"
+          : session.user.role === "admin"
+          ? "/admin-doctor"
+          : session.user.role === "doctor"
+          ? "/doctor"
+          : "/";
+      console.log("Redirecting to:", redirectPath);
+      router.push(redirectPath).catch((error) => {
+        console.error("Redirect error:", error);
+        toast.error("Failed to redirect. Please try again.");
+      });
+    }
+  }, [session, status, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const res = await signIn("credentials", { ...form, redirect: false });
+      const res = await signIn("credentials", { ...form, redirect: true }); // Rely on server-side redirect
+      console.log("signIn result:", res);
 
       if (res?.error) {
         toast.error(res.error);
-        return;
-      }
-
-      // Fetch the user session after login
-      const sessionRes = await fetch("/api/auth/session");
-      const session = await sessionRes.json();
-
-      if (session?.user?.role === "admin") {
-        router.push("/admin-doctor");
-      } else if (session?.user?.role === "registrar") {
-        router.push("/registrar");
-      } else if (session?.user?.role === "doctor") {
-        router.push("/doctor");
       } else {
-        router.push("/"); // Default route if role is not recognized
+        toast.success("Login successful!");
       }
-
-      toast.success("Logged in successfully!");
     } catch (error) {
+      console.error("Login error:", error);
       toast.error("An error occurred. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleChange = (e) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
-      {/* <Navbar showBackButton={true} /> */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
           <Card className="w-full max-w-md">
