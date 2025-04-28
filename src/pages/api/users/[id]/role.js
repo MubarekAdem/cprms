@@ -1,63 +1,48 @@
-import { connectToDB } from "@/lib/mongodb";
-import User from "@/models/User";
-import cors from "cors";
-
-const corsMiddleware = cors({
-  origin: "*",
-  methods: ["PUT", "OPTIONS"],
-  allowedHeaders: ["Content-Type"],
-});
-
-const runMiddleware = (req, res, fn) => {
-  return new Promise((resolve, reject) => {
-    fn(req, res, (result) => {
-      if (result instanceof Error) {
-        return reject(result);
-      }
-      return resolve(result);
-    });
-  });
-};
+import mongoose from "mongoose";
+import User from "@/models/User"; // Adjust the path to your User model
 
 export default async function handler(req, res) {
-  await runMiddleware(req, res, corsMiddleware);
+  if (req.method === "PUT") {
+    try {
+      const { id } = req.query;
+      const { role } = req.body;
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+      // Validate ObjectId
+      if (!mongoose.Types.ObjectId.isValid(id)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
 
-  if (req.method !== "PUT") {
-    return res.status(405).json({ error: "Method not allowed" });
-  }
+      // Validate role (optional, but recommended)
+      const validRoles = [
+        "None",
+        "admin",
+        "doctor",
+        "first-aid",
+        "registrar",
+        "super-admin",
+      ];
+      if (!validRoles.includes(role)) {
+        return res.status(400).json({ error: "Invalid role" });
+      }
 
-  const { id } = req.query;
-  const { role } = req.body;
+      // Update only the role field using $set, without running full validators
+      const updatedUser = await User.findByIdAndUpdate(
+        id,
+        { $set: { role } },
+        { new: true } // Return the updated document
+      );
 
-  if (!id || !role) {
-    return res.status(400).json({ error: "User ID and role are required" });
-  }
+      if (!updatedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
 
-  try {
-    await connectToDB();
-    const user = await User.findById(id);
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
+      return res.status(200).json(updatedUser);
+    } catch (error) {
+      console.error("Error updating user role:", error);
+      return res.status(500).json({ error: "Internal server error" });
     }
-
-    user.role = role;
-    await user.save();
-
-    return res.status(200).json({
-      message: "User role updated successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (error) {
-    console.error("Error updating user role:", error);
-    return res.status(500).json({ error: "Internal server error" });
+  } else {
+    res.setHeader("Allow", ["PUT"]);
+    return res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
 }

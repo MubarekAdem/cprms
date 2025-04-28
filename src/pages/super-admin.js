@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -50,7 +49,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
 export default function SuperAdminDashboard() {
-  const { data: session, status, update } = useSession(); // Add update method
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [admins, setAdmins] = useState([]);
@@ -63,18 +62,16 @@ export default function SuperAdminDashboard() {
   console.log("Session user role:", session?.user?.role);
   console.log("Router pathname:", router.pathname);
 
-  // Force session refresh if stuck on loading
   useEffect(() => {
     if (status === "loading") {
       const timer = setTimeout(() => {
         console.log("Status stuck on loading, forcing session update");
-        update(); // Trigger session fetch
-      }, 2000); // Wait 2 seconds
+        update();
+      }, 2000);
       return () => clearTimeout(timer);
     }
   }, [status, update]);
 
-  // Fetch all users
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -92,7 +89,6 @@ export default function SuperAdminDashboard() {
     }
   }, []);
 
-  // Fetch admin users
   const fetchAdmins = useCallback(async () => {
     try {
       console.log("Fetching admins from: /api/admins");
@@ -114,20 +110,17 @@ export default function SuperAdminDashboard() {
     }
   }, [fetchUsers, fetchAdmins, session, status]);
 
-  // Filter users based on search term
   const filteredUsers = users.filter(
     (user) =>
       user?.name?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
       user?.email?.toLowerCase()?.includes(searchTerm.toLowerCase())
   );
 
-  // Open Edit Modal
   const handleEditClick = (user) => {
     setEditUser({ ...user, role: user.role || "None" });
     setIsEditModalOpen(true);
   };
 
-  // Handle Role Change
   const handleEditSave = async () => {
     try {
       console.log("Updating user role for:", editUser._id);
@@ -147,6 +140,24 @@ export default function SuperAdminDashboard() {
       toast.error("Error updating user role: " + error.message);
     }
   };
+
+  // Group users by role
+  const groupedUsers = filteredUsers.reduce((acc, user) => {
+    const role = user.role || "None";
+    if (!acc[role]) acc[role] = [];
+    acc[role].push(user);
+    return acc;
+  }, {});
+
+  // Define role order for display
+  const roleOrder = [
+    "super-admin",
+    "admin",
+    "doctor",
+    "first-aid",
+    "registrar",
+    "None",
+  ];
 
   if (status === "loading") {
     return <p className="text-center mt-10">Loading...</p>;
@@ -214,85 +225,103 @@ export default function SuperAdminDashboard() {
                 <span>Loading users...</span>
               </div>
             ) : (
-              <div className="rounded-md border">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-50 dark:bg-gray-800">
-                      <TableHead className="font-medium">Name</TableHead>
-                      <TableHead className="font-medium">Email</TableHead>
-                      <TableHead className="font-medium">Role</TableHead>
-                      <TableHead className="text-right font-medium">
-                        Actions
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredUsers.length > 0 ? (
-                      filteredUsers.map((user) => (
-                        <TableRow
-                          key={user._id}
-                          className="hover:bg-gray-50 dark:hover:bg-gray-800"
-                        >
-                          <TableCell className="font-medium">
-                            {user.name || "N/A"}
-                          </TableCell>
-                          <TableCell>
-                            <div className="flex items-center">
-                              <Mail className="mr-1 h-3 w-3 text-gray-400" />
-                              {user.email || "N/A"}
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300"
-                            >
-                              {user.role || "None"}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <span className="sr-only">Open menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => handleEditClick(user)}
-                                >
-                                  <User className="mr-2 h-4 w-4" />
-                                  Change Role
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
-                        </TableRow>
-                      ))
+              <div className="space-y-8">
+                {roleOrder.map((role) => {
+                  const usersInRole = groupedUsers[role] || [];
+                  if (usersInRole.length === 0) return null;
+                  return (
+                    <div key={role} className="space-y-4">
+                      <h3 className="text-lg font-semibold capitalize">
+                        {role === "None" ? "No Role" : role.replace("-", " ")}
+                      </h3>
+                      <div className="rounded-md border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow className="bg-gray-50 dark:bg-gray-800">
+                              <TableHead className="font-medium">
+                                Name
+                              </TableHead>
+                              <TableHead className="font-medium">
+                                Email
+                              </TableHead>
+                              <TableHead className="font-medium">
+                                Role
+                              </TableHead>
+                              <TableHead className="text-right font-medium">
+                                Actions
+                              </TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {usersInRole.map((user) => (
+                              <TableRow
+                                key={user._id}
+                                className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                              >
+                                <TableCell className="font-medium">
+                                  {user.name || "N/A"}
+                                </TableCell>
+                                <TableCell>
+                                  <div className="flex items-center">
+                                    <Mail className="mr-1 h-3 w-3 text-gray-400" />
+                                    {user.email || "N/A"}
+                                  </div>
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant="outline"
+                                    className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300"
+                                  >
+                                    {user.role || "None"}
+                                  </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-8 w-8"
+                                      >
+                                        <span className="sr-only">
+                                          Open menu
+                                        </span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                      <DropdownMenuItem
+                                        onClick={() => handleEditClick(user)}
+                                      >
+                                        <User className="mr-2 h-4 w-4" />
+                                        Change Role
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </TableCell>
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
+                    </div>
+                  );
+                })}
+                {Object.keys(groupedUsers).length === 0 && (
+                  <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+                    {searchTerm ? (
+                      <>
+                        <Search className="h-8 w-8 mb-2 text-gray-400" />
+                        <p>No users found matching `{searchTerm}`</p>
+                      </>
                     ) : (
-                      <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
-                          {searchTerm ? (
-                            <div className="flex flex-col items-center justify-center text-gray-500">
-                              <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No users found matching `{searchTerm}`</p>
-                            </div>
-                          ) : (
-                            <div className="flex flex-col items-center justify-center text-gray-500">
-                              <AlertCircle className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No users available.</p>
-                            </div>
-                          )}
-                        </TableCell>
-                      </TableRow>
+                      <>
+                        <AlertCircle className="h-8 w-8 mb-2 text-gray-400" />
+                        <p>No users available.</p>
+                      </>
                     )}
-                  </TableBody>
-                </Table>
+                  </div>
+                )}
               </div>
             )}
           </CardContent>
