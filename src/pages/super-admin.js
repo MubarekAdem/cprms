@@ -86,22 +86,26 @@ export default function SuperAdminDashboard() {
       user?.email?.toLowerCase()?.includes(searchTerm.toLowerCase())
   );
 
-  const handleMakeAdmin = async (userId) => {
+  const handleRoleChange = async (userId, newRole) => {
     try {
-      console.log("Making user admin for:", userId);
+      console.log(`Updating user role for ${userId} to ${newRole}`);
       const res = await fetch(`/api/users/${userId}/role`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: "admin" }),
+        body: JSON.stringify({ role: newRole }),
       });
 
       if (!res.ok) throw new Error(`Failed to update user role: ${res.status}`);
-      toast.success("User role updated to admin successfully");
+      toast.success(
+        `User role updated to ${
+          newRole === "None" ? "no role" : newRole
+        } successfully`
+      );
       fetchUsers();
       fetchAdmins();
     } catch (error) {
-      console.error("Error making user admin:", error);
-      toast.error("Error making user admin: " + error.message);
+      console.error("Error updating user role:", error);
+      toast.error("Error updating user role: " + error.message);
     }
   };
 
@@ -288,22 +292,38 @@ export default function SuperAdminDashboard() {
                                         {user.role || "None"}
                                       </Badge>
                                     </TableCell>
-                                    <TableCell className="text-right">
-                                      <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() =>
-                                          handleMakeAdmin(user._id)
-                                        }
-                                        disabled={user.role === "admin"}
-                                        className={
-                                          user.role === "admin"
-                                            ? "opacity-50 cursor-not-allowed"
-                                            : ""
-                                        }
-                                      >
-                                        Make Admin
-                                      </Button>
+                                    <TableCell className="text-right space-x-2">
+                                      {user.role === "admin" ? (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleRoleChange(user._id, "None")
+                                          }
+                                        >
+                                          Remove Admin
+                                        </Button>
+                                      ) : (
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          onClick={() =>
+                                            handleRoleChange(user._id, "admin")
+                                          }
+                                          disabled={
+                                            user.role === "admin" ||
+                                            user.role === "super-admin"
+                                          }
+                                          className={
+                                            user.role === "admin" ||
+                                            user.role === "super-admin"
+                                              ? "opacity-50 cursor-not-allowed"
+                                              : ""
+                                          }
+                                        >
+                                          Make Admin
+                                        </Button>
+                                      )}
                                     </TableCell>
                                   </TableRow>
                                 )
