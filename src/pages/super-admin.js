@@ -119,14 +119,38 @@ export default function SuperAdminDashboard() {
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(
-          errorData.error || `Failed to request admin role: ${res.status}`
+          errorData.error || `Failed to request role: ${res.status}`
         );
       }
       toast.success("Admin role request sent successfully");
       fetchRoleRequests();
     } catch (error) {
       console.error("Error requesting admin role:", error);
-      toast.error("Error requesting admin role: " + error.message);
+      toast.error(`Error requesting role: ${error.message}`);
+    }
+  };
+
+  const handleRemoveAdmin = async (userId) => {
+    try {
+      console.log(`Removing admin role for user ${userId}`);
+      const res = await fetch(`/api/users/${userId}/remove-admin`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          errorData.error || `Failed to remove admin role: ${res.status}`
+        );
+      }
+      toast.success("Admin role removed successfully");
+      fetchUsers();
+      fetchAdmins();
+      fetchRoleRequests();
+    } catch (error) {
+      console.error("Error removing admin role:", error);
+      toast.error(`Error removing admin role: ${error.message}`);
     }
   };
 
@@ -296,8 +320,7 @@ export default function SuperAdminDashboard() {
                                   const pendingRequest = roleRequests.find(
                                     (req) =>
                                       req.user._id === user._id &&
-                                      req.status === "pending" &&
-                                      req.requestedRole === "admin"
+                                      req.status === "pending"
                                   );
                                   return (
                                     <TableRow
@@ -336,7 +359,7 @@ export default function SuperAdminDashboard() {
                                             variant="outline"
                                             size="sm"
                                             onClick={() =>
-                                              handleRequestAdminRole(user._id)
+                                              handleRemoveAdmin(user._id)
                                             }
                                             disabled={pendingRequest}
                                           >
