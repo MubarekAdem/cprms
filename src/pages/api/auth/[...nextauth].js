@@ -34,7 +34,7 @@ export const authOptions = {
         console.log("Authorized user:", {
           id: user._id,
           email: user.email,
-          role: user.role,
+          role: user.role || "None",
           name: user.name,
         });
 
@@ -43,7 +43,7 @@ export const authOptions = {
           name: user.name || "Unknown",
           email: user.email,
           phone: user.phone,
-          role: user.role,
+          role: user.role || "None",
         };
       },
     }),
@@ -71,7 +71,7 @@ export const authOptions = {
     },
     async signIn({ user }) {
       console.log("signIn callback - User:", user);
-      return true; // No special redirects anymore
+      return true;
     },
   },
   pages: {

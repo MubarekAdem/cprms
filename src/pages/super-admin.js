@@ -24,6 +24,7 @@ export default function SuperAdminDashboard() {
   const router = useRouter();
   const [users, setUsers] = useState([]);
   const [admins, setAdmins] = useState([]);
+  const [roleRequests, setRoleRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("super-admin");
@@ -73,12 +74,32 @@ export default function SuperAdminDashboard() {
     }
   }, []);
 
+  const fetchRoleRequests = useCallback(async () => {
+    try {
+      console.log("Fetching role requests from: /api/role-requests");
+      const res = await fetch("/api/role-requests");
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          errorData.error || `Failed to fetch role requests: ${res.status}`
+        );
+      }
+      const data = await res.json();
+      console.log("Fetched role requests:", data);
+      setRoleRequests(data);
+    } catch (error) {
+      console.error("Error fetching role requests:", error);
+      toast.error("Failed to load role request statuses. Please try again.");
+    }
+  }, []);
+
   useEffect(() => {
     if (status === "authenticated" && session?.user?.role === "super-admin") {
       fetchUsers();
       fetchAdmins();
+      fetchRoleRequests();
     }
-  }, [fetchUsers, fetchAdmins, session, status]);
+  }, [fetchUsers, fetchAdmins, fetchRoleRequests, session, status]);
 
   const filteredUsers = users.filter(
     (user) =>
@@ -86,26 +107,26 @@ export default function SuperAdminDashboard() {
       user?.email?.toLowerCase()?.includes(searchTerm.toLowerCase())
   );
 
-  const handleRoleChange = async (userId, newRole) => {
+  const handleRequestAdminRole = async (userId) => {
     try {
-      console.log(`Updating user role for ${userId} to ${newRole}`);
-      const res = await fetch(`/api/users/${userId}/role`, {
-        method: "PUT",
+      console.log(`Requesting admin role for user ${userId}`);
+      const res = await fetch("/api/role-requests", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({ userId, requestedRole: "admin" }),
       });
 
-      if (!res.ok) throw new Error(`Failed to update user role: ${res.status}`);
-      toast.success(
-        `User role updated to ${
-          newRole === "None" ? "no role" : newRole
-        } successfully`
-      );
-      fetchUsers();
-      fetchAdmins();
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(
+          errorData.error || `Failed to request admin role: ${res.status}`
+        );
+      }
+      toast.success("Admin role request sent successfully");
+      fetchRoleRequests();
     } catch (error) {
-      console.error("Error updating user role:", error);
-      toast.error("Error updating user role: " + error.message);
+      console.error("Error requesting admin role:", error);
+      toast.error("Error requesting admin role: " + error.message);
     }
   };
 
@@ -206,7 +227,6 @@ export default function SuperAdminDashboard() {
               </div>
             ) : (
               <div className="flex">
-                {/* Sidebar for role navigation */}
                 <div className="w-48 bg-gray-100 dark:bg-gray-800 p-4 rounded-l-md">
                   <h3 className="text-sm font-semibold mb-2 text-gray-600 dark:text-gray-300">
                     Roles
@@ -228,7 +248,6 @@ export default function SuperAdminDashboard() {
                     ))}
                   </ul>
                 </div>
-                {/* Main content with sliding effect */}
                 <div className="flex-1 pl-4 overflow-hidden">
                   {availableRoles.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-64 text-gray-500">
@@ -263,6 +282,9 @@ export default function SuperAdminDashboard() {
                                 <TableHead className="font-medium">
                                   Role
                                 </TableHead>
+                                <TableHead className="font-medium">
+                                  Request Status
+                                </TableHead>
                                 <TableHead className="text-right font-medium">
                                   Actions
                                 </TableHead>
@@ -270,69 +292,89 @@ export default function SuperAdminDashboard() {
                             </TableHeader>
                             <TableBody>
                               {(groupedUsers[selectedRole] || []).map(
-                                (user) => (
-                                  <TableRow
-                                    key={user._id}
-                                    className="hover:bg-gray-50 dark:hover:bg-gray-800"
-                                  >
-                                    <TableCell className="font-medium">
-                                      {user.name || "N/A"}
-                                    </TableCell>
-                                    <TableCell>
-                                      <div className="flex items-center">
-                                        <Mail className="mr-1 h-3 w-3 text-gray-400" />
-                                        {user.email || "N/A"}
-                                      </div>
-                                    </TableCell>
-                                    <TableCell>
-                                      <Badge
-                                        variant="outline"
-                                        className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300"
-                                      >
-                                        {user.role || "None"}
-                                      </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right space-x-2">
-                                      {user.role === "admin" ? (
-                                        <Button
+                                (user) => {
+                                  const pendingRequest = roleRequests.find(
+                                    (req) =>
+                                      req.user._id === user._id &&
+                                      req.status === "pending" &&
+                                      req.requestedRole === "admin"
+                                  );
+                                  return (
+                                    <TableRow
+                                      key={user._id}
+                                      className="hover:bg-gray-50 dark:hover:bg-gray-800"
+                                    >
+                                      <TableCell className="font-medium">
+                                        {user.name || "N/A"}
+                                      </TableCell>
+                                      <TableCell>
+                                        <div className="flex items-center">
+                                          <Mail className="mr-1 h-3 w-3 text-gray-400" />
+                                          {user.email || "N/A"}
+                                        </div>
+                                      </TableCell>
+                                      <TableCell>
+                                        <Badge
                                           variant="outline"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleRoleChange(user._id, "None")
-                                          }
+                                          className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300"
                                         >
-                                          Remove Admin
-                                        </Button>
-                                      ) : (
-                                        <Button
-                                          variant="outline"
-                                          size="sm"
-                                          onClick={() =>
-                                            handleRoleChange(user._id, "admin")
-                                          }
-                                          disabled={
-                                            user.role === "admin" ||
-                                            user.role === "super-admin"
-                                          }
-                                          className={
-                                            user.role === "admin" ||
-                                            user.role === "super-admin"
-                                              ? "opacity-50 cursor-not-allowed"
-                                              : ""
-                                          }
-                                        >
-                                          Make Admin
-                                        </Button>
-                                      )}
-                                    </TableCell>
-                                  </TableRow>
-                                )
+                                          {user.role || "None"}
+                                        </Badge>
+                                      </TableCell>
+                                      <TableCell>
+                                        {pendingRequest ? (
+                                          <Badge variant="secondary">
+                                            Pending
+                                          </Badge>
+                                        ) : (
+                                          "None"
+                                        )}
+                                      </TableCell>
+                                      <TableCell className="text-right space-x-2">
+                                        {user.role === "admin" ? (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                              handleRequestAdminRole(user._id)
+                                            }
+                                            disabled={pendingRequest}
+                                          >
+                                            Remove Admin
+                                          </Button>
+                                        ) : (
+                                          <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                              handleRequestAdminRole(user._id)
+                                            }
+                                            disabled={
+                                              pendingRequest ||
+                                              user.role === "admin" ||
+                                              user.role === "super-admin"
+                                            }
+                                            className={
+                                              pendingRequest ||
+                                              user.role === "admin" ||
+                                              user.role === "super-admin"
+                                                ? "opacity-50 cursor-not-allowed"
+                                                : ""
+                                            }
+                                          >
+                                            Request Admin Role
+                                          </Button>
+                                        )}
+                                      </TableCell>
+                                    </TableRow>
+                                  );
+                                }
                               )}
                               {(groupedUsers[selectedRole] || []).length ===
                                 0 && (
                                 <TableRow>
                                   <TableCell
-                                    colSpan={4}
+                                    colSpan={5}
                                     className="h-24 text-center text-gray-500"
                                   >
                                     No users in this role.

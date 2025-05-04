@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { signIn, useSession } from "next-auth/react";
-import { useRouter } from "next/router"; // Match registrar.js
+import { useRouter } from "next/router";
 import {
   Card,
   CardContent,
@@ -38,6 +38,8 @@ export default function Login() {
           ? "/admin-doctor"
           : session.user.role === "doctor"
           ? "/doctor"
+          : !session.user.role || session.user.role === "None"
+          ? "/notifications"
           : "/";
       console.log("Redirecting to:", redirectPath);
       router.push(redirectPath).catch((error) => {
@@ -52,7 +54,7 @@ export default function Login() {
     setIsLoading(true);
 
     try {
-      const res = await signIn("credentials", { ...form, redirect: true }); // Rely on server-side redirect
+      const res = await signIn("credentials", { ...form, redirect: true });
       console.log("signIn result:", res);
 
       if (res?.error) {
