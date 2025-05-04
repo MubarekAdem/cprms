@@ -38,10 +38,22 @@ export default async function handler(req, res) {
 
       const { firstName, lastName, phone, email } = req.body;
 
-      // Find the user by email
-      const existingUser = await User.findOne({ email });
-      if (!existingUser) {
+      // Validate input
+      if (!firstName || !lastName || !email) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Find the user by email to check role
+      const user = await User.findOne({ email });
+      if (!user) {
         return res.status(404).json({ error: "User not found" });
+      }
+
+      // Check if user is admin or super admin
+      if (!["admin", "super-admin"].includes(user.role)) {
+        return res
+          .status(403)
+          .json({ error: "Unauthorized to update profile" });
       }
 
       // Update the user
@@ -51,7 +63,7 @@ export default async function handler(req, res) {
           $set: {
             firstName,
             lastName,
-            phone,
+            phone: phone || "",
             updatedAt: new Date(),
           },
         },
