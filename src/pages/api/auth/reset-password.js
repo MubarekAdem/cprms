@@ -72,10 +72,14 @@ export default async function handler(req, res) {
 
     try {
       await user.save();
-      console.log(`Successfully saved reset code for user: ${email}, code: ${resetCode}, expires: ${expires}`);
+      console.log(
+        `Successfully saved reset code for user: ${email}, code: ${resetCode}, expires: ${expires}`
+      );
       // Verify the save operation
       const updatedUser = await User.findOne({ email: email.toLowerCase() });
-      console.log(`Verified user document: resetPasswordToken=${updatedUser.resetPasswordToken}, resetPasswordExpires=${updatedUser.resetPasswordExpires}`);
+      console.log(
+        `Verified user document: resetPasswordToken=${updatedUser.resetPasswordToken}, resetPasswordExpires=${updatedUser.resetPasswordExpires}`
+      );
     } catch (saveError) {
       console.error(`Failed to save reset code for user: ${email}`, saveError);
       return res.status(500).json({ error: "Failed to save reset code" });
@@ -96,7 +100,9 @@ export default async function handler(req, res) {
 
     try {
       const info = await transporter.sendMail(mailOptions);
-      console.log(`Password reset code sent to: ${email}, Message ID: ${info.messageId}`);
+      console.log(
+        `Password reset code sent to: ${email}, Message ID: ${info.messageId}`
+      );
     } catch (emailError) {
       console.error(`Failed to send email to ${email}:`, emailError);
       return res.status(500).json({ error: "Failed to send reset code email" });

@@ -27,24 +27,12 @@ export default function Home() {
             <div className="flex items-center">
               <Heart className="h-8 w-8 text-emerald-600 mr-2" />
               <span className="font-bold text-xl text-emerald-700">
-                HealthConnect
+                ETHIO-CPRMS
               </span>
             </div>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <Link
-                href="/features"
-                className="text-gray-600 hover:text-emerald-600 transition-colors"
-              >
-                Features
-              </Link>
-              <Link
-                href="/pricing"
-                className="text-gray-600 hover:text-emerald-600 transition-colors"
-              >
-                Pricing
-              </Link>
               <Link
                 href="/about"
                 className="text-gray-600 hover:text-emerald-600 transition-colors"
@@ -153,10 +141,6 @@ export default function Home() {
             <h1 className="text-4xl md:text-5xl font-bold leading-tight text-gray-900 mb-4">
               Your Complete Healthcare Management Solution
             </h1>
-            <p className="text-xl text-gray-600 mb-8 max-w-lg">
-              Connect with healthcare providers, manage appointments, and access
-              your medical records all in one place.
-            </p>
 
             <div className="space-y-4 md:space-y-0 md:space-x-4 md:flex">
               <Link href="/signup" className="block md:inline-block">
@@ -192,8 +176,8 @@ export default function Home() {
                 ))}
               </div>
               <p className="text-sm">
-                Trusted by <span className="font-semibold">2,000+</span>{" "}
-                healthcare professionals
+                Trusted by <span className="font-semibold"></span> healthcare
+                professionals
               </p>
             </div>
           </div>
@@ -228,12 +212,6 @@ export default function Home() {
                 className="text-sm text-gray-600 hover:text-emerald-600 transition-colors"
               >
                 Terms
-              </Link>
-              <Link
-                href="/support"
-                className="text-sm text-gray-600 hover:text-emerald-600 transition-colors"
-              >
-                Support
               </Link>
             </div>
           </div>
