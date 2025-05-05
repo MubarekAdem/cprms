@@ -6,13 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
+import { toast } from "sonner";
 
 export default function AIChatModal({ patientData, onClose }) {
   const [chatHistory, setChatHistory] = useState([]);
@@ -21,12 +22,13 @@ export default function AIChatModal({ patientData, onClose }) {
   const [customPrompt, setCustomPrompt] = useState(null);
   const chatContainerRef = useRef(null);
 
+  // Scroll to bottom when chat history updates
   useEffect(() => {
     if (chatContainerRef.current) {
       chatContainerRef.current.scrollTop =
         chatContainerRef.current.scrollHeight;
     }
-  }, [chatHistory]); // Updated dependency to chatHistory
+  }, [chatHistory]);
 
   const sendMessage = async () => {
     if (!message.trim() && !customPrompt) return;
@@ -51,6 +53,13 @@ export default function AIChatModal({ patientData, onClose }) {
         }),
       });
 
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `Failed to send message: ${response.status}, ${errorText}`
+        );
+      }
+
       const data = await response.json();
       setChatHistory((prev) => [...prev, { role: "ai", text: data.reply }]);
     } catch (error) {
@@ -62,6 +71,7 @@ export default function AIChatModal({ patientData, onClose }) {
           text: "Sorry, I encountered an error. Please try again.",
         },
       ]);
+      toast.error("Error communicating with AI: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -90,79 +100,103 @@ export default function AIChatModal({ patientData, onClose }) {
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
-        <Card className="w-full h-[600px] flex flex-col">
+      <DialogContent className="sm:max-w-[450px] max-h-[90vh] bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+        <Card className="border-none shadow-md w-full h-[500px] flex flex-col overflow-hidden">
           <CardHeader>
-            <DialogTitle className="text-2xl font-bold">
-              Chat with AI Assistant - {patientData.name}
+            <DialogTitle className="text-xl font-bold">
+              AI Assistant - {patientData.name}
             </DialogTitle>
           </CardHeader>
           <CardContent className="flex-grow overflow-hidden">
             <div className="flex space-x-4 mb-4">
-              <Button onClick={handleSummarize} variant="secondary">
+              <Button
+                onClick={handleSummarize}
+                variant="outline"
+                className="bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300"
+              >
                 Summarize
               </Button>
-              <Button onClick={handleRecommendation} variant="secondary">
+              <Button
+                onClick={handleRecommendation}
+                variant="outline"
+                className="bg-blue-50 text-blue-700 hover:bg-blue-100 dark:bg-blue-900/30 dark:text-blue-300"
+              >
                 Recommendation
               </Button>
             </div>
-            <ScrollArea className="h-[400px] pr-4" ref={chatContainerRef}>
-              {chatHistory.map((msg, index) => (
-                <div
-                  key={index}
-                  className={`flex items-start space-x-2 mb-4 ${
-                    msg.role === "doctor" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  {msg.role === "ai" && (
-                    <Avatar>
-                      <AvatarFallback>AI</AvatarFallback>
-                      <AvatarImage src="/ai-avatar.png" />
-                    </Avatar>
-                  )}
+            <ScrollArea
+              className="h-[300px] pr-4 bg-gray-50 dark:bg-gray-900"
+              ref={chatContainerRef}
+            >
+              {chatHistory.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-gray-500 dark:text-gray-400">
+                  <p>Start a conversation with the AI assistant.</p>
+                </div>
+              ) : (
+                chatHistory.map((msg, index) => (
                   <div
-                    className={`rounded-lg p-3 max-w-[80%] ${
-                      msg.role === "doctor"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
+                    key={index}
+                    className={`flex items-start space-x-2 mb-4 ${
+                      msg.role === "doctor" ? "justify-end" : "justify-start"
                     }`}
                   >
-                    {msg.text}
+                    <div
+                      className={`flex items-center space-x-2 max-w-[80%] ${
+                        msg.role === "doctor" ? "flex-row-reverse" : "flex-row"
+                      }`}
+                    >
+                      <Badge
+                        variant="outline"
+                        className={`${
+                          msg.role === "doctor"
+                            ? "bg-blue-500 text-white"
+                            : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                        }`}
+                      >
+                        {msg.role === "doctor" ? "Dr" : "AI"}
+                      </Badge>
+                      <div
+                        className={`rounded-lg p-3 ${
+                          msg.role === "doctor"
+                            ? "bg-blue-500 text-white dark:bg-blue-600"
+                            : "bg-gray-200 text-gray-700 dark:bg-gray-700 dark:text-gray-200"
+                        }`}
+                      >
+                        {msg.text}
+                      </div>
+                    </div>
                   </div>
-                  {msg.role === "doctor" && (
-                    <Avatar>
-                      <AvatarFallback>Dr</AvatarFallback>
-                      <AvatarImage src="/doctor-avatar.png" />
-                    </Avatar>
-                  )}
-                </div>
-              ))}
+                ))
+              )}
               {loading && (
                 <div className="flex justify-start">
-                  <div className="bg-muted p-3 rounded-lg">
-                    <Loader2 className="w-5 h-5 animate-spin text-primary" />
+                  <div className="bg-gray-200 dark:bg-gray-700 p-3 rounded-lg">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-500 dark:text-blue-300" />
                   </div>
                 </div>
               )}
             </ScrollArea>
           </CardContent>
-          <CardFooter>
-            <div className="flex w-full items-center space-x-2">
-              <Input
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Ask AI about the patient..."
-              />
-              <Button onClick={sendMessage} disabled={loading}>
-                {loading ? (
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Send className="w-4 h-4" />
-                )}
-                <span className="sr-only">Send</span>
-              </Button>
-            </div>
+          <CardFooter className="flex items-center space-x-2">
+            <Input
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Ask AI about the patient..."
+              className="flex-1 bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100"
+            />
+            <Button
+              onClick={sendMessage}
+              disabled={loading}
+              className="bg-blue-500 text-white hover:bg-blue-600"
+            >
+              {loading ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send className="w-4 h-4" />
+              )}
+              <span className="sr-only">Send</span>
+            </Button>
           </CardFooter>
         </Card>
       </DialogContent>
