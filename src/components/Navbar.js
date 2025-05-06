@@ -69,8 +69,6 @@ export default function Navbar() {
   }, [session, status]);
 
   const navItems = [
-    { icon: Building2, label: "ADMIN", href: "/admin" },
-    { icon: Users, label: "PATIENTS", href: "/patients" },
     { icon: UserCog, label: "DOCTORS", href: "/admin-doctor" },
     { icon: UserCog, label: "First Aids", href: "/admin-first-aid" },
     { icon: UserCog, label: "Registrars", href: "/admin-registrar" },
