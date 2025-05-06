@@ -43,7 +43,6 @@ export default function Navbar() {
       label: "ADD EXISTING USER",
       href: "/registrar-existing-add",
     },
-    { icon: LayoutDashboard, label: "DASHBOARD", href: "/registrar-dashboard" },
   ];
 
   const getNavItems = () => {
