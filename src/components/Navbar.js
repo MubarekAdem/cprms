@@ -13,13 +13,60 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import UserNav from "./UserNav";
 import { useRouter } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useState, useEffect } from "react";
 
 export default function Navbar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const router = useRouter();
+  const [userData, setUserData] = useState({
+    firstName: "",
+    lastName: "",
+    profilePicture: "",
+    role: "",
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    console.log("Navbar useEffect - Session:", session, "Status:", status);
+    const fetchUserData = async () => {
+      if (status === "authenticated" && session?.user?.email) {
+        try {
+          console.log("Fetching user data for email:", session.user.email);
+          const response = await fetch(
+            `/api/user/profile?email=${session.user.email}&t=${Date.now()}`
+          );
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
+          const data = await response.json();
+          console.log("Fetched user data:", data);
+
+          if (data) {
+            setUserData({
+              firstName: data.firstName || "",
+              lastName: data.lastName || "",
+              profilePicture: data.profilePicture || "",
+              role: data.role || "",
+            });
+          } else {
+            console.warn("No data returned from API");
+          }
+        } catch (error) {
+          console.error("Error fetching user data in Navbar:", error.message);
+        } finally {
+          setIsLoading(false);
+        }
+      } else {
+        console.log("Not authenticated or no email, skipping fetch");
+        setIsLoading(false);
+      }
+    };
+
+    fetchUserData();
+  }, [session, status]);
 
   const navItems = [
     { icon: Building2, label: "ADMIN", href: "/admin" },
@@ -32,9 +79,7 @@ export default function Navbar() {
     { icon: LayoutDashboard, label: "DASHBOARD", href: "/admin-dashboard" },
   ];
 
-  const doctorNavItems = [
-    // Removed Patients and Dashboard items
-  ];
+  const doctorNavItems = [];
 
   const registrarNavItems = [
     { icon: UserPlus, label: "ADD PATIENT", href: "/registrar-patient-add" },
@@ -46,7 +91,7 @@ export default function Navbar() {
   ];
 
   const getNavItems = () => {
-    switch (session?.user?.role) {
+    switch (userData.role) {
       case "admin":
         return navItems;
       case "doctor":
@@ -58,10 +103,44 @@ export default function Navbar() {
     }
   };
 
+  if (status === "loading" || isLoading) {
+    return (
+      <aside className="w-64 border-r bg-background p-6 flex flex-col h-full">
+        <div className="flex items-center justify-between mb-6">
+          <div className="animate-pulse flex items-center space-x-2">
+            <div className="rounded-full bg-gray-200 h-10 w-10"></div>
+            <div className="flex flex-col space-y-2">
+              <div className="h-4 w-20 bg-gray-200 rounded"></div>
+              <div className="h-3 w-16 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    );
+  }
+
   return (
     <aside className="w-64 border-r bg-background p-6 flex flex-col h-full">
       <div className="flex items-center justify-between mb-6">
-        <UserNav user={session?.user} />
+        <div className="flex items-center space-x-2">
+          <Avatar className="h-10 w-10">
+            {userData.profilePicture ? (
+              <AvatarImage src={userData.profilePicture} alt="Profile" />
+            ) : (
+              <AvatarFallback className="bg-primary/10 text-primary">
+                {userData.firstName?.charAt(0).toUpperCase() || "U"}
+              </AvatarFallback>
+            )}
+          </Avatar>
+          <div className="flex flex-col">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+              {userData.firstName} {userData.lastName}
+            </span>
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              {userData.role}
+            </span>
+          </div>
+        </div>
         <Button
           variant="ghost"
           size="icon"

@@ -9,13 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useRouter } from "next/navigation";
-import { User, Mail, Phone } from "lucide-react";
+import { User, Mail, Phone, Upload, CheckCircle, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/lib/supabase";
 
 export default function ProfilePage() {
   const { data: session, status } = useSession();
@@ -28,26 +29,32 @@ export default function ProfilePage() {
     lastName: "",
     email: "",
     phone: "",
+    profilePicture: "",
   });
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     phone: "",
+    profilePicture: "",
   });
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     const fetchUserData = async () => {
       if (status === "authenticated" && session?.user?.email) {
         try {
+          console.log("Fetching user data for email:", session.user.email);
           const response = await fetch(
-            `/api/user/profile?email=${session.user.email}`
+            `/api/user/profile?email=${session.user.email}&t=${Date.now()}`
           );
           if (!response.ok) {
-            throw new Error("Failed to fetch user data");
+            throw new Error(`HTTP error! status: ${response.status}`);
           }
           const data = await response.json();
+          console.log("Fetched user data:", data);
 
           if (data) {
             setUserData({
@@ -55,25 +62,31 @@ export default function ProfilePage() {
               lastName: data.lastName || "",
               email: data.email || "",
               phone: data.phone || "",
+              profilePicture: data.profilePicture || "",
             });
             setFormData({
               firstName: data.firstName || "",
               lastName: data.lastName || "",
               email: data.email || "",
               phone: data.phone || "",
+              profilePicture: data.profilePicture || "",
             });
             setIsAdmin(data.role === "admin" || data.role === "super-admin");
+          } else {
+            console.warn("No data returned from API");
           }
         } catch (error) {
-          console.error("Error fetching user data:", error);
+          console.error("Error fetching user data:", error.message);
           toast({
             title: "Error",
-            description: "Failed to load profile data",
+            description: `Failed to load profile data: ${error.message}`,
             variant: "destructive",
           });
         } finally {
           setIsLoading(false);
         }
+      } else {
+        setIsLoading(false);
       }
     };
 
@@ -91,27 +104,130 @@ export default function ProfilePage() {
     });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleProfilePictureUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
     try {
+      const progressInterval = setInterval(() => {
+        setUploadProgress((prev) => {
+          const newProgress = prev + 10;
+          if (newProgress >= 90) {
+            clearInterval(progressInterval);
+            return 90;
+          }
+          return newProgress;
+        });
+      }, 300);
+
+      const fileExt = file.name.split(".").pop();
+      const fileName = `${Date.now()}_${session.user.email}.${fileExt}`;
+      const { data, error } = await supabase.storage
+        .from("profile-pictures")
+        .upload(`avatars/${fileName}`, file);
+
+      clearInterval(progressInterval);
+      setUploadProgress(100);
+
+      if (error) {
+        throw new Error(`Supabase upload error: ${error.message}`);
+      }
+
+      const profilePictureUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/profile-pictures/${data.path}`;
+      console.log("Generated profilePictureUrl:", profilePictureUrl);
+
+      setFormData((prev) => ({ ...prev, profilePicture: profilePictureUrl }));
+      setUserData((prev) => ({ ...prev, profilePicture: profilePictureUrl }));
+
+      const payload = {
+        email: session.user.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        profilePicture: profilePictureUrl,
+      };
+      console.log("Sending PUT payload:", payload);
+
       const response = await fetch("/api/user/profile", {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
+      const responseData = await response.json();
+      console.log("PUT response:", responseData);
+
       if (!response.ok) {
-        throw new Error("Failed to update profile");
+        throw new Error(
+          `HTTP error! status: ${response.status}, message: ${
+            responseData.error || "Unknown error"
+          }`
+        );
       }
 
-      const updatedUser = await response.json();
+      setTimeout(() => {
+        setUploadProgress(0);
+        setIsUploading(false);
+      }, 1000);
+
+      toast({
+        title: "Success",
+        description: "Profile picture uploaded successfully",
+      });
+    } catch (error) {
+      console.error("Error uploading profile picture:", error.message);
+      toast({
+        title: "Error",
+        description: `Failed to upload profile picture: ${error.message}`,
+        variant: "destructive",
+      });
+      setIsUploading(false);
+      setUploadProgress(0);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const payload = {
+        email: session.user.email,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        phone: formData.phone,
+        profilePicture: formData.profilePicture,
+      };
+      console.log("Sending PUT payload (form submit):", payload);
+
+      const response = await fetch("/api/user/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const responseData = await response.json();
+      console.log("PUT response (form submit):", responseData);
+
+      if (!response.ok) {
+        throw new Error(
+          `HTTP error! status: ${response.status}, message: ${
+            responseData.error || "Unknown error"
+          }`
+        );
+      }
+
       setUserData({
-        firstName: updatedUser.user.firstName,
-        lastName: updatedUser.user.lastName,
-        email: updatedUser.user.email,
-        phone: updatedUser.user.phone,
+        firstName: responseData.user.firstName,
+        lastName: responseData.user.lastName,
+        email: responseData.user.email,
+        phone: responseData.user.phone,
+        profilePicture: responseData.user.profilePicture || "",
       });
       setIsEditing(false);
       toast({
@@ -119,10 +235,10 @@ export default function ProfilePage() {
         description: "Profile updated successfully",
       });
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error updating profile:", error.message);
       toast({
         title: "Error",
-        description: "Failed to update profile",
+        description: `Failed to update profile: ${error.message}`,
         variant: "destructive",
       });
     }
@@ -145,11 +261,26 @@ export default function ProfilePage() {
       <div className="container mx-auto py-10">
         <div className="grid gap-6">
           <div className="flex items-center space-x-4">
-            <Avatar className="h確-24 w-24 border-4 border-primary">
-              <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                {userData.firstName?.charAt(0).toUpperCase() || "U"}
-              </AvatarFallback>
-            </Avatar>
+            <label className="relative cursor-pointer">
+              <Avatar className="h-24 w-24 border-4 border-primary">
+                {userData.profilePicture ? (
+                  <AvatarImage src={userData.profilePicture} alt="Profile" />
+                ) : (
+                  <AvatarFallback className="text-2xl bg-primary/10 text-primary">
+                    {userData.firstName?.charAt(0).toUpperCase() || "U"}
+                  </AvatarFallback>
+                )}
+              </Avatar>
+              <input
+                type="file"
+                accept="image/*"
+                className="absolute inset-0 opacity-0 cursor-pointer"
+                onChange={handleProfilePictureUpload}
+              />
+              <div className="absolute bottom-0 right-0 bg-primary text-white rounded-full p-2">
+                <Upload className="h-4 w-4" />
+              </div>
+            </label>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
                 {userData.firstName} {userData.lastName}
@@ -158,6 +289,26 @@ export default function ProfilePage() {
                 <Mail className="h-4 w-4 mr-2 text-primary" />
                 {userData.email}
               </p>
+              {isUploading && (
+                <div className="mt-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span>Uploading...</span>
+                    <span>{uploadProgress}%</span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+                    <div
+                      className="h-full bg-primary transition-all duration-300"
+                      style={{ width: `${uploadProgress}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              {userData.profilePicture && !isUploading && (
+                <div className="mt-2 flex items-center text-sm text-green-600">
+                  <CheckCircle className="mr-1 h-4 w-4" />
+                  Profile picture uploaded
+                </div>
+              )}
             </div>
           </div>
 

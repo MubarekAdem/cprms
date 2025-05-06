@@ -19,7 +19,14 @@ export default async function handler(req, res) {
         return res.status(404).json({ error: "User not found" });
       }
 
-      return res.status(200).json(user);
+      return res.status(200).json({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phone: user.phone,
+        profilePicture: user.profilePicture || "",
+        role: user.role,
+      });
     } catch (error) {
       console.error("Error fetching user profile:", error);
       return res.status(500).json({ error: "Failed to fetch user profile" });
@@ -31,53 +38,79 @@ export default async function handler(req, res) {
       const session = await getServerSession(req, res, authOptions);
 
       if (!session) {
+        console.log("No session found");
         return res.status(401).json({ error: "Not authenticated" });
       }
 
+      console.log("Session user:", session.user);
+      console.log("Request body:", req.body);
+
       await connectToDB();
 
-      const { firstName, lastName, phone, email } = req.body;
+      const { firstName, lastName, phone, email, profilePicture } = req.body;
 
-      // Validate input
-      if (!firstName || !lastName || !email) {
-        return res.status(400).json({ error: "Missing required fields" });
+      if (!email) {
+        console.log("Email missing in request body");
+        return res.status(400).json({ error: "Email is required" });
       }
 
-      // Find the user by email to check role
       const user = await User.findOne({ email });
       if (!user) {
+        console.log("User not found for email:", email);
         return res.status(404).json({ error: "User not found" });
       }
 
-      // Check if user is admin or super admin
-      if (!["admin", "super-admin"].includes(user.role)) {
-        return res
-          .status(403)
-          .json({ error: "Unauthorized to update profile" });
+      if (session.user.email !== email) {
+        console.log(
+          "Session email does not match request email:",
+          session.user.email,
+          email
+        );
+        return res.status(403).json({ error: "Unauthorized: Email mismatch" });
       }
 
-      // Update the user
+      const updateData = {};
+      if (firstName !== undefined) updateData.firstName = firstName;
+      if (lastName !== undefined) updateData.lastName = lastName;
+      if (phone !== undefined) updateData.phone = phone || "";
+      if (profilePicture !== undefined)
+        updateData.profilePicture = profilePicture;
+
+      if (Object.keys(updateData).length === 0) {
+        console.log("No fields to update");
+        return res.status(400).json({ error: "No updates provided" });
+      }
+
+      updateData.updatedAt = new Date();
+      console.log("Updating user with data:", updateData);
+
       const updatedUser = await User.findOneAndUpdate(
         { email },
-        {
-          $set: {
-            firstName,
-            lastName,
-            phone: phone || "",
-            updatedAt: new Date(),
-          },
-        },
+        { $set: updateData },
         { new: true }
       ).select("-password");
 
       if (!updatedUser) {
+        console.log("Failed to update user");
         return res.status(500).json({ error: "Failed to update user" });
       }
 
-      // Return the updated user data
+      console.log("Updated user:", updatedUser);
+
+      // Verify the update in the database
+      const verifiedUser = await User.findOne({ email }).select("-password");
+      console.log("Verified user after update:", verifiedUser);
+
       return res.status(200).json({
         message: "Profile updated successfully",
-        user: updatedUser,
+        user: {
+          firstName: updatedUser.firstName,
+          lastName: updatedUser.lastName,
+          email: updatedUser.email,
+          phone: updatedUser.phone,
+          profilePicture: updatedUser.profilePicture || "",
+          role: updatedUser.role,
+        },
       });
     } catch (error) {
       console.error("Profile update error:", error);
