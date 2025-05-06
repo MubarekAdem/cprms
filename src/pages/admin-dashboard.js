@@ -7,6 +7,7 @@ import StaffDistributionChart from "@/components/admin-dashboard/staff-distribut
 import RecentPatients from "@/components/admin-dashboard/recent-patients";
 import HospitalMap from "@/components/admin-dashboard/hospital-map";
 import DashboardSidebar from "@/components/admin-dashboard/dashboard-sidebar";
+import Navbar from "@/components/Navbar";
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -21,9 +22,9 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-      <DashboardSidebar />
-      <main className="md:ml-64">
-        <div className="p-6 md:p-8">
+      <div className="flex">
+        <Navbar />
+        <main className="flex-1 p-6 md:p-8">
           <DashboardHeader />
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-6">
             <DashboardStats />
@@ -37,8 +38,8 @@ export default function Dashboard() {
             <HospitalMap />
             <RecentPatients />
           </div>
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }
