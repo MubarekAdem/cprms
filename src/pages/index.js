@@ -207,12 +207,12 @@ export default function Home() {
               >
                 Privacy
               </Link>
-              <Link
+              {/* <Link
                 href="/terms"
                 className="text-sm text-gray-600 hover:text-emerald-600 transition-colors"
               >
                 Terms
-              </Link>
+              </Link> */}
             </div>
           </div>
         </div>
