@@ -46,7 +46,8 @@ export default async function handler(req, res) {
 
       // Create new user
       const user = await User.create({
-        name: `${firstName} ${lastName}`,
+        firstName,
+        lastName,
         email,
         phone,
         password: hashedPassword,
@@ -57,7 +58,8 @@ export default async function handler(req, res) {
         message: "User created successfully",
         user: {
           id: user._id,
-          name: user.name,
+          firstName: user.firstName,
+          lastName: user.lastName,
           email: user.email,
           phone: user.phone,
         },
