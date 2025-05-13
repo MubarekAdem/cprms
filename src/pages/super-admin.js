@@ -18,6 +18,7 @@ import {
 import { AlertCircle, Loader2, Mail, Search, User, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
 
 export default function SuperAdminDashboard() {
   const { data: session, status, update } = useSession();
@@ -185,7 +186,7 @@ export default function SuperAdminDashboard() {
   }, [groupedUsers, selectedRole, availableRoles]);
 
   if (status === "loading") {
-    return <p className="text-center mt-10">Loading...</p>;
+    return <DashboardSkeleton />;
   }
 
   if (!session || session?.user?.role !== "super-admin") {

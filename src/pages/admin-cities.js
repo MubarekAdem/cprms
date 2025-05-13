@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
 
 export default function CitiesDashboard() {
   const { data: session, status } = useSession();
@@ -147,16 +148,7 @@ export default function CitiesDashboard() {
   };
 
   if (status === "loading") {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Loading session...
-          </h3>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!session) return null; // Will redirect in useEffect

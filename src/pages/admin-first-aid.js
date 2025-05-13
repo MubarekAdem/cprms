@@ -56,6 +56,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
 
 export default function FirstAidDashboard() {
   const { data: session, status } = useSession();
@@ -284,16 +285,7 @@ export default function FirstAidDashboard() {
   };
 
   if (status === "loading") {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Loading session...
-          </h3>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (!session) return null; // Will redirect in useEffect
@@ -473,7 +465,10 @@ export default function FirstAidDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No responders found matching "{searchTerm}"</p>
+                              <p>
+                                No responders found matching &quot;{searchTerm}
+                                &quot;
+                              </p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
