@@ -69,7 +69,9 @@ export default async function handler(req, res) {
       const session = await getServerSession(req, res, authOptions);
       if (
         !session ||
-        (session.user.role !== "None" && session.user.role !== "super-admin")
+        (session.user.role !== "None" &&
+          session.user.role !== "super-admin" &&
+          session.user.role !== "first-aid")
       ) {
         console.error(
           `Unauthorized GET attempt by user: ${

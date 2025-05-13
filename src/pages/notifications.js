@@ -25,6 +25,12 @@ export default function NotificationsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (status === "unauthenticated") {
+      router.push("/login");
+      return;
+    }
+
     const fetchRequests = async () => {
       setIsLoading(true);
       try {
@@ -61,11 +67,13 @@ export default function NotificationsDashboard() {
 
     if (
       status === "authenticated" &&
-      (!session?.user?.role || session?.user?.role === "None")
+      (!session?.user?.role ||
+        session?.user?.role === "None" ||
+        session?.user?.role === "first-aid")
     ) {
       fetchRequests();
     }
-  }, [session, status]);
+  }, [session, status, router]);
 
   const handleApproveRequest = async (requestId) => {
     try {
@@ -121,11 +129,27 @@ export default function NotificationsDashboard() {
     }
   };
 
+  // Show loading state while checking authentication
   if (status === "loading") {
-    return <p className="text-center mt-10">Loading...</p>;
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
   }
 
-  if (session && session?.user?.role && session?.user?.role !== "None") {
+  // Redirect if not authenticated
+  if (status === "unauthenticated") {
+    return null; // The useEffect will handle the redirect
+  }
+
+  // Check for unauthorized roles
+  if (
+    session &&
+    session?.user?.role &&
+    session?.user?.role !== "None" &&
+    session?.user?.role !== "first-aid"
+  ) {
     console.log(
       "Unauthorized - Session:",
       session,

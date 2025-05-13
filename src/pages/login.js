@@ -17,51 +17,57 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Lock, Mail } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
   const [isLoading, setIsLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  console.log("Login - Session status:", status, "Session:", session);
-  console.log("NEXT_PUBLIC_BASE_URL:", process.env.NEXT_PUBLIC_BASE_URL);
-
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
-      console.log("Authenticated user:", session.user);
-      const redirectPath =
-        session.user.role === "super-admin"
-          ? "/super-admin"
-          : session.user.role === "registrar"
-          ? "/registrar"
-          : session.user.role === "admin"
-          ? "/admin-doctor"
-          : session.user.role === "doctor"
-          ? "/doctor"
-          : !session.user.role || session.user.role === "None"
-          ? "/notifications"
-          : "/";
-      console.log("Redirecting to:", redirectPath);
-      router.push(redirectPath).catch((error) => {
-        console.error("Redirect error:", error);
-        toast.error("Failed to redirect. Please try again.");
-      });
+      const redirectPath = getRedirectPath(session.user.role);
+      router.push(redirectPath);
     }
   }, [session, status, router]);
+
+  const getRedirectPath = (role) => {
+    switch (role) {
+      case "super-admin":
+        return "/super-admin";
+      case "registrar":
+        return "/registrar";
+      case "admin":
+        return "/admin-doctor";
+      case "doctor":
+        return "/doctor";
+      case "first-aid":
+        return "/notifications";
+      case "None":
+      case undefined:
+        return "/notifications";
+      default:
+        return "/notifications";
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
     try {
-      const res = await signIn("credentials", { ...form, redirect: true });
-      console.log("signIn result:", res);
+      const res = await signIn("credentials", {
+        ...form,
+        redirect: false,
+      });
 
       if (res?.error) {
         toast.error(res.error);
       } else {
         toast.success("Login successful!");
+        // The useEffect will handle the redirection
       }
     } catch (error) {
       console.error("Login error:", error);
@@ -71,9 +77,30 @@ export default function Login() {
     }
   };
 
+  const handleGoogleSignIn = () => {
+    setIsGoogleLoading(true);
+    signIn("google", {
+      redirect: false,
+    }).then((res) => {
+      if (res?.error) {
+        toast.error(res.error);
+        setIsGoogleLoading(false);
+      }
+    });
+  };
+
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
+
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
@@ -129,7 +156,7 @@ export default function Login() {
                   </Link>
                 </div>
               </CardContent>
-              <CardFooter>
+              <CardFooter className="flex flex-col space-y-4">
                 <Button className="w-full" type="submit" disabled={isLoading}>
                   {isLoading ? (
                     <>
@@ -139,6 +166,36 @@ export default function Login() {
                   ) : (
                     "Sign In"
                   )}
+                </Button>
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or continue with
+                    </span>
+                  </div>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={handleGoogleSignIn}
+                  disabled={isGoogleLoading}
+                >
+                  {isGoogleLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Image
+                      src="/google.svg"
+                      alt="Google"
+                      width={20}
+                      height={20}
+                      className="mr-2"
+                    />
+                  )}
+                  Sign in with Google
                 </Button>
               </CardFooter>
             </form>

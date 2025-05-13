@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/router";
 import { Button } from "@/components/ui/button";
 import {
   Heart,
@@ -13,10 +15,58 @@ import {
   Phone,
   Mail,
   ChevronRight,
+  Loader2,
 } from "lucide-react";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const redirectPath = getRedirectPath(session.user.role);
+      router.push(redirectPath);
+    }
+  }, [session, status, router]);
+
+  const getRedirectPath = (role) => {
+    switch (role) {
+      case "super-admin":
+        return "/super-admin";
+      case "registrar":
+        return "/registrar";
+      case "admin":
+        return "/admin-doctor";
+      case "doctor":
+        return "/doctor";
+      case "first-aid":
+        return "/notifications";
+      case "None":
+      case undefined:
+        return "/notifications";
+      default:
+        return "/notifications";
+    }
+  };
+
+  // Show loading state while checking authentication
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
+
+  // If authenticated, show loading while redirecting
+  if (status === "authenticated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
