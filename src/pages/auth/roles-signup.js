@@ -31,6 +31,7 @@ import {
   Hospital,
   BadgeIcon as IdCard,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function RolesSignup() {
   const router = useRouter();
@@ -256,6 +257,14 @@ export default function RolesSignup() {
                 </div>
               </>
             )}
+            <div className="flex justify-end">
+              <Link
+                href="/forgot-password"
+                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                Forgot Password?
+              </Link>
+            </div>
           </CardContent>
           <CardFooter>
             <Button className="w-full" type="submit" disabled={isLoading}>

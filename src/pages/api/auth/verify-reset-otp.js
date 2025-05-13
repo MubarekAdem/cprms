@@ -1,6 +1,5 @@
 import { connectToDB } from "@/lib/mongodb";
 import User from "@/models/User";
-import bcrypt from "bcryptjs";
 
 export default async function handler(req, res) {
   if (req.method !== "POST") {
@@ -8,10 +7,10 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { email, otp, password } = req.body;
+    const { email, otp } = req.body;
 
-    if (!email || !otp || !password) {
-      return res.status(400).json({ error: "Missing required fields" });
+    if (!email || !otp) {
+      return res.status(400).json({ error: "Email and OTP are required" });
     }
 
     await connectToDB();
@@ -63,21 +62,11 @@ export default async function handler(req, res) {
         .json({ error: "Reset code has expired. Please request a new one" });
     }
 
-    // Hash the new password
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    // Update user's password and clear reset token fields
-    await User.updateOne(
-      { email: email.toLowerCase() },
-      {
-        $set: { password: hashedPassword },
-        $unset: { resetPasswordToken: "", resetPasswordExpires: "" },
-      }
-    );
-
-    return res.status(200).json({ message: "Password reset successful" });
+    return res
+      .status(200)
+      .json({ message: "Reset code verified successfully" });
   } catch (error) {
-    console.error("Reset password error:", error);
-    return res.status(500).json({ error: "Internal server error" });
+    console.error("Verify OTP error:", error);
+    return res.status(500).json({ error: "Failed to verify reset code" });
   }
 }

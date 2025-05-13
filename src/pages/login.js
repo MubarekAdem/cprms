@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Loader2, Lock, Mail } from "lucide-react";
+import Link from "next/link";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -118,6 +119,14 @@ export default function Login() {
                       required
                     />
                   </div>
+                </div>
+                <div className="flex justify-end">
+                  <Link
+                    href="/forgot-password"
+                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                  >
+                    Forgot Password?
+                  </Link>
                 </div>
               </CardContent>
               <CardFooter>
