@@ -57,6 +57,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
+import { useDelayedLoading } from "@/hooks/use-delayed-loading";
 
 export default function FirstAidDashboard() {
   const { data: session, status } = useSession();
@@ -66,13 +67,7 @@ export default function FirstAidDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [editModalOpen, setEditModalOpen] = useState(false);
-  const [editForm, setEditForm] = useState({
-    id: "",
-    name: "",
-    email: "",
-    phone: "",
-    hospital: "",
-  });
+  const [selectedFirstAid, setSelectedFirstAid] = useState(null);
   const [firstAidForm, setFirstAidForm] = useState({
     name: "",
     email: "",
@@ -85,6 +80,7 @@ export default function FirstAidDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const showSkeleton = useDelayedLoading(status === "loading" || isLoading);
 
   // Restrict access
   useEffect(() => {
@@ -162,30 +158,24 @@ export default function FirstAidDashboard() {
 
   // Open edit modal
   const openEditModal = (responder) => {
-    setEditForm({
-      id: responder._id,
-      name: responder.name,
-      email: responder.email,
-      phone: responder.phone,
-      hospital: responder.hospital,
-    });
+    setSelectedFirstAid(responder);
     setEditModalOpen(true);
   };
 
   // Handle edit form input
   const handleEditChange = (e) => {
     const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
+    setSelectedFirstAid((prev) => ({ ...prev, [name]: value }));
   };
 
   // Update first aid responder
   const handleEditSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`/api/first-aid/${editForm.id}`, {
+      const res = await fetch(`/api/first-aid/${selectedFirstAid._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editForm),
+        body: JSON.stringify(selectedFirstAid),
       });
       if (!res.ok) throw new Error("Failed to update first aid responder");
       await fetchFirstAids();
@@ -284,7 +274,7 @@ export default function FirstAidDashboard() {
     }
   };
 
-  if (status === "loading") {
+  if (showSkeleton) {
     return <DashboardSkeleton />;
   }
 
@@ -664,7 +654,7 @@ export default function FirstAidDashboard() {
                 <Input
                   id="edit-name"
                   name="name"
-                  value={editForm.name}
+                  value={selectedFirstAid?.name}
                   onChange={handleEditChange}
                   placeholder="Responder name"
                 />
@@ -676,7 +666,7 @@ export default function FirstAidDashboard() {
                   id="edit-email"
                   name="email"
                   type="email"
-                  value={editForm.email}
+                  value={selectedFirstAid?.email}
                   onChange={handleEditChange}
                   placeholder="Email address"
                 />
@@ -687,7 +677,7 @@ export default function FirstAidDashboard() {
                 <Input
                   id="edit-phone"
                   name="phone"
-                  value={editForm.phone}
+                  value={selectedFirstAid?.phone}
                   onChange={handleEditChange}
                   placeholder="Phone number"
                 />
@@ -696,9 +686,12 @@ export default function FirstAidDashboard() {
               <div className="space-y-2">
                 <Label htmlFor="edit-hospital">Hospital</Label>
                 <Select
-                  value={editForm.hospital}
+                  value={selectedFirstAid?.hospital}
                   onValueChange={(value) =>
-                    setEditForm({ ...editForm, hospital: value })
+                    setSelectedFirstAid({
+                      ...selectedFirstAid,
+                      hospital: value,
+                    })
                   }
                 >
                   <SelectTrigger id="edit-hospital">

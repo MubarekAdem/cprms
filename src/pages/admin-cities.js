@@ -44,6 +44,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
+import { useDelayedLoading } from "@/hooks/use-delayed-loading";
 
 export default function CitiesDashboard() {
   const { data: session, status } = useSession();
@@ -59,6 +60,7 @@ export default function CitiesDashboard() {
     address: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const showSkeleton = useDelayedLoading(status === "loading" || isLoading);
 
   // Restrict access
   useEffect(() => {
@@ -147,7 +149,7 @@ export default function CitiesDashboard() {
     }
   };
 
-  if (status === "loading") {
+  if (showSkeleton) {
     return <DashboardSkeleton />;
   }
 

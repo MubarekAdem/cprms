@@ -53,6 +53,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
+import { useDelayedLoading } from "@/hooks/use-delayed-loading";
 
 export default function HospitalsDashboard() {
   const { data: session, status } = useSession();
@@ -72,6 +73,7 @@ export default function HospitalsDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const showSkeleton = useDelayedLoading(status === "loading" || isLoading);
 
   // Restrict access
   useEffect(() => {
@@ -292,7 +294,7 @@ export default function HospitalsDashboard() {
     }
   };
 
-  if (status === "loading") {
+  if (showSkeleton) {
     return <DashboardSkeleton />;
   }
 
