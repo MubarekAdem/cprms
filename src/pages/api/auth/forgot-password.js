@@ -3,7 +3,7 @@ import User from "@/models/User";
 import nodemailer from "nodemailer";
 
 // Validate email configuration
-if (!process.env.Email_user || !process.env.email_password) {
+if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
   console.error(
     "Missing email configuration. Please set Email_user and email_password in .env.local"
   );
