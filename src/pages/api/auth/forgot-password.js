@@ -13,8 +13,8 @@ if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.Email_user,
-    pass: process.env.email_password,
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASSWORD,
   },
   tls: {
     rejectUnauthorized: false, // Only use this in development
@@ -43,7 +43,7 @@ export default async function handler(req, res) {
     }
 
     // Check if email configuration is set
-    if (!process.env.Email_user || !process.env.email_password) {
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASSWORD) {
       return res.status(500).json({ error: "Email service is not configured" });
     }
 
@@ -75,7 +75,7 @@ export default async function handler(req, res) {
 
     // Send email with OTP
     const mailOptions = {
-      from: `"Password Reset" <${process.env.Email_user}>`,
+      from: `"Password Reset" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Password Reset OTP",
       html: `
