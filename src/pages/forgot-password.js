@@ -32,7 +32,7 @@ export default function ForgotPassword() {
     try {
       const endpoint = requiresOTP
         ? "/api/auth/verify-reset-otp"
-        : "/api/auth/forgot-password";
+        : "/api/auth/forgot-password-web";
       const body = requiresOTP ? { email, otp } : { email };
 
       const res = await fetch(endpoint, {
