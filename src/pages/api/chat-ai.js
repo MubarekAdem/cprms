@@ -31,6 +31,7 @@ export default async function handler(req, res) {
       .join("\n");
 
     const prompt = `
+        If you are aksed normal non medical question response with normal related answer otherwise if you are asked medical questions
         You are a medical AI assistant with expertise in disease diagnosis and treatment.
         
         Patient Information:
