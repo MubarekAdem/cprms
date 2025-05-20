@@ -253,7 +253,7 @@ export default function RegistrarPatientAdd() {
                   id="rawId"
                   name="rawId"
                   value={formData.rawId || ""}
-                  readOnly
+                  onChange={handleInputChange}
                   className="bg-gray-200"
                 />
               </div>
