@@ -23,14 +23,13 @@ import {
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
 
-const RegistrarPatientAdd = () => {
-  const [patientExists, setPatientExists] = useState(false);
-
-  const { data: session, status } = useSession();
+export default function RegistrarPatientAdd() {
+  const { data: session, status } = useSession({ required: true });
   const router = useRouter();
   const { name, id, birthDate } = router.query;
+  const [patientExists, setPatientExists] = useState(false);
   const [formData, setFormData] = useState({
-    name: "",
+    name: name ? decodeURIComponent(name) : "",
     phone: "",
     address: "",
     gender: "",
@@ -45,53 +44,90 @@ const RegistrarPatientAdd = () => {
     dateAdded: new Date().toISOString().split("T")[0],
     hospitalName: "",
     doctorName: "",
-    nationalId: "",
-    rawBirthDate: "",
-    rawId: "",
+    nationalId: id || "",
+    rawBirthDate: birthDate ? decodeURIComponent(birthDate) : "",
+    rawId: id || "",
     registeredBy: "",
   });
-  const checkPatientExists = async (nationalId) => {
-    try {
-      const res = await fetch(`/api/patients/${nationalId}`);
-      if (res.ok) {
-        const data = await res.json();
-        if (data.patientExists) {
-          setPatientExists(true);
-          // Pre-fill existing data (excluding sensitive fields)
-          setFormData((prevData) => ({
-            ...prevData,
-            ...data.data,
-            rawId: data.data.nationalId,
-            rawBirthDate: data.data.birthDate,
-          }));
-        } else {
-          setPatientExists(false);
-        }
-      } else {
-        setPatientExists(false);
-      }
-    } catch (error) {
-      console.error("Error checking patient:", error);
-      toast.error("Failed to check patient existence. Please try again.");
-    }
-  };
 
+  // Check patient existence
   useEffect(() => {
-    if (session && session.user.role === "registrar") {
+    if (router.isReady && formData.rawId) {
+      console.log("Checking patient existence for ID:", formData.rawId);
+      const checkPatientExists = async () => {
+        try {
+          const res = await fetch(`/api/patients/${formData.rawId}`);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.patientExists) {
+              setPatientExists(true);
+              setFormData((prevData) => ({
+                ...prevData,
+                ...data.data,
+                name: prevData.name, // Preserve QR data
+                rawId: prevData.rawId,
+                rawBirthDate: prevData.rawBirthDate,
+              }));
+              toast.info(
+                "Patient already exists. Form pre-filled with existing data."
+              );
+            } else {
+              setPatientExists(false);
+            }
+          } else {
+            setPatientExists(false);
+          }
+        } catch (error) {
+          console.error("Error checking patient:", error);
+          toast.error("Failed to check patient existence. Please try again.");
+        }
+      };
+      checkPatientExists();
+    }
+  }, [router.isReady, formData.rawId]);
+
+  // Fetch registrar data
+  useEffect(() => {
+    if (
+      router.isReady &&
+      status === "authenticated" &&
+      session?.user?.role === "registrar"
+    ) {
+      console.log("Query params:", { name, id, birthDate });
+      console.log("Session:", session);
       const fetchRegistrarData = async () => {
         try {
           const res = await fetch(`/api/registrars`);
           const data = await res.json();
+          console.log("Registrar data:", data);
           const registrar = data.find((r) => r.email === session.user.email);
           if (registrar) {
             setFormData((prev) => ({
               ...prev,
               hospitalName: registrar.hospital,
-              nationalId: formData.rawId,
-              registeredBy: registrar.name || session.user.name,
-              name: name || prev.name,
-              rawBirthDate: birthDate || prev.rawBirthDate,
+              registeredBy:
+                registrar.name || session.user.name || "Unknown Registrar",
+              name: decodeURIComponent(name || prev.name),
               rawId: id || prev.rawId,
+              rawBirthDate: birthDate
+                ? decodeURIComponent(birthDate)
+                : prev.rawBirthDate,
+            }));
+            console.log("Updated formData:", formData);
+          } else {
+            console.warn("No registrar found for email:", session.user.email);
+            toast.warning(
+              "No registrar profile found. Please update your profile."
+            );
+            setFormData((prev) => ({
+              ...prev,
+              hospitalName: "Unknown Hospital",
+              registeredBy: session.user.name || "Unknown Registrar",
+              name: decodeURIComponent(name || prev.name),
+              rawId: id || prev.rawId,
+              rawBirthDate: birthDate
+                ? decodeURIComponent(birthDate)
+                : prev.rawBirthDate,
             }));
           }
         } catch (error) {
@@ -101,7 +137,27 @@ const RegistrarPatientAdd = () => {
       };
       fetchRegistrarData();
     }
-  }, [session, name, id, birthDate]);
+  }, [router.isReady, session, status, name, id, birthDate]);
+
+  // Update formData when query params change
+  useEffect(() => {
+    if (router.isReady) {
+      console.log("Updating formData with query params:", {
+        name,
+        id,
+        birthDate,
+      });
+      setFormData((prev) => ({
+        ...prev,
+        name: name ? decodeURIComponent(name) : prev.name,
+        rawId: id || prev.rawId,
+        rawBirthDate: birthDate
+          ? decodeURIComponent(birthDate)
+          : prev.rawBirthDate,
+        nationalId: id || prev.nationalId,
+      }));
+    }
+  }, [router.isReady, name, id, birthDate]);
 
   if (status === "loading") {
     return (
@@ -112,6 +168,7 @@ const RegistrarPatientAdd = () => {
   }
 
   if (!session || session.user.role !== "registrar") {
+    console.log("Unauthorized - Session:", session);
     return (
       <div className="flex justify-center items-center min-h-screen">
         <p className="text-red-500 font-semibold">Unauthorized</p>
@@ -125,6 +182,10 @@ const RegistrarPatientAdd = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.password !== formData.repeatPassword) {
+      toast.error("Passwords do not match.");
+      return;
+    }
 
     try {
       const res = await fetch("/api/patients", {
@@ -140,7 +201,7 @@ const RegistrarPatientAdd = () => {
           bloodType: formData.bloodType,
           birthDate: formData.rawBirthDate,
           otherDisease: formData.otherDisease,
-          password: formData.password, // Make sure this is included
+          password: formData.password,
           diseaseName: formData.diseaseName,
           diseaseDescription: formData.diseaseDescription,
           medication: formData.medication,
@@ -148,7 +209,7 @@ const RegistrarPatientAdd = () => {
           doctorName: formData.doctorName,
           dateAdded: formData.dateAdded,
           registeredBy: formData.registeredBy,
-          registrarHospital: formData.hospitalName, // Add this line
+          registrarHospital: formData.hospitalName,
         }),
       });
 
@@ -157,7 +218,7 @@ const RegistrarPatientAdd = () => {
         router.push("/registrar");
       } else {
         const errorData = await res.json();
-        toast.error(errorData.error);
+        toast.error(errorData.error || "Failed to register patient.");
       }
     } catch (error) {
       console.error("Error registering patient:", error);
@@ -181,7 +242,7 @@ const RegistrarPatientAdd = () => {
                 <Input
                   id="name"
                   name="name"
-                  value={formData.name}
+                  value={formData.name || ""}
                   readOnly
                   className="bg-gray-200"
                 />
@@ -191,7 +252,7 @@ const RegistrarPatientAdd = () => {
                 <Input
                   id="rawId"
                   name="rawId"
-                  value={formData.rawId}
+                  value={formData.rawId || ""}
                   readOnly
                   className="bg-gray-200"
                 />
@@ -201,7 +262,7 @@ const RegistrarPatientAdd = () => {
                 <Input
                   id="rawBirthDate"
                   name="rawBirthDate"
-                  value={formData.rawBirthDate}
+                  value={formData.rawBirthDate || ""}
                   readOnly
                   className="bg-gray-200"
                 />
@@ -366,23 +427,22 @@ const RegistrarPatientAdd = () => {
                   id="registeredBy"
                   name="registeredBy"
                   value={formData.registeredBy}
+                  readOnly
                   className="bg-gray-200"
                 />
               </div>
             </div>
+            <CardFooter className="flex justify-between">
+              <Button variant="outline" onClick={() => router.push("/scan-qr")}>
+                Scan QR Code
+              </Button>
+              <Button type="submit" onClick={handleSubmit}>
+                Register Patient
+              </Button>
+            </CardFooter>
           </form>
         </CardContent>
-        <CardFooter className="flex justify-between">
-          <Button variant="outline" onClick={() => router.push("/scan-qr")}>
-            Scan QR Code
-          </Button>
-          <Button type="submit" onClick={handleSubmit}>
-            Register Patient
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );
-};
-
-export default RegistrarPatientAdd;
+}
