@@ -14,6 +14,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Label } from "@/components/ui/label";
 import { Search, QrCode, Users, AlertCircle, Loader2 } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import { toast } from "sonner";
@@ -26,6 +27,12 @@ export default function RegistrarComponent({ initialPatient }) {
   const [patients, setPatients] = useState([]);
   const [searchId, setSearchId] = useState("");
   const [selectedPatient, setSelectedPatient] = useState(initialPatient);
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [passwordError, setPasswordError] = useState("");
 
   useEffect(() => {
     if (!session || session.user.role !== "registrar") return;
@@ -40,6 +47,7 @@ export default function RegistrarComponent({ initialPatient }) {
         setPatients(data);
       } catch (error) {
         console.error("Error fetching patients:", error);
+        toast.error("Failed to fetch patients. Please try again.");
       }
     };
 
@@ -52,15 +60,78 @@ export default function RegistrarComponent({ initialPatient }) {
         (p) => p.nationalId === router.query.id
       );
       if (foundPatient) setSelectedPatient(foundPatient);
+      else toast.error("Patient not found for the provided ID.");
     }
   }, [router.query.id, patients]);
 
   const handleSearch = () => {
     const foundPatient = patients.find((p) => p.nationalId === searchId);
     setSelectedPatient(foundPatient || null);
+    if (!foundPatient) toast.error("No patient found with the provided ID.");
   };
 
-  // Generate and download PDF using jsPDF with autoTable
+  const handlePasswordInputChange = (e) => {
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+    setPasswordError("");
+  };
+
+  const validatePassword = () => {
+    if (!passwordData.newPassword || !passwordData.confirmPassword) {
+      setPasswordError("Both password fields are required");
+      return false;
+    }
+    if (passwordData.newPassword.length < 8) {
+      setPasswordError("Password must be at least 8 characters long");
+      return false;
+    }
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      setPasswordError("Passwords do not match");
+      return false;
+    }
+    return true;
+  };
+
+  const handlePasswordUpdate = async (e) => {
+    e.preventDefault();
+    if (!selectedPatient) {
+      toast.error("No patient selected for password update");
+      return;
+    }
+    if (!selectedPatient.nationalId) {
+      toast.error("Selected patient has no national ID");
+      return;
+    }
+    if (!validatePassword()) return;
+
+    const payload = { password: passwordData.newPassword };
+    const requestUrl = `/api/patients/${selectedPatient.nationalId}/password`;
+    console.log("Sending password update request:", {
+      nationalId: selectedPatient.nationalId,
+      requestUrl,
+      payload,
+    });
+
+    try {
+      const res = await fetch(requestUrl, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      if (res.ok) {
+        toast.success("Password updated successfully!");
+        setPasswordData({ newPassword: "", confirmPassword: "" });
+        setShowPasswordForm(false);
+      } else {
+        const errorData = await res.json();
+        toast.error(errorData.error || "Failed to update password");
+      }
+    } catch (error) {
+      console.error("Error updating password:", error);
+      toast.error("Failed to update password. Please try again.");
+    }
+  };
+
   const handlePrintPatientData = () => {
     if (!selectedPatient) {
       toast.error("No patient selected to print");
@@ -73,7 +144,6 @@ export default function RegistrarComponent({ initialPatient }) {
     const margin = 10;
     let yPosition = margin;
 
-    // Header
     doc.setFontSize(16);
     doc.setFont("helvetica", "bold");
     doc.text("Patient Medical Report", margin, yPosition);
@@ -94,7 +164,6 @@ export default function RegistrarComponent({ initialPatient }) {
     );
     yPosition += 10;
 
-    // Patient Information Section
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text("Patient Information", margin, yPosition);
@@ -124,7 +193,6 @@ export default function RegistrarComponent({ initialPatient }) {
 
     yPosition += 5;
 
-    // Medical Records Section
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.text("Medical Records", margin, yPosition);
@@ -174,7 +242,6 @@ export default function RegistrarComponent({ initialPatient }) {
       yPosition += 10;
     }
 
-    // Footer
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
@@ -221,7 +288,6 @@ export default function RegistrarComponent({ initialPatient }) {
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
-        {/* Summary Card */}
         <div className="grid gap-6 md:grid-cols-2">
           <Card className="overflow-hidden border-none bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
             <CardHeader className="pb-2">
@@ -237,7 +303,6 @@ export default function RegistrarComponent({ initialPatient }) {
           </Card>
         </div>
 
-        {/* Search & QR Scanner */}
         <Card className="border-none shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-xl font-bold">Patient Search</CardTitle>
@@ -271,10 +336,8 @@ export default function RegistrarComponent({ initialPatient }) {
           </CardContent>
         </Card>
 
-        {/* Patient Details */}
         {selectedPatient ? (
           <div className="grid md:grid-cols-[350px,1fr] gap-6">
-            {/* Basic Info */}
             <Card className="border-none shadow-md">
               <CardHeader>
                 <CardTitle className="text-xl font-bold">
@@ -284,17 +347,17 @@ export default function RegistrarComponent({ initialPatient }) {
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-2 text-sm">
                   <div className="text-gray-500">Gender</div>
-                  <div>{selectedPatient.gender}</div>
+                  <div>{selectedPatient.gender || "N/A"}</div>
                   <div className="text-gray-500">Blood Type</div>
-                  <div>{selectedPatient.bloodType}</div>
+                  <div>{selectedPatient.bloodType || "N/A"}</div>
                   <div className="text-gray-500">Birth Date</div>
-                  <div>{selectedPatient.birthDate}</div>
+                  <div>{selectedPatient.birthDate || "N/A"}</div>
                   <div className="text-gray-500">Phone</div>
-                  <div>{selectedPatient.phone}</div>
+                  <div>{selectedPatient.phone || "N/A"}</div>
                   <div className="text-gray-500">Emergency Contact</div>
-                  <div>{selectedPatient.emergencyNumber}</div>
+                  <div>{selectedPatient.emergencyNumber || "N/A"}</div>
                   <div className="text-gray-500">Address</div>
-                  <div>{selectedPatient.address}</div>
+                  <div>{selectedPatient.address || "N/A"}</div>
                 </div>
                 <div className="space-y-2">
                   <Button
@@ -303,11 +366,60 @@ export default function RegistrarComponent({ initialPatient }) {
                   >
                     Print Patient Data
                   </Button>
+                  <Button
+                    variant="outline"
+                    className="w-full"
+                    onClick={() => setShowPasswordForm(!showPasswordForm)}
+                    disabled={!selectedPatient.nationalId}
+                  >
+                    {showPasswordForm
+                      ? "Cancel Password Update"
+                      : "Update Password"}
+                  </Button>
+                  {showPasswordForm && (
+                    <div className="space-y-4 p-4 border rounded-md">
+                      <h3 className="text-lg font-semibold">Update Password</h3>
+                      <div className="space-y-2">
+                        <Label htmlFor="newPassword">New Password</Label>
+                        <Input
+                          id="newPassword"
+                          name="newPassword"
+                          type="password"
+                          value={passwordData.newPassword}
+                          onChange={handlePasswordInputChange}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">
+                          Confirm New Password
+                        </Label>
+                        <Input
+                          id="confirmPassword"
+                          name="confirmPassword"
+                          type="password"
+                          value={passwordData.confirmPassword}
+                          onChange={handlePasswordInputChange}
+                        />
+                      </div>
+                      {passwordError && (
+                        <p className="text-red-500 text-sm">{passwordError}</p>
+                      )}
+                      <Button
+                        className="w-full bg-blue-500 text-white hover:bg-blue-600"
+                        onClick={handlePasswordUpdate}
+                        disabled={
+                          !passwordData.newPassword ||
+                          !passwordData.confirmPassword
+                        }
+                      >
+                        Save New Password
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
 
-            {/* Medical Info */}
             <Card className="border-none shadow-md">
               <CardHeader>
                 <CardTitle className="text-xl font-bold">
