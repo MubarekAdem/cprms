@@ -80,10 +80,17 @@ export default function Navbar() {
   const doctorNavItems = [];
 
   const registrarNavItems = [
-    { icon: UserPlus, label: "ADD PATIENT", href: "/registrar-patient-add" },
     {
       icon: UserPlus,
-      label: "ADD EXISTING USER",
+      label: "HOME",
+      href: "/registrar",
+    },
+
+    { icon: UserPlus, label: "ADD PATIENT", href: "/registrar-patient-add" },
+
+    {
+      icon: UserPlus,
+      label: "ADD EXISTING PATIENT",
       href: "/registrar-existing-add",
     },
   ];
