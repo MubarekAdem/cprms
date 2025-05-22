@@ -38,6 +38,7 @@ import {
   User,
   UserPlus,
   Users,
+  Lock,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -69,9 +70,11 @@ export default function FirstAidDashboard() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedFirstAid, setSelectedFirstAid] = useState(null);
   const [firstAidForm, setFirstAidForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
+    password: "",
     role: "first-aid",
     hospital: "",
     firstAidId: "",
@@ -158,7 +161,13 @@ export default function FirstAidDashboard() {
 
   // Open edit modal
   const openEditModal = (responder) => {
-    setSelectedFirstAid(responder);
+    const [firstName, ...lastNameParts] = responder.name.split(" ");
+    setSelectedFirstAid({
+      ...responder,
+      firstName,
+      lastName: lastNameParts.join(" "),
+      password: "",
+    });
     setEditModalOpen(true);
   };
 
@@ -175,7 +184,14 @@ export default function FirstAidDashboard() {
       const res = await fetch(`/api/first-aid/${selectedFirstAid._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(selectedFirstAid),
+        body: JSON.stringify({
+          firstName: selectedFirstAid.firstName,
+          lastName: selectedFirstAid.lastName,
+          email: selectedFirstAid.email,
+          phone: selectedFirstAid.phone,
+          password: selectedFirstAid.password,
+          hospital: selectedFirstAid.hospital,
+        }),
       });
       if (!res.ok) throw new Error("Failed to update first aid responder");
       await fetchFirstAids();
@@ -201,7 +217,6 @@ export default function FirstAidDashboard() {
     setUploadProgress(0);
 
     try {
-      // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           const newProgress = prev + 10;
@@ -227,7 +242,6 @@ export default function FirstAidDashboard() {
       const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/first-aid/${data.path}`;
       setFirstAidForm((prev) => ({ ...prev, proofDocument: proofDocumentUrl }));
 
-      // Reset progress after a delay
       setTimeout(() => {
         setUploadProgress(0);
         setIsUploading(false);
@@ -254,14 +268,19 @@ export default function FirstAidDashboard() {
         body: JSON.stringify(firstAidForm),
       });
 
-      if (!res.ok) throw new Error("Failed to add first aid responder");
+      if (!res.ok)
+        throw new Error(
+          (await res.json()).error || "Failed to add first aid responder"
+        );
 
       toast.success("First aid responder added successfully");
-      fetchFirstAids(); // Refresh first aid responders list
+      fetchFirstAids();
       setFirstAidForm({
-        name: "",
+        firstName: "",
+        lastName: "",
         email: "",
         phone: "",
+        password: "",
         role: "first-aid",
         hospital: "",
         firstAidId: "",
@@ -278,13 +297,12 @@ export default function FirstAidDashboard() {
     return <DashboardSkeleton />;
   }
 
-  if (!session) return null; // Will redirect in useEffect
+  if (!session) return null;
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
-        {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3">
           <Card className="overflow-hidden border-none bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg">
             <CardHeader className="pb-2">
@@ -300,24 +318,6 @@ export default function FirstAidDashboard() {
               </p>
             </CardContent>
           </Card>
-
-          {/* <Card className="border-none shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-lg font-medium">
-                <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
-                Certified Responders
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {Math.round(firstAids.length * 0.9)}
-              </div>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Fully certified professionals
-              </p>
-            </CardContent>
-          </Card> */}
-
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
@@ -333,8 +333,6 @@ export default function FirstAidDashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {/* First Aid Responders List */}
         <Card className="border-none shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-xl font-bold">
@@ -406,7 +404,8 @@ export default function FirstAidDashboard() {
                                 href={responder.proofDocument}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                                className="flex items-center text-blue-600 hover:text-blue-8
+System: 00 dark:text-blue-400 dark:hover:text-blue-300"
                               >
                                 <FileText className="mr-1 h-4 w-4" />
                                 View Document
@@ -451,14 +450,11 @@ export default function FirstAidDashboard() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
+                        <TableCell colSpan={5} className="h-24 text-center">
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>
-                                No responders found matching &quot;{searchTerm}
-                                &quot;
-                              </p>
+                              <p>No responders found matching "{searchTerm}"</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -475,8 +471,6 @@ export default function FirstAidDashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Add First Aid Responder Form */}
         <Card className="border-none shadow-md">
           <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
             <CardTitle className="flex items-center text-xl font-bold">
@@ -487,18 +481,29 @@ export default function FirstAidDashboard() {
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Responder Name</Label>
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
-                  id="name"
-                  name="name"
-                  value={firstAidForm.name}
+                  id="firstName"
+                  name="firstName"
+                  value={firstAidForm.firstName}
                   onChange={handleInputChange}
-                  placeholder="Enter first aid responder name"
+                  placeholder="John"
                   required
                   className="w-full"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  value={firstAidForm.lastName}
+                  onChange={handleInputChange}
+                  placeholder="Doe"
+                  required
+                  className="w-full"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
@@ -507,12 +512,11 @@ export default function FirstAidDashboard() {
                   type="email"
                   value={firstAidForm.email}
                   onChange={handleInputChange}
-                  placeholder="Enter email"
+                  placeholder="responder@example.com"
                   required
                   className="w-full"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
@@ -520,12 +524,24 @@ export default function FirstAidDashboard() {
                   name="phone"
                   value={firstAidForm.phone}
                   onChange={handleInputChange}
-                  placeholder="Enter phone number"
+                  placeholder="+1 (555) 123-4567"
                   required
                   className="w-full"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={firstAidForm.password}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  required
+                  className="w-full"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Select
@@ -542,7 +558,6 @@ export default function FirstAidDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="hospital">Hospital</Label>
                 <Select
@@ -563,7 +578,6 @@ export default function FirstAidDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="firstAidId">First Aid ID</Label>
                 <Input
@@ -571,12 +585,11 @@ export default function FirstAidDashboard() {
                   name="firstAidId"
                   value={firstAidForm.firstAidId}
                   onChange={handleInputChange}
-                  placeholder="Enter first aid ID"
+                  placeholder="FA-12345"
                   required
                   className="w-full"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="proofDocument">Proof Document</Label>
                 <div className="mt-1">
@@ -591,7 +604,6 @@ export default function FirstAidDashboard() {
                     />
                   </label>
                 </div>
-
                 {isUploading && (
                   <div className="mt-2">
                     <div className="flex items-center justify-between text-xs">
@@ -606,7 +618,6 @@ export default function FirstAidDashboard() {
                     </div>
                   </div>
                 )}
-
                 {firstAidForm.proofDocument && !isUploading && (
                   <div className="mt-2 flex items-center text-sm text-green-600 dark:text-green-400">
                     <CheckCircle className="mr-1 h-4 w-4" />
@@ -614,7 +625,6 @@ export default function FirstAidDashboard() {
                   </div>
                 )}
               </div>
-
               <div className="md:col-span-2 mt-4">
                 <Button
                   type="submit"
@@ -637,8 +647,6 @@ export default function FirstAidDashboard() {
             </form>
           </CardContent>
         </Card>
-
-        {/* Edit First Aid Responder Modal */}
         <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -647,19 +655,27 @@ export default function FirstAidDashboard() {
                 Edit First Aid Responder
               </DialogTitle>
             </DialogHeader>
-
             <form onSubmit={handleEditSubmit} className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Name</Label>
+                <Label htmlFor="edit-firstName">First Name</Label>
                 <Input
-                  id="edit-name"
-                  name="name"
-                  value={selectedFirstAid?.name}
+                  id="edit-firstName"
+                  name="firstName"
+                  value={selectedFirstAid?.firstName}
                   onChange={handleEditChange}
-                  placeholder="Responder name"
+                  placeholder="First name"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Last Name</Label>
+                <Input
+                  id="edit-lastName"
+                  name="lastName"
+                  value={selectedFirstAid?.lastName}
+                  onChange={handleEditChange}
+                  placeholder="Last name"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-email">Email</Label>
                 <Input
@@ -671,7 +687,6 @@ export default function FirstAidDashboard() {
                   placeholder="Email address"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="edit-phone">Phone</Label>
                 <Input
@@ -682,7 +697,19 @@ export default function FirstAidDashboard() {
                   placeholder="Phone number"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="edit-password">
+                  Password (leave blank to keep unchanged)
+                </Label>
+                <Input
+                  id="edit-password"
+                  name="password"
+                  type="password"
+                  value={selectedFirstAid?.password}
+                  onChange={handleEditChange}
+                  placeholder="••••••••"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-hospital">Hospital</Label>
                 <Select
@@ -706,7 +733,6 @@ export default function FirstAidDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
               <DialogFooter className="flex space-x-2 sm:justify-end">
                 <Button
                   variant="outline"

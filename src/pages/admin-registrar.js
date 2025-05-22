@@ -39,6 +39,7 @@ import {
   User,
   UserPlus,
   Users,
+  Lock,
 } from "lucide-react";
 import {
   Dialog,
@@ -68,9 +69,11 @@ export default function RegistrarsDashboard() {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedRegistrar, setSelectedRegistrar] = useState(null);
   const [registrarForm, setRegistrarForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
+    password: "",
     role: "registrar",
     hospital: "",
     registrarId: "",
@@ -155,7 +158,13 @@ export default function RegistrarsDashboard() {
 
   // Open edit modal
   const handleEdit = (registrar) => {
-    setSelectedRegistrar(registrar);
+    const [firstName, ...lastNameParts] = registrar.name.split(" ");
+    setSelectedRegistrar({
+      ...registrar,
+      firstName,
+      lastName: lastNameParts.join(" "),
+      password: "",
+    });
     setEditModalOpen(true);
   };
 
@@ -172,17 +181,17 @@ export default function RegistrarsDashboard() {
       const res = await fetch(`/api/registrars/${selectedRegistrar._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(selectedRegistrar),
+        body: JSON.stringify({
+          firstName: selectedRegistrar.firstName,
+          lastName: selectedRegistrar.lastName,
+          email: selectedRegistrar.email,
+          phone: selectedRegistrar.phone,
+          password: selectedRegistrar.password,
+          hospital: selectedRegistrar.hospital,
+        }),
       });
       if (!res.ok) throw new Error("Failed to update registrar");
-      const updatedRegistrar = await res.json();
-      setRegistrars((prev) =>
-        prev.map((r) =>
-          r._id === updatedRegistrar.registrar._id
-            ? updatedRegistrar.registrar
-            : r
-        )
-      );
+      await fetchRegistrars();
       setEditModalOpen(false);
       toast.success("Registrar updated successfully");
     } catch (error) {
@@ -205,7 +214,6 @@ export default function RegistrarsDashboard() {
     setUploadProgress(0);
 
     try {
-      // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           const newProgress = prev + 10;
@@ -234,7 +242,6 @@ export default function RegistrarsDashboard() {
         proofDocument: proofDocumentUrl,
       }));
 
-      // Reset progress after a delay
       setTimeout(() => {
         setUploadProgress(0);
         setIsUploading(false);
@@ -261,15 +268,17 @@ export default function RegistrarsDashboard() {
         body: JSON.stringify(registrarForm),
       });
 
-      if (!res.ok) throw new Error("Failed to add registrar");
+      if (!res.ok)
+        throw new Error((await res.json()).error || "Failed to add registrar");
 
-      const data = await res.json();
       toast.success("Registrar added successfully");
-      setRegistrars((prev) => [...prev, data.registrar]);
+      fetchRegistrars();
       setRegistrarForm({
-        name: "",
+        firstName: "",
+        lastName: "",
         email: "",
         phone: "",
+        password: "",
         role: "registrar",
         hospital: "",
         registrarId: "",
@@ -286,13 +295,12 @@ export default function RegistrarsDashboard() {
     return <DashboardSkeleton />;
   }
 
-  if (!session) return null; // Will redirect in useEffect
+  if (!session) return null;
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
-        {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3">
           <Card className="overflow-hidden border-none bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg">
             <CardHeader className="pb-2">
@@ -306,7 +314,6 @@ export default function RegistrarsDashboard() {
               <p className="mt-1 text-sm opacity-80">Active registrars</p>
             </CardContent>
           </Card>
-
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
@@ -323,7 +330,6 @@ export default function RegistrarsDashboard() {
               </p>
             </CardContent>
           </Card>
-
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
@@ -339,8 +345,6 @@ export default function RegistrarsDashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Registrars List */}
         <Card className="border-none shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-xl font-bold">
@@ -458,8 +462,6 @@ export default function RegistrarsDashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Add Registrar Form */}
         <Card className="border-none shadow-md">
           <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
             <CardTitle className="flex items-center text-xl font-bold">
@@ -470,18 +472,29 @@ export default function RegistrarsDashboard() {
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Registrar Name</Label>
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
-                  id="name"
-                  name="name"
-                  value={registrarForm.name}
+                  id="firstName"
+                  name="firstName"
+                  value={registrarForm.firstName}
                   onChange={handleInputChange}
-                  placeholder="Enter registrar name"
+                  placeholder="John"
                   required
                   className="w-full"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  value={registrarForm.lastName}
+                  onChange={handleInputChange}
+                  placeholder="Doe"
+                  required
+                  className="w-full"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
@@ -490,12 +503,11 @@ export default function RegistrarsDashboard() {
                   type="email"
                   value={registrarForm.email}
                   onChange={handleInputChange}
-                  placeholder="Enter email"
+                  placeholder="registrar@example.com"
                   required
                   className="w-full"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
@@ -503,12 +515,24 @@ export default function RegistrarsDashboard() {
                   name="phone"
                   value={registrarForm.phone}
                   onChange={handleInputChange}
-                  placeholder="Enter phone number"
+                  placeholder="+1 (555) 123-4567"
                   required
                   className="w-full"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={registrarForm.password}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  required
+                  className="w-full"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Select
@@ -525,7 +549,6 @@ export default function RegistrarsDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="hospital">Hospital</Label>
                 <Select
@@ -546,7 +569,6 @@ export default function RegistrarsDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="registrarId">Registrar ID</Label>
                 <Input
@@ -554,12 +576,11 @@ export default function RegistrarsDashboard() {
                   name="registrarId"
                   value={registrarForm.registrarId}
                   onChange={handleInputChange}
-                  placeholder="Enter registrar ID"
+                  placeholder="REG-12345"
                   required
                   className="w-full"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="proofDocument">Proof Document</Label>
                 <div className="mt-1">
@@ -574,7 +595,6 @@ export default function RegistrarsDashboard() {
                     />
                   </label>
                 </div>
-
                 {isUploading && (
                   <div className="mt-2">
                     <div className="flex items-center justify-between text-xs">
@@ -589,7 +609,6 @@ export default function RegistrarsDashboard() {
                     </div>
                   </div>
                 )}
-
                 {registrarForm.proofDocument && !isUploading && (
                   <div className="mt-2 flex items-center text-sm text-green-600 dark:text-green-400">
                     <CheckCircle className="mr-1 h-4 w-4" />
@@ -597,7 +616,6 @@ export default function RegistrarsDashboard() {
                   </div>
                 )}
               </div>
-
               <div className="md:col-span-2 mt-4">
                 <Button
                   type="submit"
@@ -620,8 +638,6 @@ export default function RegistrarsDashboard() {
             </form>
           </CardContent>
         </Card>
-
-        {/* Edit Registrar Modal */}
         <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -630,19 +646,27 @@ export default function RegistrarsDashboard() {
                 Edit Registrar
               </DialogTitle>
             </DialogHeader>
-
             <form onSubmit={handleEditSubmit} className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Name</Label>
+                <Label htmlFor="edit-firstName">First Name</Label>
                 <Input
-                  id="edit-name"
-                  name="name"
-                  value={selectedRegistrar?.name}
+                  id="edit-firstName"
+                  name="firstName"
+                  value={selectedRegistrar?.firstName}
                   onChange={handleEditInputChange}
-                  placeholder="Registrar name"
+                  placeholder="First name"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="edit-lastName">Last Name</Label>
+                <Input
+                  id="edit-lastName"
+                  name="lastName"
+                  value={selectedRegistrar?.lastName}
+                  onChange={handleEditInputChange}
+                  placeholder="Last name"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-email">Email</Label>
                 <Input
@@ -654,7 +678,6 @@ export default function RegistrarsDashboard() {
                   placeholder="Email address"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="edit-phone">Phone</Label>
                 <Input
@@ -665,7 +688,19 @@ export default function RegistrarsDashboard() {
                   placeholder="Phone number"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="edit-password">
+                  Password (leave blank to keep unchanged)
+                </Label>
+                <Input
+                  id="edit-password"
+                  name="password"
+                  type="password"
+                  value={selectedRegistrar?.password}
+                  onChange={handleEditInputChange}
+                  placeholder="••••••••"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-hospital">Hospital</Label>
                 <Select
@@ -689,7 +724,6 @@ export default function RegistrarsDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
               <DialogFooter className="flex space-x-2 sm:justify-end">
                 <Button
                   variant="outline"
