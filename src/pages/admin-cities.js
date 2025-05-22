@@ -149,6 +149,21 @@ export default function CitiesDashboard() {
     }
   };
 
+  const handleEditSubmit = (e) => {
+    e.preventDefault();
+    // Implement the logic to update the city
+    toast.success("City updated successfully");
+    setEditModalOpen(false);
+  };
+
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedCity((prevCity) => ({
+      ...prevCity,
+      [name]: value,
+    }));
+  };
+
   if (showSkeleton) {
     return <DashboardSkeleton />;
   }
@@ -394,6 +409,78 @@ export default function CitiesDashboard() {
             </form>
           </CardContent>
         </Card>
+
+        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+          <DialogContent
+            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
+            <DialogHeader>
+              <DialogTitle className="flex items-center text-xl font-semibold text-black">
+                <MapPin className="mr-2 h-5 w-5 text-black" />
+                Edit City
+              </DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleEditSubmit} className="grid gap-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-name" className="text-black">
+                  City Name
+                </Label>
+                <Input
+                  id="edit-name"
+                  name="name"
+                  value={selectedCity?.name}
+                  onChange={handleEditInputChange}
+                  placeholder="City name"
+                  className="bg-white text-black"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-code" className="text-black">
+                  City Code
+                </Label>
+                <Input
+                  id="edit-code"
+                  name="code"
+                  value={selectedCity?.code}
+                  onChange={handleEditInputChange}
+                  placeholder="City code"
+                  className="bg-white text-black"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-address" className="text-black">
+                  Address
+                </Label>
+                <Input
+                  id="edit-address"
+                  name="address"
+                  value={selectedCity?.address}
+                  onChange={handleEditInputChange}
+                  placeholder="City address"
+                  className="bg-white text-black"
+                />
+              </div>
+              <DialogFooter className="flex space-x-2 sm:justify-end">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setEditModalOpen(false)}
+                  className="border-black text-black hover:bg-gray-500"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  className="bg-white text-black hover:bg-gray-300"
+                >
+                  Save Changes
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

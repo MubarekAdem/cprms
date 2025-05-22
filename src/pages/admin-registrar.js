@@ -374,6 +374,9 @@ export default function RegistrarsDashboard() {
                       <TableHead className="font-medium">Name</TableHead>
                       <TableHead className="font-medium">Contact</TableHead>
                       <TableHead className="font-medium">Hospital</TableHead>
+                      <TableHead className="font-medium">
+                        Proof Document
+                      </TableHead>
                       <TableHead className="text-right font-medium">
                         Actions
                       </TableHead>
@@ -406,6 +409,23 @@ export default function RegistrarsDashboard() {
                               <Building2 className="mr-1 h-3 w-3 text-gray-400" />
                               <span>{registrar.hospital}</span>
                             </div>
+                          </TableCell>
+                          <TableCell>
+                            {registrar.proofDocument ? (
+                              <a
+                                href={registrar.proofDocument}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
+                              >
+                                <FileText className="mr-1 h-4 w-4" />
+                                View Document
+                              </a>
+                            ) : (
+                              <span className="text-gray-500 dark:text-gray-400">
+                                No document
+                              </span>
+                            )}
                           </TableCell>
                           <TableCell className="text-right">
                             <DropdownMenu>
@@ -445,7 +465,10 @@ export default function RegistrarsDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No registrars found matching "{searchTerm}"</p>
+                              <p>
+                                No registrars found matching &quot;{searchTerm}
+                                &quot;
+                              </p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -639,36 +662,48 @@ export default function RegistrarsDashboard() {
           </CardContent>
         </Card>
         <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent
+            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg"
+            onOpenAutoFocus={(e) => e.preventDefault()}
+          >
             <DialogHeader>
-              <DialogTitle className="flex items-center text-xl font-semibold">
-                <FileText className="mr-2 h-5 w-5 text-primary" />
+              <DialogTitle className="flex items-center text-xl font-semibold text-black">
+                <FileText className="mr-2 h-5 w-5 text-black" />
                 Edit Registrar
               </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleEditSubmit} className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-firstName">First Name</Label>
+                <Label htmlFor="edit-firstName" className="text-black">
+                  First Name
+                </Label>
                 <Input
                   id="edit-firstName"
                   name="firstName"
                   value={selectedRegistrar?.firstName}
                   onChange={handleEditInputChange}
                   placeholder="First name"
+                  className="bg-white text-black"
+                  autoFocus
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-lastName">Last Name</Label>
+                <Label htmlFor="edit-lastName" className="text-black">
+                  Last Name
+                </Label>
                 <Input
                   id="edit-lastName"
                   name="lastName"
                   value={selectedRegistrar?.lastName}
                   onChange={handleEditInputChange}
                   placeholder="Last name"
+                  className="bg-white text-black"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-email">Email</Label>
+                <Label htmlFor="edit-email" className="text-black">
+                  Email
+                </Label>
                 <Input
                   id="edit-email"
                   name="email"
@@ -676,20 +711,24 @@ export default function RegistrarsDashboard() {
                   value={selectedRegistrar?.email}
                   onChange={handleEditInputChange}
                   placeholder="Email address"
+                  className="bg-white text-black"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-phone">Phone</Label>
+                <Label htmlFor="edit-phone" className="text-black">
+                  Phone
+                </Label>
                 <Input
                   id="edit-phone"
                   name="phone"
                   value={selectedRegistrar?.phone}
                   onChange={handleEditInputChange}
                   placeholder="Phone number"
+                  className="bg-white text-black"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-password">
+                <Label htmlFor="edit-password" className="text-black">
                   Password (leave blank to keep unchanged)
                 </Label>
                 <Input
@@ -699,10 +738,13 @@ export default function RegistrarsDashboard() {
                   value={selectedRegistrar?.password}
                   onChange={handleEditInputChange}
                   placeholder="••••••••"
+                  className="bg-white text-black"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-hospital">Hospital</Label>
+                <Label htmlFor="edit-hospital" className="text-black">
+                  Hospital
+                </Label>
                 <Select
                   value={selectedRegistrar?.hospital}
                   onValueChange={(value) =>
@@ -712,12 +754,19 @@ export default function RegistrarsDashboard() {
                     }))
                   }
                 >
-                  <SelectTrigger id="edit-hospital">
+                  <SelectTrigger
+                    id="edit-hospital"
+                    className="bg-white text-black"
+                  >
                     <SelectValue placeholder="Select Hospital" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white text-black">
                     {hospitals.map((hospital) => (
-                      <SelectItem key={hospital._id} value={hospital.name}>
+                      <SelectItem
+                        key={hospital._id}
+                        value={hospital.name}
+                        className="text-black"
+                      >
                         {hospital.name}
                       </SelectItem>
                     ))}
@@ -726,14 +775,16 @@ export default function RegistrarsDashboard() {
               </div>
               <DialogFooter className="flex space-x-2 sm:justify-end">
                 <Button
+                  type="button"
                   variant="outline"
                   onClick={() => setEditModalOpen(false)}
+                  className="border-black text-black hover:bg-gray-500"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-white text-black hover:bg-gray-300"
                 >
                   Save Changes
                 </Button>

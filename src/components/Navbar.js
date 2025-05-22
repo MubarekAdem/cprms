@@ -1,3 +1,9 @@
+"use client";
+
+import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { useSession, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import {
   Building2,
@@ -9,13 +15,21 @@ import {
   User,
   LogOut,
   UserPlus,
+  Stethoscope,
+  FileText,
 } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { useState, useEffect } from "react";
+import { toast } from "sonner";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -28,6 +42,7 @@ export default function Navbar() {
     role: "",
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [isSignOutDialogOpen, setIsSignOutDialogOpen] = useState(false);
 
   useEffect(() => {
     console.log("Navbar useEffect - Session:", session, "Status:", status);
@@ -49,13 +64,15 @@ export default function Navbar() {
               firstName: data.firstName || "",
               lastName: data.lastName || "",
               profilePicture: data.profilePicture || "",
-              role: data.role || "",
+              role: data.role || "None",
             });
           } else {
             console.warn("No data returned from API");
+            toast.error("Failed to load user profile");
           }
         } catch (error) {
           console.error("Error fetching user data in Navbar:", error.message);
+          toast.error("Error loading user profile");
         } finally {
           setIsLoading(false);
         }
@@ -70,29 +87,31 @@ export default function Navbar() {
 
   const navItems = [
     { icon: UserCog, label: "DOCTORS", href: "/admin-doctor" },
-    { icon: UserCog, label: "First Aids", href: "/admin-first-aid" },
-    { icon: UserCog, label: "Registrars", href: "/admin-registrar" },
-    { icon: Hospital, label: "Hospitals", href: "/admin-hospitals" },
-    { icon: MapPin, label: "Cities", href: "/admin-cities" },
+    { icon: UserCog, label: "FIRST AIDS", href: "/admin-first-aid" },
+    { icon: UserCog, label: "REGISTRARS", href: "/admin-registrar" },
+    { icon: Hospital, label: "HOSPITALS", href: "/admin-hospitals" },
+    { icon: MapPin, label: "CITIES", href: "/admin-cities" },
     { icon: LayoutDashboard, label: "DASHBOARD", href: "/admin-dashboard" },
   ];
 
-  const doctorNavItems = [];
+  const doctorNavItems = [
+    { icon: Stethoscope, label: "DASHBOARD", href: "/doctor" },
+    { icon: FileText, label: "PATIENTS", href: "/doctor-patients" },
+  ];
 
   const registrarNavItems = [
-    {
-      icon: UserPlus,
-      label: "HOME",
-      href: "/registrar",
-    },
-
+    { icon: UserPlus, label: "HOME", href: "/registrar" },
     { icon: UserPlus, label: "ADD PATIENT", href: "/registrar-patient-add" },
-
     {
       icon: UserPlus,
       label: "ADD EXISTING PATIENT",
       href: "/registrar-existing-add",
     },
+  ];
+
+  const defaultNavItems = [
+    { icon: LayoutDashboard, label: "NOTIFICATIONS", href: "/notifications" },
+    { icon: User, label: "PROFILE", href: "/profile" },
   ];
 
   const getNavItems = () => {
@@ -103,9 +122,24 @@ export default function Navbar() {
         return doctorNavItems;
       case "registrar":
         return registrarNavItems;
+      case "first-aid":
+      case "None":
+        return defaultNavItems;
       default:
-        return [];
+        return defaultNavItems;
     }
+  };
+
+  const handleSignOut = () => {
+    setIsSignOutDialogOpen(false);
+    signOut({ callbackUrl: "/" })
+      .then(() => {
+        toast.success("Signed out successfully");
+      })
+      .catch((error) => {
+        console.error("Sign out error:", error);
+        toast.error("Failed to sign out");
+      });
   };
 
   if (status === "loading" || isLoading) {
@@ -120,6 +154,14 @@ export default function Navbar() {
             </div>
           </div>
         </div>
+        <div className="space-y-2">
+          {[...Array(3)].map((_, i) => (
+            <div
+              key={i}
+              className="h-10 w-full bg-gray-200 rounded animate-pulse"
+            />
+          ))}
+        </div>
       </aside>
     );
   }
@@ -133,16 +175,19 @@ export default function Navbar() {
               <AvatarImage src={userData.profilePicture} alt="Profile" />
             ) : (
               <AvatarFallback className="bg-primary/10 text-primary">
-                {userData.firstName?.charAt(0).toUpperCase() || "U"}
+                {userData.firstName?.charAt(0).toUpperCase() ||
+                  session?.user?.email?.charAt(0).toUpperCase() ||
+                  "U"}
               </AvatarFallback>
             )}
           </Avatar>
           <div className="flex flex-col">
             <span className="text-sm font-medium text-foreground">
-              {userData.firstName} {userData.lastName}
+              {userData.firstName || session?.user?.name || "User"}{" "}
+              {userData.lastName}
             </span>
             <span className="text-xs text-muted-foreground">
-              {userData.role}
+              {userData.role || "No role"}
             </span>
           </div>
         </div>
@@ -151,6 +196,7 @@ export default function Navbar() {
           size="icon"
           onClick={() => router.push("/profile")}
           className="text-muted-foreground hover:text-primary"
+          aria-label="View profile"
         >
           <User className="h-5 w-5" />
         </Button>
@@ -165,6 +211,7 @@ export default function Navbar() {
                   ? "bg-primary/10 text-primary hover:bg-primary/20"
                   : "text-muted-foreground hover:text-primary hover:bg-primary/5"
               }`}
+              aria-label={`Navigate to ${item.label}`}
             >
               <item.icon
                 className={`h-4 w-4 ${
@@ -183,14 +230,49 @@ export default function Navbar() {
           <p className="text-sm text-muted-foreground truncate">
             {session?.user?.email || "No email"}
           </p>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => router.push("/api/auth/signout")}
-            className="text-muted-foreground hover:text-destructive"
+          <Dialog
+            open={isSignOutDialogOpen}
+            onOpenChange={setIsSignOutDialogOpen}
           >
-            <LogOut className="h-4 w-4" />
-          </Button>
+            <DialogTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="text-muted-foreground hover:text-destructive"
+                aria-label="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] bg-white text-black">
+              <DialogHeader>
+                <DialogTitle className="text-black">
+                  Confirm Sign Out
+                </DialogTitle>
+                <DialogDescription className="text-gray-600">
+                  Are you sure you want to sign out? You will be redirected to
+                  the homepage.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsSignOutDialogOpen(false)}
+                  className="text-black border-gray-300 hover:bg-gray-100"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={handleSignOut}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  aria-label="Confirm sign out"
+                >
+                  Sign Out
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
     </aside>

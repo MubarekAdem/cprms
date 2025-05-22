@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Lock } from "lucide-react";
-import { Link } from "@/components/ui/link";
+import Link from "next/link";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");

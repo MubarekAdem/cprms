@@ -466,7 +466,7 @@ export default function HospitalsDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No hospitals found matching "{searchTerm}"</p>
+                              <p>No hospitals found matching &quot;{searchTerm}&quot;</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -604,28 +604,33 @@ export default function HospitalsDashboard() {
 
         {/* Edit Hospital Modal */}
         <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg">
             <DialogHeader>
-              <DialogTitle className="flex items-center text-xl font-semibold">
-                <Building2 className="mr-2 h-5 w-5 text-primary" />
+              <DialogTitle className="flex items-center text-xl font-semibold text-black">
+                <Building2 className="mr-2 h-5 w-5 text-black" />
                 Edit Hospital
               </DialogTitle>
             </DialogHeader>
 
             <form onSubmit={handleUpdateHospital} className="grid gap-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Hospital Name</Label>
+                <Label htmlFor="edit-name" className="text-black">
+                  Hospital Name
+                </Label>
                 <Input
                   id="edit-name"
                   name="name"
                   value={hospitalForm.name}
                   onChange={handleInputChange}
                   placeholder="Hospital name"
+                  className="bg-white text-black"
                 />
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-id">Hospital ID</Label>
+                <Label htmlFor="edit-id" className="text-black">
+                  Hospital ID
+                </Label>
                 <Input
                   id="edit-id"
                   name="id"
@@ -633,25 +638,34 @@ export default function HospitalsDashboard() {
                   onChange={handleInputChange}
                   placeholder="Hospital ID"
                   disabled
-                  className="bg-gray-100 dark:bg-gray-800"
+                  className="bg-gray-100 dark:bg-gray-800 text-black"
                 />
                 <p className="text-xs text-gray-500">ID cannot be changed</p>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="edit-location">Location</Label>
+                <Label htmlFor="edit-location" className="text-black">
+                  Location
+                </Label>
                 <Select
                   value={hospitalForm.location}
                   onValueChange={(value) =>
                     setHospitalForm((prev) => ({ ...prev, location: value }))
                   }
                 >
-                  <SelectTrigger id="edit-location">
+                  <SelectTrigger
+                    id="edit-location"
+                    className="bg-white text-black"
+                  >
                     <SelectValue placeholder="Select a city" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-white text-black">
                     {cities.map((city) => (
-                      <SelectItem key={city.id || city._id} value={city.name}>
+                      <SelectItem
+                        key={city.id || city._id}
+                        value={city.name}
+                        className="text-black"
+                      >
                         {city.name}
                       </SelectItem>
                     ))}
@@ -663,12 +677,13 @@ export default function HospitalsDashboard() {
                 <Button
                   variant="outline"
                   onClick={() => setEditModalOpen(false)}
+                  className="border-black text-black hover:bg-gray-500"
                 >
                   Cancel
                 </Button>
                 <Button
                   type="submit"
-                  className="bg-primary hover:bg-primary/90"
+                  className="bg-white text-black hover:bg-gray-300"
                 >
                   {isSubmitting ? (
                     <>

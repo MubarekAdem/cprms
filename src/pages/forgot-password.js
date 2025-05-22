@@ -15,8 +15,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Loader2, Mail, KeyRound } from "lucide-react";
-import { Link } from "@/components/ui/link";
-
+import Link from "next/link";
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
@@ -116,7 +115,7 @@ export default function ForgotPassword() {
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
                         required
-                        maxLength={4}
+                        maxLength={6}
                       />
                     </div>
                   </div>

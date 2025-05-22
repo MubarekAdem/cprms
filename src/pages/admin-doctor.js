@@ -652,20 +652,20 @@ export default function DoctorsDashboard() {
         </Card>
         {isEditModalOpen && (
           <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-            <DialogContent className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg">
+            <DialogContent
+              className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg"
+              onOpenAutoFocus={(e) => e.preventDefault()}
+            >
               <DialogHeader>
                 <DialogTitle className="flex items-center text-xl font-semibold text-black">
                   <FileText className="mr-2 h-5 w-5 text-black" />
                   Edit Doctor
                 </DialogTitle>
               </DialogHeader>
-              <div className="grid gap-4 py-4">
+              <form onSubmit={handleEditSave} className="grid gap-4 py-4">
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-firstName"
-                    className="flex items-center gap-2"
-                  >
-                    <FileText className="h-4 w-4 text-white" /> First Name
+                  <Label htmlFor="edit-firstName" className="text-black">
+                    First Name
                   </Label>
                   <Input
                     id="edit-firstName"
@@ -679,14 +679,12 @@ export default function DoctorsDashboard() {
                     }
                     placeholder="First name"
                     className="bg-white text-black"
+                    autoFocus
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-lastName"
-                    className="flex items-center gap-2"
-                  >
-                    <FileText className="h-4 w-4 text-white" /> Last Name
+                  <Label htmlFor="edit-lastName" className="text-black">
+                    Last Name
                   </Label>
                   <Input
                     id="edit-lastName"
@@ -700,11 +698,8 @@ export default function DoctorsDashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-email"
-                    className="flex items-center gap-2"
-                  >
-                    <Mail className="h-4 w-4 text-white" /> Email
+                  <Label htmlFor="edit-email" className="text-black">
+                    Email
                   </Label>
                   <Input
                     id="edit-email"
@@ -719,11 +714,8 @@ export default function DoctorsDashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-phone"
-                    className="flex items-center gap-2"
-                  >
-                    <Phone className="h-4 w-4 text-white" /> Phone
+                  <Label htmlFor="edit-phone" className="text-black">
+                    Phone
                   </Label>
                   <Input
                     id="edit-phone"
@@ -737,12 +729,8 @@ export default function DoctorsDashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-password"
-                    className="flex items-center gap-2"
-                  >
-                    <Lock className="h-4 w-4 text-white" /> Password (leave
-                    blank to keep unchanged)
+                  <Label htmlFor="edit-password" className="text-black">
+                    Password (leave blank to keep unchanged)
                   </Label>
                   <Input
                     id="edit-password"
@@ -757,11 +745,8 @@ export default function DoctorsDashboard() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label
-                    htmlFor="edit-hospital"
-                    className="flex items-center gap-2"
-                  >
-                    <Hospital className="h-4 w-4 text-white" /> Hospital
+                  <Label htmlFor="edit-hospital" className="text-black">
+                    Hospital
                   </Label>
                   <Select
                     value={editDoctor.hospital}
@@ -788,22 +773,23 @@ export default function DoctorsDashboard() {
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <DialogFooter className="flex space-x-2 sm:justify-end">
-                <Button
-                  variant="outline"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="border-black text-black hover:bg-gray-500"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handleEditSave}
-                  className="bg-white text-black hover:bg-gray-300"
-                >
-                  Save Changes
-                </Button>
-              </DialogFooter>
+                <DialogFooter className="flex space-x-2 sm:justify-end">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsEditModalOpen(false)}
+                    className="border-black text-black hover:bg-gray-500"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    type="submit"
+                    className="bg-white text-black hover:bg-gray-300"
+                  >
+                    Save Changes
+                  </Button>
+                </DialogFooter>
+              </form>
             </DialogContent>
           </Dialog>
         )}
