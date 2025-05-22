@@ -45,8 +45,13 @@ export default function NotificationsDashboard() {
         }
         const data = await res.json();
         console.log("Fetched requests:", data);
-        // Filter unique requests by user and requestedRole
+
+        // Filter unique requests by user and requestedRole, handling null users
         const uniqueRequests = data.reduce((acc, req) => {
+          if (!req.user) {
+            console.warn(`Skipping request with null user: ${req._id}`);
+            return acc; // Skip requests with null user
+          }
           const key = `${req.user._id}-${req.requestedRole}`;
           if (
             !acc[key] ||
@@ -204,7 +209,9 @@ export default function NotificationsDashboard() {
                         className="hover:bg-gray-50 dark:hover:bg-gray-800"
                       >
                         <TableCell className="font-medium">
-                          {request.user?.name || request.user?.email || "N/A"}
+                          {request.user?.name ||
+                            request.user?.email ||
+                            "Unknown User"}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center">
