@@ -187,16 +187,6 @@ export default function Home() {
                   <ChevronRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>
-
-              <Link href="/auth/roles-signup" className="block md:inline-block">
-                <Button
-                  variant="outline"
-                  className="w-full md:w-auto text-base py-6 px-8 border-primary text-primary hover:bg-primary/10 transition-all duration-300"
-                >
-                  <Users className="mr-2 h-5 w-5" />
-                  Roles Signup
-                </Button>
-              </Link>
             </div>
 
             <div className="flex items-center mt-10 text-gray-600">
