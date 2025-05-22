@@ -31,7 +31,6 @@ export default async function handler(req, res) {
       .join("\n");
 
     const prompt = `
-        If you are aksed normal non medical question response with normal related answer otherwise if you are asked medical questions
         You are a medical AI assistant with expertise in disease diagnosis and treatment.
         
         Patient Information:
@@ -46,10 +45,10 @@ export default async function handler(req, res) {
         Medical History:
         ${formattedMedicalRecords}
   
-        Please provide a detailed response to the doctor's query: ${message}
-        
+        only if you asked medical related questions , Please provide a highlight very simple not more than 2 paragraphs response to the doctor's query: ${message},
+        If you are aksed normal non medical question response with normal related answer otherwise if you are asked medical questions
+        also if you asked very simple question repsonse with straight forward simple answer , like if you asked "hi" , response with "Hi How can i help you " ald similar to that if you asked other non medical questions reponse with apropirate equal level responses.
         Consider the patient's complete medical history, current medications, and any potential drug interactions when answering.
-        If discussing treatments, take into account their existing conditions and medications, also recommend the best diet for the patient.
       `;
 
     const result = await model.generateContent(prompt);

@@ -320,12 +320,13 @@ export default function SuperAdminDashboard() {
                                 (user) => {
                                   const pendingRequest = roleRequests.find(
                                     (req) =>
+                                      req.user &&
                                       req.user._id === user._id &&
                                       req.status === "pending"
                                   );
                                   return (
                                     <TableRow
-                                      key={user._id}
+                                      key={user._id || Math.random()}
                                       className="hover:bg-gray-50 dark:hover:bg-gray-800"
                                     >
                                       <TableCell className="font-medium">

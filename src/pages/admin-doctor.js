@@ -39,6 +39,7 @@ import {
   User,
   UserPlus,
   Users,
+  Lock,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
@@ -67,9 +68,11 @@ export default function DoctorsDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [doctorForm, setDoctorForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     email: "",
     phone: "",
+    password: "",
     role: "doctor",
     hospital: "",
     doctorId: "",
@@ -147,7 +150,6 @@ export default function DoctorsDashboard() {
     setUploadProgress(0);
 
     try {
-      // Simulate upload progress
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           const newProgress = prev + 10;
@@ -173,7 +175,6 @@ export default function DoctorsDashboard() {
       const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/doctors/${data.path}`;
       setDoctorForm((prev) => ({ ...prev, proofDocument: proofDocumentUrl }));
 
-      // Reset progress after a delay
       setTimeout(() => {
         setUploadProgress(0);
         setIsUploading(false);
@@ -200,14 +201,17 @@ export default function DoctorsDashboard() {
         body: JSON.stringify(doctorForm),
       });
 
-      if (!res.ok) throw new Error("Failed to add doctor");
+      if (!res.ok)
+        throw new Error((await res.json()).error || "Failed to add doctor");
 
       toast.success("Doctor added successfully");
-      fetchDoctors(); // Refresh doctors list
+      fetchDoctors();
       setDoctorForm({
-        name: "",
+        firstName: "",
+        lastName: "",
         email: "",
         phone: "",
+        password: "",
         role: "doctor",
         hospital: "",
         doctorId: "",
@@ -222,7 +226,13 @@ export default function DoctorsDashboard() {
 
   // Open Edit Modal
   const handleEditClick = (doctor) => {
-    setEditDoctor(doctor);
+    const [firstName, ...lastNameParts] = doctor.name.split(" ");
+    setEditDoctor({
+      ...doctor,
+      firstName,
+      lastName: lastNameParts.join(" "),
+      password: "",
+    });
     setIsEditModalOpen(true);
   };
 
@@ -232,13 +242,21 @@ export default function DoctorsDashboard() {
       const res = await fetch(`/api/doctors/${editDoctor._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(editDoctor),
+        body: JSON.stringify({
+          firstName: editDoctor.firstName,
+          lastName: editDoctor.lastName,
+          email: editDoctor.email,
+          phone: editDoctor.phone,
+          password: editDoctor.password,
+          hospital: editDoctor.hospital,
+        }),
       });
 
-      if (!res.ok) throw new Error("Failed to update doctor");
+      if (!res.ok)
+        throw new Error((await res.json()).error || "Failed to update doctor");
 
       toast.success("Doctor updated successfully");
-      fetchDoctors(); // Refresh doctors list
+      fetchDoctors();
       setIsEditModalOpen(false);
     } catch (error) {
       toast.error("Error updating doctor: " + error.message);
@@ -252,7 +270,8 @@ export default function DoctorsDashboard() {
     try {
       const res = await fetch(`/api/doctors/${doctorId}`, { method: "DELETE" });
 
-      if (!res.ok) throw new Error("Failed to delete doctor");
+      if (!res.ok)
+        throw new Error((await res.json()).error || "Failed to delete doctor");
 
       toast.success("Doctor deleted successfully");
       fetchDoctors();
@@ -274,13 +293,12 @@ export default function DoctorsDashboard() {
     );
   }
 
-  if (!session) return null; // Will redirect in useEffect
+  if (!session) return null;
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
-        {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3">
           <Card className="overflow-hidden border-none bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
             <CardHeader className="pb-2">
@@ -296,24 +314,6 @@ export default function DoctorsDashboard() {
               </p>
             </CardContent>
           </Card>
-
-          {/* <Card className="border-none shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-lg font-medium">
-                <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
-                Verified Doctors
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {Math.round(doctors.length * 0.8)}
-              </div>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Fully verified credentials
-              </p>
-            </CardContent>
-          </Card> */}
-
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
@@ -329,8 +329,6 @@ export default function DoctorsDashboard() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Doctors List */}
         <Card className="border-none shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-xl font-bold">
@@ -476,8 +474,6 @@ export default function DoctorsDashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Add Doctor Form */}
         <Card className="border-none shadow-md">
           <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
             <CardTitle className="flex items-center text-xl font-bold">
@@ -488,18 +484,29 @@ export default function DoctorsDashboard() {
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="name">Doctor Name</Label>
+                <Label htmlFor="firstName">First Name</Label>
                 <Input
-                  id="name"
-                  name="name"
-                  value={doctorForm.name}
+                  id="firstName"
+                  name="firstName"
+                  value={doctorForm.firstName}
                   onChange={handleInputChange}
-                  placeholder="Dr. John Doe"
+                  placeholder="John"
                   required
                   className="w-full"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input
+                  id="lastName"
+                  name="lastName"
+                  value={doctorForm.lastName}
+                  onChange={handleInputChange}
+                  placeholder="Doe"
+                  required
+                  className="w-full"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
                 <Input
@@ -513,7 +520,6 @@ export default function DoctorsDashboard() {
                   className="w-full"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
                 <Input
@@ -526,7 +532,19 @@ export default function DoctorsDashboard() {
                   className="w-full"
                 />
               </div>
-
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  value={doctorForm.password}
+                  onChange={handleInputChange}
+                  placeholder="••••••••"
+                  required
+                  className="w-full"
+                />
+              </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
                 <Select
@@ -543,7 +561,6 @@ export default function DoctorsDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="hospital">Hospital</Label>
                 <Select
@@ -564,7 +581,6 @@ export default function DoctorsDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="doctorId">Doctor ID</Label>
                 <Input
@@ -577,7 +593,6 @@ export default function DoctorsDashboard() {
                   className="w-full"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="proofDocument">Proof Document</Label>
                 <div className="mt-1">
@@ -592,7 +607,6 @@ export default function DoctorsDashboard() {
                     />
                   </label>
                 </div>
-
                 {isUploading && (
                   <div className="mt-2">
                     <div className="flex items-center justify-between text-xs">
@@ -607,7 +621,6 @@ export default function DoctorsDashboard() {
                     </div>
                   </div>
                 )}
-
                 {doctorForm.proofDocument && !isUploading && (
                   <div className="mt-2 flex items-center text-sm text-green-600 dark:text-green-400">
                     <CheckCircle className="mr-1 h-4 w-4" />
@@ -615,7 +628,6 @@ export default function DoctorsDashboard() {
                   </div>
                 )}
               </div>
-
               <div className="md:col-span-2 mt-4">
                 <Button
                   type="submit"
@@ -638,8 +650,6 @@ export default function DoctorsDashboard() {
             </form>
           </CardContent>
         </Card>
-
-        {/* Edit Doctor Modal */}
         {isEditModalOpen && (
           <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
             <DialogContent className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg">
@@ -649,27 +659,46 @@ export default function DoctorsDashboard() {
                   Edit Doctor
                 </DialogTitle>
               </DialogHeader>
-
               <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <Label
-                    htmlFor="edit-name"
+                    htmlFor="edit-firstName"
                     className="flex items-center gap-2"
                   >
-                    <FileText className="h-4 w-4 text-white" /> Name
+                    <FileText className="h-4 w-4 text-white" /> First Name
                   </Label>
                   <Input
-                    id="edit-name"
-                    name="name"
-                    value={editDoctor.name}
+                    id="edit-firstName"
+                    name="firstName"
+                    value={editDoctor.firstName}
                     onChange={(e) =>
-                      setEditDoctor({ ...editDoctor, name: e.target.value })
+                      setEditDoctor({
+                        ...editDoctor,
+                        firstName: e.target.value,
+                      })
                     }
-                    placeholder="Doctor name"
+                    placeholder="First name"
                     className="bg-white text-black"
                   />
                 </div>
-
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-lastName"
+                    className="flex items-center gap-2"
+                  >
+                    <FileText className="h-4 w-4 text-white" /> Last Name
+                  </Label>
+                  <Input
+                    id="edit-lastName"
+                    name="lastName"
+                    value={editDoctor.lastName}
+                    onChange={(e) =>
+                      setEditDoctor({ ...editDoctor, lastName: e.target.value })
+                    }
+                    placeholder="Last name"
+                    className="bg-white text-black"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label
                     htmlFor="edit-email"
@@ -689,7 +718,6 @@ export default function DoctorsDashboard() {
                     className="bg-white text-black"
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label
                     htmlFor="edit-phone"
@@ -708,7 +736,26 @@ export default function DoctorsDashboard() {
                     className="bg-white text-black"
                   />
                 </div>
-
+                <div className="space-y-2">
+                  <Label
+                    htmlFor="edit-password"
+                    className="flex items-center gap-2"
+                  >
+                    <Lock className="h-4 w-4 text-white" /> Password (leave
+                    blank to keep unchanged)
+                  </Label>
+                  <Input
+                    id="edit-password"
+                    name="password"
+                    type="password"
+                    value={editDoctor.password}
+                    onChange={(e) =>
+                      setEditDoctor({ ...editDoctor, password: e.target.value })
+                    }
+                    placeholder="••••••••"
+                    className="bg-white text-black"
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label
                     htmlFor="edit-hospital"
@@ -742,12 +789,11 @@ export default function DoctorsDashboard() {
                   </Select>
                 </div>
               </div>
-
               <DialogFooter className="flex space-x-2 sm:justify-end">
                 <Button
                   variant="outline"
                   onClick={() => setIsEditModalOpen(false)}
-                  className="border-black text-blavk hover:bg-gray-500"
+                  className="border-black text-black hover:bg-gray-500"
                 >
                   Cancel
                 </Button>
