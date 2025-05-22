@@ -649,10 +649,25 @@ export default function FirstAidDashboard() {
             </form>
           </CardContent>
         </Card>
-        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <Dialog
+          open={editModalOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedFirstAid(null);
+              setEditModalOpen(false);
+            }
+          }}
+        >
           <DialogContent
-            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg"
-            onOpenAutoFocus={(e) => e.preventDefault()}
+            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto"
+            onInteractOutside={(e) => {
+              e.preventDefault();
+            }}
+            onEscapeKeyDown={(e) => {
+              e.preventDefault();
+              setSelectedFirstAid(null);
+              setEditModalOpen(false);
+            }}
           >
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl font-semibold text-black">

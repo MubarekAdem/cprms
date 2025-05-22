@@ -466,7 +466,10 @@ export default function HospitalsDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No hospitals found matching &quot;{searchTerm}&quot;</p>
+                              <p>
+                                No hospitals found matching &quot;{searchTerm}
+                                &quot;
+                              </p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -603,15 +606,32 @@ export default function HospitalsDashboard() {
         </Card>
 
         {/* Edit Hospital Modal */}
-        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
-          <DialogContent className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg">
+        <Dialog
+          open={editModalOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setEditHospital(null);
+              setEditModalOpen(false);
+            }
+          }}
+        >
+          <DialogContent
+            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto"
+            onInteractOutside={(e) => {
+              e.preventDefault();
+            }}
+            onEscapeKeyDown={(e) => {
+              e.preventDefault();
+              setEditHospital(null);
+              setEditModalOpen(false);
+            }}
+          >
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl font-semibold text-black">
                 <Building2 className="mr-2 h-5 w-5 text-black" />
                 Edit Hospital
               </DialogTitle>
             </DialogHeader>
-
             <form onSubmit={handleUpdateHospital} className="grid gap-4 py-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name" className="text-black">

@@ -149,11 +149,30 @@ export default function CitiesDashboard() {
     }
   };
 
-  const handleEditSubmit = (e) => {
+  const handleEditSubmit = async (e) => {
     e.preventDefault();
-    // Implement the logic to update the city
-    toast.success("City updated successfully");
-    setEditModalOpen(false);
+    try {
+      const res = await fetch(`/api/cities/${selectedCity._id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(selectedCity),
+      });
+
+      if (!res.ok) throw new Error("Failed to update city");
+
+      setCities(
+        cities.map((city) =>
+          city._id === selectedCity._id ? selectedCity : city
+        )
+      );
+      setEditModalOpen(false);
+      setSelectedCity(null);
+      toast.success("City updated successfully");
+    } catch (error) {
+      toast.error("Error updating city: " + error.message);
+    }
   };
 
   const handleEditInputChange = (e) => {
@@ -162,6 +181,11 @@ export default function CitiesDashboard() {
       ...prevCity,
       [name]: value,
     }));
+  };
+
+  const handleCloseDialog = () => {
+    setEditModalOpen(false);
+    setSelectedCity(null);
   };
 
   if (showSkeleton) {
@@ -410,10 +434,25 @@ export default function CitiesDashboard() {
           </CardContent>
         </Card>
 
-        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <Dialog
+          open={editModalOpen}
+          onOpenChange={(open) => {
+            if (!open) {
+              setSelectedCity(null);
+              setEditModalOpen(false);
+            }
+          }}
+        >
           <DialogContent
-            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg"
-            onOpenAutoFocus={(e) => e.preventDefault()}
+            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto"
+            onInteractOutside={(e) => {
+              e.preventDefault();
+            }}
+            onEscapeKeyDown={(e) => {
+              e.preventDefault();
+              setSelectedCity(null);
+              setEditModalOpen(false);
+            }}
           >
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl font-semibold text-black">
@@ -429,7 +468,7 @@ export default function CitiesDashboard() {
                 <Input
                   id="edit-name"
                   name="name"
-                  value={selectedCity?.name}
+                  value={selectedCity?.name || ""}
                   onChange={handleEditInputChange}
                   placeholder="City name"
                   className="bg-white text-black"
@@ -443,7 +482,7 @@ export default function CitiesDashboard() {
                 <Input
                   id="edit-code"
                   name="code"
-                  value={selectedCity?.code}
+                  value={selectedCity?.code || ""}
                   onChange={handleEditInputChange}
                   placeholder="City code"
                   className="bg-white text-black"
@@ -456,7 +495,7 @@ export default function CitiesDashboard() {
                 <Input
                   id="edit-address"
                   name="address"
-                  value={selectedCity?.address}
+                  value={selectedCity?.address || ""}
                   onChange={handleEditInputChange}
                   placeholder="City address"
                   className="bg-white text-black"
@@ -466,7 +505,7 @@ export default function CitiesDashboard() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setEditModalOpen(false)}
+                  onClick={handleCloseDialog}
                   className="border-black text-black hover:bg-gray-500"
                 >
                   Cancel

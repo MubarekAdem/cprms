@@ -192,11 +192,16 @@ export default function RegistrarsDashboard() {
       });
       if (!res.ok) throw new Error("Failed to update registrar");
       await fetchRegistrars();
-      setEditModalOpen(false);
+      handleCloseDialog();
       toast.success("Registrar updated successfully");
     } catch (error) {
       toast.error("Error updating registrar: " + error.message);
     }
+  };
+
+  const handleCloseDialog = () => {
+    setEditModalOpen(false);
+    setSelectedRegistrar(null);
   };
 
   // Handle form input changes
@@ -661,10 +666,21 @@ export default function RegistrarsDashboard() {
             </form>
           </CardContent>
         </Card>
-        <Dialog open={editModalOpen} onOpenChange={setEditModalOpen}>
+        <Dialog
+          open={editModalOpen}
+          onOpenChange={(open) => {
+            if (!open) handleCloseDialog();
+          }}
+        >
           <DialogContent
             className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg"
-            onOpenAutoFocus={(e) => e.preventDefault()}
+            onInteractOutside={(e) => {
+              e.preventDefault();
+            }}
+            onEscapeKeyDown={(e) => {
+              e.preventDefault();
+              handleCloseDialog();
+            }}
           >
             <DialogHeader>
               <DialogTitle className="flex items-center text-xl font-semibold text-black">
@@ -680,7 +696,7 @@ export default function RegistrarsDashboard() {
                 <Input
                   id="edit-firstName"
                   name="firstName"
-                  value={selectedRegistrar?.firstName}
+                  value={selectedRegistrar?.firstName || ""}
                   onChange={handleEditInputChange}
                   placeholder="First name"
                   className="bg-white text-black"
@@ -694,7 +710,7 @@ export default function RegistrarsDashboard() {
                 <Input
                   id="edit-lastName"
                   name="lastName"
-                  value={selectedRegistrar?.lastName}
+                  value={selectedRegistrar?.lastName || ""}
                   onChange={handleEditInputChange}
                   placeholder="Last name"
                   className="bg-white text-black"
@@ -708,7 +724,7 @@ export default function RegistrarsDashboard() {
                   id="edit-email"
                   name="email"
                   type="email"
-                  value={selectedRegistrar?.email}
+                  value={selectedRegistrar?.email || ""}
                   onChange={handleEditInputChange}
                   placeholder="Email address"
                   className="bg-white text-black"
@@ -721,7 +737,7 @@ export default function RegistrarsDashboard() {
                 <Input
                   id="edit-phone"
                   name="phone"
-                  value={selectedRegistrar?.phone}
+                  value={selectedRegistrar?.phone || ""}
                   onChange={handleEditInputChange}
                   placeholder="Phone number"
                   className="bg-white text-black"
@@ -735,7 +751,7 @@ export default function RegistrarsDashboard() {
                   id="edit-password"
                   name="password"
                   type="password"
-                  value={selectedRegistrar?.password}
+                  value={selectedRegistrar?.password || ""}
                   onChange={handleEditInputChange}
                   placeholder="••••••••"
                   className="bg-white text-black"
@@ -746,7 +762,7 @@ export default function RegistrarsDashboard() {
                   Hospital
                 </Label>
                 <Select
-                  value={selectedRegistrar?.hospital}
+                  value={selectedRegistrar?.hospital || ""}
                   onValueChange={(value) =>
                     setSelectedRegistrar((prev) => ({
                       ...prev,
@@ -777,7 +793,7 @@ export default function RegistrarsDashboard() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setEditModalOpen(false)}
+                  onClick={handleCloseDialog}
                   className="border-black text-black hover:bg-gray-500"
                 >
                   Cancel

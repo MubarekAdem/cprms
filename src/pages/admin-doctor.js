@@ -651,10 +651,25 @@ export default function DoctorsDashboard() {
           </CardContent>
         </Card>
         {isEditModalOpen && (
-          <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+          <Dialog
+            open={isEditModalOpen}
+            onOpenChange={(open) => {
+              if (!open) {
+                setEditDoctor(null);
+                setIsEditModalOpen(false);
+              }
+            }}
+          >
             <DialogContent
-              className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg"
-              onOpenAutoFocus={(e) => e.preventDefault()}
+              className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto"
+              onInteractOutside={(e) => {
+                e.preventDefault();
+              }}
+              onEscapeKeyDown={(e) => {
+                e.preventDefault();
+                setEditDoctor(null);
+                setIsEditModalOpen(false);
+              }}
             >
               <DialogHeader>
                 <DialogTitle className="flex items-center text-xl font-semibold text-black">
