@@ -114,7 +114,7 @@ export default function RolesSignup() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
+    <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-primary/10 to-accent/20">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
@@ -134,7 +134,7 @@ export default function RolesSignup() {
                   <Input
                     id="firstName"
                     name="firstName"
-                    placeholder="Abebe"
+                    placeholder="John"
                     className="pl-10"
                     value={form.firstName}
                     onChange={handleChange}
@@ -149,7 +149,7 @@ export default function RolesSignup() {
                   <Input
                     id="lastName"
                     name="lastName"
-                    placeholder="kebede"
+                    placeholder="Doe"
                     className="pl-10"
                     value={form.lastName}
                     onChange={handleChange}
@@ -164,9 +164,9 @@ export default function RolesSignup() {
                 <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="email"
-                  name="email"
                   type="email"
-                  placeholder="john@example.com"
+                  name="email"
+                  placeholder="m@example.com"
                   className="pl-10"
                   value={form.email}
                   onChange={handleChange}
@@ -175,13 +175,14 @@ export default function RolesSignup() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Phone</Label>
+              <Label htmlFor="phone">Phone Number</Label>
               <div className="relative">
                 <Phone className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="phone"
+                  type="tel"
                   name="phone"
-                  placeholder="123-456-7890"
+                  placeholder="+251 9XXXXXXXX"
                   className="pl-10"
                   value={form.phone}
                   onChange={handleChange}
@@ -195,8 +196,8 @@ export default function RolesSignup() {
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                 <Input
                   id="password"
-                  name="password"
                   type="password"
+                  name="password"
                   placeholder="••••••••"
                   className="pl-10"
                   value={form.password}
@@ -207,21 +208,25 @@ export default function RolesSignup() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
-              <div className="relative">
-                <Briefcase className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                <Select onValueChange={handleRoleChange} value={form.role}>
-                  <SelectTrigger className="pl-10">
-                    <SelectValue placeholder="Select Role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="doctor">Doctor</SelectItem>
-                    <SelectItem value="first-aid">
-                      First Aid Responder
-                    </SelectItem>
-                    <SelectItem value="registrar">Registrar</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <Select
+                name="role"
+                value={form.role}
+                onValueChange={(value) =>
+                  handleChange({ target: { name: "role", value } })
+                }
+                required
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select your role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="doctor">Doctor</SelectItem>
+                  <SelectItem value="nurse">Nurse</SelectItem>
+                  <SelectItem value="pharmacist">Pharmacist</SelectItem>
+                  <SelectItem value="registrar">Registrar</SelectItem>
+                  <SelectItem value="first_aid">First Aid</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             {form.role === "registrar" && (
               <>
@@ -257,27 +262,22 @@ export default function RolesSignup() {
                 </div>
               </>
             )}
-            <div className="flex justify-end">
-              <Link
-                href="/forgot-password"
-                className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-              >
-                Forgot Password?
-              </Link>
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button className="w-full" type="submit" disabled={isLoading}>
-              {isLoading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please wait
-                </>
-              ) : (
-                "Sign Up"
-              )}
+            <Button
+              type="submit"
+              className="w-full bg-primary hover:bg-primary/90"
+            >
+              Sign Up
             </Button>
-          </CardFooter>
+          </CardContent>
         </form>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-center text-sm">
+            Already have an account?{" "}
+            <Link href="/login" className="text-primary hover:text-primary/80">
+              Sign in
+            </Link>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );

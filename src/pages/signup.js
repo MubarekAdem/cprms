@@ -14,8 +14,18 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Loader2, User, Mail, Phone, Lock, KeyRound } from "lucide-react";
+import {
+  Loader2,
+  User,
+  Mail,
+  Phone,
+  Lock,
+  KeyRound,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import Navbar from "@/components/Navbar";
+import Link from "next/link";
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -29,6 +39,7 @@ export default function Signup() {
   const [isLoading, setIsLoading] = useState(false);
   const [requiresOTP, setRequiresOTP] = useState(false);
   const [error, setError] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
   const handleChange = (e) => {
@@ -74,7 +85,7 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/20">
       {/* <Navbar showBackButton={true} /> */}
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
@@ -106,8 +117,9 @@ export default function Signup() {
                           <Input
                             id="firstName"
                             name="firstName"
-                            placeholder="Abebe"
+                            placeholder="John"
                             className="pl-10"
+                            value={form.firstName}
                             onChange={handleChange}
                             required
                           />
@@ -120,8 +132,9 @@ export default function Signup() {
                           <Input
                             id="lastName"
                             name="lastName"
-                            placeholder="kebede"
+                            placeholder="Doe"
                             className="pl-10"
+                            value={form.lastName}
                             onChange={handleChange}
                             required
                           />
@@ -134,10 +147,11 @@ export default function Signup() {
                         <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="email"
-                          name="email"
                           type="email"
-                          placeholder="john@example.com"
+                          name="email"
+                          placeholder="m@example.com"
                           className="pl-10"
+                          value={form.email}
                           onChange={handleChange}
                           required
                         />
@@ -164,13 +178,25 @@ export default function Signup() {
                         <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                         <Input
                           id="password"
+                          type={showPassword ? "text" : "password"}
                           name="password"
-                          type="password"
                           placeholder="••••••••"
                           className="pl-10"
+                          value={form.password}
                           onChange={handleChange}
                           required
                         />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-3 text-muted-foreground"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
                       </div>
                     </div>
                   </>
@@ -182,33 +208,35 @@ export default function Signup() {
                       <Input
                         id="otp"
                         name="otp"
-                        type="text"
                         placeholder="Enter 4-digit code"
                         className="pl-10"
+                        value={form.otp}
                         onChange={handleChange}
-                        maxLength={4}
-                        pattern="[0-9]{4}"
                         required
+                        maxLength={4}
                       />
                     </div>
                   </div>
                 )}
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full" type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please
-                      wait
-                    </>
-                  ) : requiresOTP ? (
-                    "Verify Code"
-                  ) : (
-                    "Sign Up"
-                  )}
+                <Button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-primary/90"
+                >
+                  {requiresOTP ? "Verify" : "Sign Up"}
                 </Button>
-              </CardFooter>
+              </CardContent>
             </form>
+            <CardFooter className="flex flex-col space-y-4">
+              <div className="text-center text-sm">
+                Already have an account?{" "}
+                <Link
+                  href="/login"
+                  className="text-primary hover:text-primary/80"
+                >
+                  Sign in
+                </Link>
+              </div>
+            </CardFooter>
           </Card>
         </div>
       </div>

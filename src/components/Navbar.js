@@ -138,10 +138,10 @@ export default function Navbar() {
             )}
           </Avatar>
           <div className="flex flex-col">
-            <span className="text-sm font-medium text-gray-900 dark:text-gray-100">
+            <span className="text-sm font-medium text-foreground">
               {userData.firstName} {userData.lastName}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
+            <span className="text-xs text-muted-foreground">
               {userData.role}
             </span>
           </div>
@@ -150,7 +150,7 @@ export default function Navbar() {
           variant="ghost"
           size="icon"
           onClick={() => router.push("/profile")}
-          className="text-gray-600 hover:text-primary"
+          className="text-muted-foreground hover:text-primary"
         >
           <User className="h-5 w-5" />
         </Button>
@@ -160,15 +160,25 @@ export default function Navbar() {
           <Link key={item.label} href={item.href}>
             <Button
               variant={pathname === item.href ? "secondary" : "ghost"}
-              className="w-full justify-start gap-2 text-gray-800"
+              className={`w-full justify-start gap-2 ${
+                pathname === item.href
+                  ? "bg-primary/10 text-primary hover:bg-primary/20"
+                  : "text-muted-foreground hover:text-primary hover:bg-primary/5"
+              }`}
             >
-              <item.icon className="h-4 w-4 text-green-500" />
+              <item.icon
+                className={`h-4 w-4 ${
+                  pathname === item.href
+                    ? "text-primary"
+                    : "text-muted-foreground"
+                }`}
+              />
               {item.label}
             </Button>
           </Link>
         ))}
       </div>
-      <div className="mt-auto pt-4 border-t">
+      <div className="mt-auto pt-4 border-t border-border">
         <div className="flex items-center justify-between">
           <p className="text-sm text-muted-foreground truncate">
             {session?.user?.email || "No email"}
@@ -177,7 +187,7 @@ export default function Navbar() {
             variant="ghost"
             size="icon"
             onClick={() => router.push("/api/auth/signout")}
-            className="text-gray-600 hover:text-red-500"
+            className="text-muted-foreground hover:text-destructive"
           >
             <LogOut className="h-4 w-4" />
           </Button>

@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Loader2, Lock } from "lucide-react";
+import { Link } from "@/components/ui/link";
 
 export default function ResetPassword() {
   const [password, setPassword] = useState("");
@@ -67,7 +68,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/20">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
           <Card className="w-full max-w-md">
@@ -82,7 +83,7 @@ export default function ResetPassword() {
             <form onSubmit={handleSubmit}>
               <CardContent className="space-y-4">
                 {error && (
-                  <div className="p-3 bg-red-100 text-red-700 rounded-md text-sm">
+                  <div className="p-3 bg-destructive/10 text-destructive rounded-md text-sm">
                     {error}
                   </div>
                 )}
@@ -119,17 +120,22 @@ export default function ResetPassword() {
                   </div>
                 </div>
               </CardContent>
-              <CardFooter>
-                <Button className="w-full" type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please
-                      wait
-                    </>
-                  ) : (
-                    "Reset Password"
-                  )}
+              <CardFooter className="flex flex-col space-y-4">
+                <Button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-primary/90"
+                >
+                  Reset Password
                 </Button>
+                <div className="text-center text-sm">
+                  Remember your password?{" "}
+                  <Link
+                    href="/login"
+                    className="text-primary hover:text-primary/80"
+                  >
+                    Sign in
+                  </Link>
+                </div>
               </CardFooter>
             </form>
           </Card>

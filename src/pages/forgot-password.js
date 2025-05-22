@@ -15,6 +15,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Loader2, Mail, KeyRound } from "lucide-react";
+import { Link } from "@/components/ui/link";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -65,7 +66,7 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/20">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
           <Card className="w-full max-w-md">
@@ -94,7 +95,7 @@ export default function ForgotPassword() {
                       <Input
                         id="email"
                         type="email"
-                        placeholder="you@example.com"
+                        placeholder="m@example.com"
                         className="pl-10"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
@@ -110,32 +111,35 @@ export default function ForgotPassword() {
                       <Input
                         id="otp"
                         type="text"
-                        placeholder="Enter verification code"
+                        placeholder="Enter 4-digit code"
                         className="pl-10"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
-                        maxLength={6}
                         required
+                        maxLength={4}
                       />
                     </div>
                   </div>
                 )}
-              </CardContent>
-              <CardFooter>
-                <Button className="w-full" type="submit" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please
-                      wait
-                    </>
-                  ) : requiresOTP ? (
-                    "Verify Code"
-                  ) : (
-                    "Send Reset Link"
-                  )}
+                <Button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-primary/90"
+                >
+                  {requiresOTP ? "Verify" : "Send Reset Link"}
                 </Button>
-              </CardFooter>
+              </CardContent>
             </form>
+            <CardFooter className="flex flex-col space-y-4">
+              <div className="text-center text-sm">
+                Remember your password?{" "}
+                <Link
+                  href="/login"
+                  className="text-primary hover:text-primary/80"
+                >
+                  Sign in
+                </Link>
+              </div>
+            </CardFooter>
           </Card>
         </div>
       </div>

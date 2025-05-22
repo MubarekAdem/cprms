@@ -304,7 +304,7 @@ export default function FirstAidDashboard() {
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="overflow-hidden border-none bg-gradient-to-br from-green-500 to-emerald-600 text-white shadow-lg">
+          <Card className="overflow-hidden border-none bg-gradient-to-br from-primary to-accent text-white shadow-lg">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
                 <Users className="mr-2 h-5 w-5" />
@@ -321,7 +321,7 @@ export default function FirstAidDashboard() {
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
-                <Building2 className="mr-2 h-5 w-5 text-blue-500" />
+                <Building2 className="mr-2 h-5 w-5 text-primary" />
                 Hospitals Coverage
               </CardTitle>
             </CardHeader>
@@ -472,7 +472,7 @@ System: 00 dark:text-blue-400 dark:hover:text-blue-300"
           </CardContent>
         </Card>
         <Card className="border-none shadow-md">
-          <CardHeader className="bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/20 dark:to-emerald-900/20">
+          <CardHeader className="bg-gradient-to-r from-primary to-accent">
             <CardTitle className="flex items-center text-xl font-bold">
               <UserPlus className="mr-2 h-5 w-5 text-primary" />
               Add First Aid Responder

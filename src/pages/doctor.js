@@ -253,7 +253,7 @@ export default function DoctorComponent({ initialPatient }) {
       <div className="flex-1 p-6 space-y-6">
         {/* Summary Card */}
         <div className="grid gap-6 md:grid-cols-2">
-          <Card className="overflow-hidden border-none bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+          <Card className="overflow-hidden border-none bg-gradient-to-br from-primary to-accent text-white shadow-lg">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
                 <Users className="mr-2 h-5 w-5" />
@@ -285,16 +285,16 @@ export default function DoctorComponent({ initialPatient }) {
             <div className="flex items-center gap-4 flex-wrap">
               <Button
                 onClick={handleSearch}
-                className="bg-blue-500 text-white hover:bg-blue-600"
+                className="bg-primary text-white hover:bg-primary/90"
               >
                 Search
               </Button>
               <Button
                 variant="outline"
                 onClick={() => router.push("/scan-qr-doctor")}
-                className="border-green-500 text-green-600 hover:bg-green-50"
+                className="border-primary text-primary hover:bg-primary/10"
               >
-                <QrCode className="mr-2 h-4 w-4 text-green-600" />
+                <QrCode className="mr-2 h-4 w-4 text-primary" />
                 Scan QR
               </Button>
             </div>

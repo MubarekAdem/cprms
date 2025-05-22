@@ -302,7 +302,7 @@ export default function RegistrarsDashboard() {
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="overflow-hidden border-none bg-gradient-to-br from-purple-500 to-indigo-600 text-white shadow-lg">
+          <Card className="overflow-hidden border-none bg-gradient-to-br from-primary to-accent text-white shadow-lg">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
                 <Users className="mr-2 h-5 w-5" />
@@ -317,7 +317,7 @@ export default function RegistrarsDashboard() {
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
-                <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
+                <CheckCircle className="mr-2 h-5 w-5 text-primary" />
                 Verified Registrars
               </CardTitle>
             </CardHeader>
@@ -463,7 +463,7 @@ export default function RegistrarsDashboard() {
           </CardContent>
         </Card>
         <Card className="border-none shadow-md">
-          <CardHeader className="bg-gradient-to-r from-purple-50 to-indigo-50 dark:from-purple-900/20 dark:to-indigo-900/20">
+          <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
             <CardTitle className="flex items-center text-xl font-bold">
               <UserPlus className="mr-2 h-5 w-5 text-primary" />
               Add New Registrar

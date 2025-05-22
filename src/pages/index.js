@@ -69,14 +69,14 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 via-secondary to-accent/20">
       {/* Navigation Bar */}
-      <nav className="border-b border-emerald-100 bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+      <nav className="border-b border-primary/10 bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
-              <Heart className="h-8 w-8 text-emerald-600 mr-2" />
-              <span className="font-bold text-xl text-emerald-700">
+              <Heart className="h-8 w-8 text-primary mr-2" />
+              <span className="font-bold text-xl text-primary">
                 ETHIO-CPRMS
               </span>
             </div>
@@ -85,27 +85,27 @@ export default function Home() {
             <div className="hidden md:flex items-center space-x-8">
               <Link
                 href="/about"
-                className="text-gray-600 hover:text-emerald-600 transition-colors"
+                className="text-gray-600 hover:text-primary transition-colors"
               >
                 About
               </Link>
               <Link
                 href="/contact"
-                className="text-gray-600 hover:text-emerald-600 transition-colors"
+                className="text-gray-600 hover:text-primary transition-colors"
               >
                 Contact
               </Link>
               <Link href="/login">
                 <Button
                   variant="ghost"
-                  className="text-emerald-600 hover:bg-emerald-50"
+                  className="text-primary hover:bg-primary/10"
                 >
                   <LogIn className="mr-2 h-4 w-4" />
                   Login
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                <Button className="bg-primary hover:bg-primary/90 text-white">
                   <UserPlus className="mr-2 h-4 w-4" />
                   Sign Up
                 </Button>
@@ -117,7 +117,6 @@ export default function Home() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="text-gray-600"
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
               >
                 {mobileMenuOpen ? (
@@ -130,52 +129,40 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Mobile Navigation */}
+        {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-emerald-100 shadow-sm px-4 py-4 space-y-3">
-            <Link
-              href="/features"
-              className="block text-gray-700 hover:text-emerald-600"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Features
-            </Link>
-            <Link
-              href="/pricing"
-              className="block text-gray-700 hover:text-emerald-600"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Pricing
-            </Link>
-            <Link
-              href="/about"
-              className="block text-gray-700 hover:text-emerald-600"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              About
-            </Link>
-            <Link
-              href="/contact"
-              className="block text-gray-700 hover:text-emerald-600"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Contact
-            </Link>
-            <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
-              <Button
-                variant="ghost"
-                className="w-full justify-start text-emerald-600"
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              <Link
+                href="/about"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-primary/10"
+                onClick={() => setMobileMenuOpen(false)}
               >
-                <LogIn className="mr-2 h-4 w-4" />
-                Login
-              </Button>
-            </Link>
-            <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-              <Button className="w-full justify-start bg-emerald-600 hover:bg-emerald-700 text-white">
-                <UserPlus className="mr-2 h-4 w-4" />
-                Sign Up
-              </Button>
-            </Link>
+                About
+              </Link>
+              <Link
+                href="/contact"
+                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-primary/10"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Contact
+              </Link>
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+                <Button
+                  variant="ghost"
+                  className="w-full justify-start text-primary hover:bg-primary/10"
+                >
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </Button>
+              </Link>
+              <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
+                <Button className="w-full justify-start bg-primary hover:bg-primary/90 text-white">
+                  <UserPlus className="mr-2 h-4 w-4" />
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
           </div>
         )}
       </nav>
@@ -185,7 +172,7 @@ export default function Home() {
         <div className="flex flex-col md:flex-row items-center py-12 md:py-24">
           {/* Left Content */}
           <div className="md:w-1/2 md:pr-12 mb-10 md:mb-0">
-            <div className="inline-block px-3 py-1 rounded-full bg-emerald-100 text-emerald-800 font-medium text-sm mb-6">
+            <div className="inline-block px-3 py-1 rounded-full bg-primary/10 text-primary font-medium text-sm mb-6">
               Healthcare Simplified
             </div>
             <h1 className="text-4xl md:text-5xl font-bold leading-tight text-gray-900 mb-4">
@@ -194,7 +181,7 @@ export default function Home() {
 
             <div className="space-y-4 md:space-y-0 md:space-x-4 md:flex">
               <Link href="/signup" className="block md:inline-block">
-                <Button className="w-full md:w-auto text-base py-6 px-8 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white transition-all duration-300 shadow-md">
+                <Button className="w-full md:w-auto text-base py-6 px-8 bg-gradient-to-r from-primary to-accent hover:from-primary/90 hover:to-accent/90 text-white transition-all duration-300 shadow-md">
                   <UserPlus className="mr-2 h-5 w-5" />
                   Create Account
                   <ChevronRight className="ml-2 h-5 w-5" />
@@ -204,7 +191,7 @@ export default function Home() {
               <Link href="/auth/roles-signup" className="block md:inline-block">
                 <Button
                   variant="outline"
-                  className="w-full md:w-auto text-base py-6 px-8 border-emerald-200 text-emerald-700 hover:bg-emerald-50 transition-all duration-300"
+                  className="w-full md:w-auto text-base py-6 px-8 border-primary text-primary hover:bg-primary/10 transition-all duration-300"
                 >
                   <Users className="mr-2 h-5 w-5" />
                   Roles Signup
@@ -217,9 +204,7 @@ export default function Home() {
                 {[1, 2, 3, 4].map((i) => (
                   <div
                     key={i}
-                    className={`w-8 h-8 rounded-full border-2 border-white bg-emerald-${
-                      i * 100
-                    } flex items-center justify-center text-xs text-white font-medium`}
+                    className={`w-8 h-8 rounded-full border-2 border-white bg-primary flex items-center justify-center text-xs text-white font-medium`}
                   >
                     {["JD", "SM", "RK", "AL"][i - 1]}
                   </div>
@@ -234,8 +219,8 @@ export default function Home() {
 
           {/* Right Content - Illustrations or images can go here */}
           <div className="md:w-1/2 relative">
-            <div className="absolute top-1/2 -right-4 transform -translate-y-1/2 w-24 h-24 bg-emerald-200 rounded-full opacity-30 blur-xl"></div>
-            <div className="absolute bottom-1/4 -left-8 w-32 h-32 bg-teal-200 rounded-full opacity-30 blur-xl"></div>
+            <div className="absolute top-1/2 -right-4 transform -translate-y-1/2 w-24 h-24 bg-primary/20 rounded-full opacity-30 blur-xl"></div>
+            <div className="absolute bottom-1/4 -left-8 w-32 h-32 bg-accent/20 rounded-full opacity-30 blur-xl"></div>
           </div>
         </div>
       </div>

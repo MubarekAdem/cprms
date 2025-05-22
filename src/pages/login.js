@@ -14,10 +14,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { Loader2, Lock, Mail, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image";
+
+// Ensure all components are imported correctly
+// If any component is undefined, it will cause the "Element type is invalid" error
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -106,7 +109,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-100 to-indigo-200">
+    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/20">
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
           <Card className="w-full max-w-md">
@@ -130,6 +133,7 @@ export default function Login() {
                       name="email"
                       placeholder="m@example.com"
                       className="pl-10"
+                      value={form.email}
                       onChange={handleChange}
                       required
                     />
@@ -145,6 +149,7 @@ export default function Login() {
                       name="password"
                       placeholder="••••••••"
                       className="pl-10 pr-10"
+                      value={form.password}
                       onChange={handleChange}
                       required
                     />
@@ -161,62 +166,50 @@ export default function Login() {
                     </button>
                   </div>
                 </div>
-                <div className="flex justify-end">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox id="remember" />
+                    <Label htmlFor="remember" className="text-sm">
+                      Remember me
+                    </Label>
+                  </div>
                   <Link
                     href="/forgot-password"
-                    className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                    className="text-sm text-primary hover:text-primary/80"
                   >
-                    Forgot Password?
+                    Forgot password?
                   </Link>
                 </div>
-              </CardContent>
-              <CardFooter className="flex flex-col space-y-4">
-                <Button className="w-full" type="submit" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-primary/90"
+                  disabled={isLoading}
+                >
                   {isLoading ? (
                     <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Please
-                      wait
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Logging in...
                     </>
                   ) : (
-                    "Sign In"
+                    "Login"
                   )}
                 </Button>
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <span className="w-full border-t" />
-                  </div>
-                  <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-background px-2 text-muted-foreground">
-                      Or continue with
-                    </span>
-                  </div>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="w-full"
-                  onClick={handleGoogleSignIn}
-                  disabled={isGoogleLoading}
-                >
-                  {isGoogleLoading ? (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  ) : (
-                    <Image
-                      src="/google.svg"
-                      alt="Google"
-                      width={20}
-                      height={20}
-                      className="mr-2"
-                    />
-                  )}
-                  Sign in with Google
-                </Button>
-              </CardFooter>
+              </CardContent>
             </form>
+            <CardFooter className="flex flex-col space-y-4">
+              <div className="text-center text-sm">
+                Don&apos;t have an account?{" "}
+                <Link
+                  href="/signup"
+                  className="text-primary hover:text-primary/80"
+                >
+                  Sign up
+                </Link>
+              </div>
+            </CardFooter>
           </Card>
         </div>
       </div>
     </div>
   );
 }
-//finish login page
