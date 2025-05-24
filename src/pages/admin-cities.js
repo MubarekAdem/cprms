@@ -21,30 +21,100 @@ import {
   CheckCircle,
   Loader2,
   MapPin,
-  MoreHorizontal,
   Plus,
   Search,
-  Trash2,
-  Users,
 } from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
 import { useDelayedLoading } from "@/hooks/use-delayed-loading";
+
+// Static JSON data for Ethiopian cities
+const ethiopianCities = [
+  { city: "Addis Ababa", region: "Addis Ababa (Chartered City)" },
+  { city: "Dire Dawa", region: "Dire Dawa (Chartered City)" },
+  { city: "Mek'ele", region: "Tigray" },
+  { city: "Gondar", region: "Amhara" },
+  { city: "Bahir Dar", region: "Amhara" },
+  { city: "Adama (Nazret)", region: "Oromia" },
+  { city: "Hawassa", region: "Sidama" },
+  { city: "Jimma", region: "Oromia" },
+  { city: "Jijiga", region: "Somali" },
+  { city: "Dessie", region: "Amhara" },
+  { city: "Bishoftu (Debre Zeit)", region: "Oromia" },
+  { city: "Shashamane", region: "Oromia" },
+  {
+    city: "Arba Minch",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Harar", region: "Harari" },
+  { city: "Asosa", region: "Benishangul-Gumuz" },
+  { city: "Gambella", region: "Gambella" },
+  { city: "Semera", region: "Afar" },
+  { city: "Debre Markos", region: "Amhara" },
+  { city: "Debre Berhan", region: "Amhara" },
+  { city: "Kombolcha", region: "Amhara" },
+  {
+    city: "Dilla",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  {
+    city: "Hosaena",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Nekemte", region: "Oromia" },
+  { city: "Ambo", region: "Oromia" },
+  { city: "Woliso", region: "Oromia" },
+  { city: "Sebeta", region: "Oromia" },
+  { city: "Adigrat", region: "Tigray" },
+  { city: "Axum", region: "Tigray" },
+  { city: "Shire (Inda Selassie)", region: "Tigray" },
+  { city: "Lalibela", region: "Amhara" },
+  { city: "Woldia", region: "Amhara" },
+  { city: "Bonga", region: "South West Ethiopia Peoples' Region (SWEPR)" },
+  {
+    city: "Mizan Teferi",
+    region: "South West Ethiopia Peoples' Region (SWEPR)",
+  },
+  {
+    city: "Sawla",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Gode", region: "Somali" },
+  { city: "Kebri Dahar", region: "Somali" },
+  { city: "Asella", region: "Oromia" },
+  { city: "Robe", region: "Oromia" },
+  { city: "Metu", region: "Oromia" },
+  { city: "Yirgalem", region: "Sidama" },
+  { city: "Alemaya", region: "Oromia" },
+  { city: "Mojo", region: "Oromia" },
+  { city: "Ziway", region: "Oromia" },
+  {
+    city: "Butajira",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  {
+    city: "Wolaita Sodo",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Gimbi", region: "Oromia" },
+  { city: "Agaro", region: "Oromia" },
+  { city: "Chiro (Asebe Teferi)", region: "Oromia" },
+  { city: "Finote Selam", region: "Amhara" },
+  { city: "Dejen", region: "Amhara" },
+  { city: "Mota", region: "Amhara" },
+  { city: "Adwa", region: "Tigray" },
+  { city: "Humera", region: "Tigray" },
+  { city: "Debre Tabor", region: "Amhara" },
+  { city: "Burayu", region: "Oromia" },
+  { city: "Hagere Hiwot", region: "Amhara" },
+  {
+    city: "Durame",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Goba", region: "Oromia" },
+  { city: "Meki", region: "Oromia" },
+];
 
 export default function CitiesDashboard() {
   const { data: session, status } = useSession();
@@ -52,8 +122,6 @@ export default function CitiesDashboard() {
   const [cities, setCities] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState(null);
   const [cityForm, setCityForm] = useState({
     name: "",
     code: "",
@@ -71,26 +139,18 @@ export default function CitiesDashboard() {
     }
   }, [session, status, router]);
 
+  // Load cities from JSON
   useEffect(() => {
-    const fetchCities = async () => {
-      setIsLoading(true);
-      try {
-        const res = await fetch("/api/cities");
-        if (!res.ok) throw new Error("Failed to fetch cities");
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setCities(data);
-        } else {
-          throw new Error("Invalid data format");
-        }
-      } catch (error) {
-        toast.error("Error fetching cities: " + error.message);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchCities();
+    setIsLoading(true);
+    // Map JSON to match expected structure (name, code, address)
+    const formattedCities = ethiopianCities.map((city, index) => ({
+      _id: index.toString(), // Generate a unique ID for table keys
+      name: city.city,
+      code: city.city.slice(0, 3).toUpperCase(), // Generate code from first 3 letters
+      address: city.region,
+    }));
+    setCities(formattedCities);
+    setIsLoading(false);
   }, []);
 
   // Filter cities based on search term
@@ -109,23 +169,18 @@ export default function CitiesDashboard() {
     }));
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
-      const res = await fetch("/api/cities", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(cityForm),
-      });
-
-      if (!res.ok) throw new Error("Failed to add city");
-
-      const data = await res.json();
-      setCities((prevCities) => [...prevCities, data.city]);
+      const newCity = {
+        _id: (cities.length + 1).toString(),
+        name: cityForm.name,
+        code: cityForm.code,
+        address: cityForm.address,
+      };
+      setCities((prevCities) => [...prevCities, newCity]);
       setCityForm({ name: "", code: "", address: "" });
       toast.success("City added successfully");
     } catch (error) {
@@ -133,59 +188,6 @@ export default function CitiesDashboard() {
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Delete city
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this city?")) return;
-
-    try {
-      const res = await fetch(`/api/cities/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Failed to delete city");
-      setCities(cities.filter((city) => city._id !== id));
-      toast.success("City deleted successfully");
-    } catch (error) {
-      toast.error("Error deleting city: " + error.message);
-    }
-  };
-
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await fetch(`/api/cities/${selectedCity._id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(selectedCity),
-      });
-
-      if (!res.ok) throw new Error("Failed to update city");
-
-      setCities(
-        cities.map((city) =>
-          city._id === selectedCity._id ? selectedCity : city
-        )
-      );
-      setEditModalOpen(false);
-      setSelectedCity(null);
-      toast.success("City updated successfully");
-    } catch (error) {
-      toast.error("Error updating city: " + error.message);
-    }
-  };
-
-  const handleEditInputChange = (e) => {
-    const { name, value } = e.target;
-    setSelectedCity((prevCity) => ({
-      ...prevCity,
-      [name]: value,
-    }));
-  };
-
-  const handleCloseDialog = () => {
-    setEditModalOpen(false);
-    setSelectedCity(null);
   };
 
   if (showSkeleton) {
@@ -200,7 +202,7 @@ export default function CitiesDashboard() {
       <div className="flex-1 p-6 space-y-6">
         {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="overflow-hidden border-none bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+          <Card className="overflow-hidden border-none bg-gradient-to-br from-primary to-accent text-white shadow-lg">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
                 <MapPin className="mr-2 h-5 w-5" />
@@ -278,9 +280,6 @@ export default function CitiesDashboard() {
                       <TableHead className="font-medium">Name</TableHead>
                       <TableHead className="font-medium">Code</TableHead>
                       <TableHead className="font-medium">Address</TableHead>
-                      <TableHead className="text-right font-medium">
-                        Actions
-                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -300,51 +299,15 @@ export default function CitiesDashboard() {
                               <span>{city.address}</span>
                             </div>
                           </TableCell>
-                          <TableCell className="text-right">
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                >
-                                  <span className="sr-only">Open menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setSelectedCity(city);
-                                    setEditModalOpen(true);
-                                  }}
-                                >
-                                  <MapPin className="mr-2 h-4 w-4" />
-                                  Edit Details
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                  onClick={() => handleDelete(city._id)}
-                                  className="text-red-600 focus:text-red-600"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" />
-                                  Delete City
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </TableCell>
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
+                        <TableCell colSpan={3} className="h-24 text-center">
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>
-                                No cities found matching &quot;{searchTerm}
-                                &quot;
-                              </p>
+                              <p>No cities found matching "{searchTerm}"</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -433,93 +396,6 @@ export default function CitiesDashboard() {
             </form>
           </CardContent>
         </Card>
-
-        <Dialog
-          open={editModalOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSelectedCity(null);
-              setEditModalOpen(false);
-            }
-          }}
-        >
-          <DialogContent
-            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto"
-            onInteractOutside={(e) => {
-              e.preventDefault();
-            }}
-            onEscapeKeyDown={(e) => {
-              e.preventDefault();
-              setSelectedCity(null);
-              setEditModalOpen(false);
-            }}
-          >
-            <DialogHeader>
-              <DialogTitle className="flex items-center text-xl font-semibold text-black">
-                <MapPin className="mr-2 h-5 w-5 text-black" />
-                Edit City
-              </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleEditSubmit} className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name" className="text-black">
-                  City Name
-                </Label>
-                <Input
-                  id="edit-name"
-                  name="name"
-                  value={selectedCity?.name || ""}
-                  onChange={handleEditInputChange}
-                  placeholder="City name"
-                  className="bg-white text-black"
-                  autoFocus
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-code" className="text-black">
-                  City Code
-                </Label>
-                <Input
-                  id="edit-code"
-                  name="code"
-                  value={selectedCity?.code || ""}
-                  onChange={handleEditInputChange}
-                  placeholder="City code"
-                  className="bg-white text-black"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-address" className="text-black">
-                  Address
-                </Label>
-                <Input
-                  id="edit-address"
-                  name="address"
-                  value={selectedCity?.address || ""}
-                  onChange={handleEditInputChange}
-                  placeholder="City address"
-                  className="bg-white text-black"
-                />
-              </div>
-              <DialogFooter className="flex space-x-2 sm:justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCloseDialog}
-                  className="border-black text-black hover:bg-gray-500"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-white text-black hover:bg-gray-300"
-                >
-                  Save Changes
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
       </div>
     </div>
   );

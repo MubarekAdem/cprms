@@ -300,7 +300,7 @@ export default function DoctorsDashboard() {
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
         <div className="grid gap-6 md:grid-cols-3">
-          <Card className="overflow-hidden border-none bg-gradient-to-br from-blue-500 to-indigo-600 text-white shadow-lg">
+          <Card className="overflow-hidden border-none bg-gradient-to-br from-primary to-accent text-white shadow-lg">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
                 <Users className="mr-2 h-5 w-5" />
