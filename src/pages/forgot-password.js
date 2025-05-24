@@ -16,18 +16,25 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Loader2, Mail, KeyRound } from "lucide-react";
 import Link from "next/link";
+
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSendingResetLink, setIsSendingResetLink] = useState(false);
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false);
   const [requiresOTP, setRequiresOTP] = useState(false);
   const [error, setError] = useState("");
   const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
+    const isOtpVerification = requiresOTP;
+    if (isOtpVerification) {
+      setIsVerifyingOtp(true);
+    } else {
+      setIsSendingResetLink(true);
+    }
 
     try {
       const endpoint = requiresOTP
@@ -60,7 +67,11 @@ export default function ForgotPassword() {
       setError(error.message);
       toast.error(error.message);
     } finally {
-      setIsLoading(false);
+      if (isOtpVerification) {
+        setIsVerifyingOtp(false);
+      } else {
+        setIsSendingResetLink(false);
+      }
     }
   };
 
@@ -110,7 +121,7 @@ export default function ForgotPassword() {
                       <Input
                         id="otp"
                         type="text"
-                        placeholder="Enter 4-digit code"
+                        placeholder="Enter 6-digit code"
                         className="pl-10"
                         value={otp}
                         onChange={(e) => setOtp(e.target.value)}
@@ -123,8 +134,25 @@ export default function ForgotPassword() {
                 <Button
                   type="submit"
                   className="w-full bg-primary hover:bg-primary/90"
+                  disabled={isSendingResetLink || isVerifyingOtp}
                 >
-                  {requiresOTP ? "Verify" : "Send Reset Link"}
+                  {requiresOTP ? (
+                    isVerifyingOtp ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Verifying...
+                      </>
+                    ) : (
+                      "Verify"
+                    )
+                  ) : isSendingResetLink ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Reset Link"
+                  )}
                 </Button>
               </CardContent>
             </form>
