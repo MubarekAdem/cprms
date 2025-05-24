@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -39,15 +39,13 @@ import {
   User,
   UserPlus,
   Users,
-  Lock,
 } from "lucide-react";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
+  DialogPanel,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  DialogDescription,
+} from "@headlessui/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -82,6 +80,7 @@ export default function RegistrarsDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const triggerRef = useRef(null);
 
   // Restrict access
   useEffect(() => {
@@ -175,8 +174,8 @@ export default function RegistrarsDashboard() {
   };
 
   // Update registrar
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
+  const handleEditSubmit = async () => {
+    setIsSubmitting(true);
     try {
       const res = await fetch(`/api/registrars/${selectedRegistrar._id}`, {
         method: "PUT",
@@ -196,12 +195,17 @@ export default function RegistrarsDashboard() {
       toast.success("Registrar updated successfully");
     } catch (error) {
       toast.error("Error updating registrar: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleCloseDialog = () => {
     setEditModalOpen(false);
     setSelectedRegistrar(null);
+    if (triggerRef.current) {
+      triggerRef.current.focus();
+    }
   };
 
   // Handle form input changes
@@ -439,8 +443,9 @@ export default function RegistrarsDashboard() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8"
+                                  ref={triggerRef}
+                                  aria-label={`Open menu for ${registrar.name}`}
                                 >
-                                  <span className="sr-only">Open menu</span>
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -470,10 +475,7 @@ export default function RegistrarsDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>
-                                No registrars found matching &quot;{searchTerm}
-                                &quot;
-                              </p>
+                              <p>No registrars found matching "{searchTerm}"</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -668,145 +670,147 @@ export default function RegistrarsDashboard() {
         </Card>
         <Dialog
           open={editModalOpen}
-          onOpenChange={(open) => {
-            if (!open) handleCloseDialog();
-          }}
+          onClose={handleCloseDialog}
+          className="relative z-50"
         >
-          <DialogContent
-            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg"
-            onInteractOutside={(e) => {
-              e.preventDefault();
-            }}
-            onEscapeKeyDown={(e) => {
-              e.preventDefault();
-              handleCloseDialog();
-            }}
-          >
-            <DialogHeader>
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <DialogPanel className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
               <DialogTitle className="flex items-center text-xl font-semibold text-black">
                 <FileText className="mr-2 h-5 w-5 text-black" />
                 Edit Registrar
               </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleEditSubmit} className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-firstName" className="text-black">
-                  First Name
-                </Label>
-                <Input
-                  id="edit-firstName"
-                  name="firstName"
-                  value={selectedRegistrar?.firstName || ""}
-                  onChange={handleEditInputChange}
-                  placeholder="First name"
-                  className="bg-white text-black"
-                  autoFocus
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-lastName" className="text-black">
-                  Last Name
-                </Label>
-                <Input
-                  id="edit-lastName"
-                  name="lastName"
-                  value={selectedRegistrar?.lastName || ""}
-                  onChange={handleEditInputChange}
-                  placeholder="Last name"
-                  className="bg-white text-black"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-email" className="text-black">
-                  Email
-                </Label>
-                <Input
-                  id="edit-email"
-                  name="email"
-                  type="email"
-                  value={selectedRegistrar?.email || ""}
-                  onChange={handleEditInputChange}
-                  placeholder="Email address"
-                  className="bg-white text-black"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-phone" className="text-black">
-                  Phone
-                </Label>
-                <Input
-                  id="edit-phone"
-                  name="phone"
-                  value={selectedRegistrar?.phone || ""}
-                  onChange={handleEditInputChange}
-                  placeholder="Phone number"
-                  className="bg-white text-black"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-password" className="text-black">
-                  Password (leave blank to keep unchanged)
-                </Label>
-                <Input
-                  id="edit-password"
-                  name="password"
-                  type="password"
-                  value={selectedRegistrar?.password || ""}
-                  onChange={handleEditInputChange}
-                  placeholder="••••••••"
-                  className="bg-white text-black"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-hospital" className="text-black">
-                  Hospital
-                </Label>
-                <Select
-                  value={selectedRegistrar?.hospital || ""}
-                  onValueChange={(value) =>
-                    setSelectedRegistrar((prev) => ({
-                      ...prev,
-                      hospital: value,
-                    }))
-                  }
-                >
-                  <SelectTrigger
-                    id="edit-hospital"
+              <DialogDescription className="mt-2 text-sm text-gray-600">
+                Update the details of the registrar below and save your changes.
+              </DialogDescription>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-firstName" className="text-black">
+                    First Name
+                  </Label>
+                  <Input
+                    id="edit-firstName"
+                    name="firstName"
+                    value={selectedRegistrar?.firstName || ""}
+                    onChange={handleEditInputChange}
+                    placeholder="First name"
                     className="bg-white text-black"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lastName" className="text-black">
+                    Last Name
+                  </Label>
+                  <Input
+                    id="edit-lastName"
+                    name="lastName"
+                    value={selectedRegistrar?.lastName || ""}
+                    onChange={handleEditInputChange}
+                    placeholder="Last name"
+                    className="bg-white text-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email" className="text-black">
+                    Email
+                  </Label>
+                  <Input
+                    id="edit-email"
+                    name="email"
+                    type="email"
+                    value={selectedRegistrar?.email || ""}
+                    onChange={handleEditInputChange}
+                    placeholder="Email address"
+                    className="bg-white text-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone" className="text-black">
+                    Phone
+                  </Label>
+                  <Input
+                    id="edit-phone"
+                    name="phone"
+                    value={selectedRegistrar?.phone || ""}
+                    onChange={handleEditInputChange}
+                    placeholder="Phone number"
+                    className="bg-white text-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-password" className="text-black">
+                    Password (leave blank to keep unchanged)
+                  </Label>
+                  <Input
+                    id="edit-password"
+                    name="password"
+                    type="password"
+                    value={selectedRegistrar?.password || ""}
+                    onChange={handleEditInputChange}
+                    placeholder="••••••••"
+                    className="bg-white text-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-hospital" className="text-black">
+                    Hospital
+                  </Label>
+                  <Select
+                    value={selectedRegistrar?.hospital || ""}
+                    onValueChange={(value) =>
+                      setSelectedRegistrar((prev) => ({
+                        ...prev,
+                        hospital: value,
+                      }))
+                    }
                   >
-                    <SelectValue placeholder="Select Hospital" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-black">
-                    {hospitals.map((hospital) => (
-                      <SelectItem
-                        key={hospital._id}
-                        value={hospital.name}
-                        className="text-black"
-                      >
-                        {hospital.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <SelectTrigger
+                      id="edit-hospital"
+                      className="bg-white text-black"
+                    >
+                      <SelectValue placeholder="Select Hospital" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white text-black">
+                      {hospitals.map((hospital) => (
+                        <SelectItem
+                          key={hospital._id}
+                          value={hospital.name}
+                          className="text-black"
+                        >
+                          {hospital.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2 justify-end mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleCloseDialog}
+                    className="border-black text-black hover:bg-gray-500"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleEditSubmit}
+                    className="bg-white text-black hover:bg-gray-300"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
               </div>
-              <DialogFooter className="flex space-x-2 sm:justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleCloseDialog}
-                  className="border-black text-black hover:bg-gray-500"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-white text-black hover:bg-gray-300"
-                >
-                  Save Changes
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
+            </DialogPanel>
+          </div>
         </Dialog>
       </div>
     </div>

@@ -215,7 +215,7 @@ export default function CitiesDashboard() {
             </CardContent>
           </Card>
 
-          <Card className="border-none shadow-md">
+          {/* <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
                 <Building2 className="mr-2 h-5 w-5 text-blue-500" />
@@ -230,9 +230,9 @@ export default function CitiesDashboard() {
                 Partner medical facilities
               </p>
             </CardContent>
-          </Card>
+          </Card> */}
 
-          <Card className="border-none shadow-md">
+          {/* <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
                 <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
@@ -247,7 +247,7 @@ export default function CitiesDashboard() {
                 Fully verified locations
               </p>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Cities List */}

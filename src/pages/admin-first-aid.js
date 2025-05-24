@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -38,16 +38,14 @@ import {
   User,
   UserPlus,
   Users,
-  Lock,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
+  DialogPanel,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  DialogDescription,
+} from "@headlessui/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +82,7 @@ export default function FirstAidDashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const showSkeleton = useDelayedLoading(status === "loading" || isLoading);
+  const triggerRef = useRef(null);
 
   // Restrict access
   useEffect(() => {
@@ -178,8 +177,8 @@ export default function FirstAidDashboard() {
   };
 
   // Update first aid responder
-  const handleEditSubmit = async (e) => {
-    e.preventDefault();
+  const handleEditSubmit = async () => {
+    setIsSubmitting(true);
     try {
       const res = await fetch(`/api/first-aid/${selectedFirstAid._id}`, {
         method: "PUT",
@@ -196,9 +195,15 @@ export default function FirstAidDashboard() {
       if (!res.ok) throw new Error("Failed to update first aid responder");
       await fetchFirstAids();
       setEditModalOpen(false);
+      setSelectedFirstAid(null);
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      }
       toast.success("First aid responder updated successfully");
     } catch (error) {
       toast.error("Error updating first aid responder: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -422,8 +427,9 @@ export default function FirstAidDashboard() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8"
+                                  ref={triggerRef}
+                                  aria-label={`Open menu for ${responder.name}`}
                                 >
-                                  <span className="sr-only">Open menu</span>
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -453,10 +459,7 @@ export default function FirstAidDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>
-                                No responders found matching &quot;{searchTerm}
-                                &quot;
-                              </p>
+                              <p>No responders found matching "{searchTerm}"</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -651,149 +654,160 @@ export default function FirstAidDashboard() {
         </Card>
         <Dialog
           open={editModalOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              setSelectedFirstAid(null);
-              setEditModalOpen(false);
+          onClose={() => {
+            setSelectedFirstAid(null);
+            setEditModalOpen(false);
+            if (triggerRef.current) {
+              triggerRef.current.focus();
             }
           }}
+          className="relative z-50"
         >
-          <DialogContent
-            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto"
-            onInteractOutside={(e) => {
-              e.preventDefault();
-            }}
-            onEscapeKeyDown={(e) => {
-              e.preventDefault();
-              setSelectedFirstAid(null);
-              setEditModalOpen(false);
-            }}
-          >
-            <DialogHeader>
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <DialogPanel className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
               <DialogTitle className="flex items-center text-xl font-semibold text-black">
                 <FileText className="mr-2 h-5 w-5 text-black" />
                 Edit First Aid Responder
               </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleEditSubmit} className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-firstName" className="text-black">
-                  First Name
-                </Label>
-                <Input
-                  id="edit-firstName"
-                  name="firstName"
-                  value={selectedFirstAid?.firstName}
-                  onChange={handleEditChange}
-                  placeholder="First name"
-                  className="bg-white text-black"
-                  autoFocus
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-lastName" className="text-black">
-                  Last Name
-                </Label>
-                <Input
-                  id="edit-lastName"
-                  name="lastName"
-                  value={selectedFirstAid?.lastName}
-                  onChange={handleEditChange}
-                  placeholder="Last name"
-                  className="bg-white text-black"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-email" className="text-black">
-                  Email
-                </Label>
-                <Input
-                  id="edit-email"
-                  name="email"
-                  type="email"
-                  value={selectedFirstAid?.email}
-                  onChange={handleEditChange}
-                  placeholder="Email address"
-                  className="bg-white text-black"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-phone" className="text-black">
-                  Phone
-                </Label>
-                <Input
-                  id="edit-phone"
-                  name="phone"
-                  value={selectedFirstAid?.phone}
-                  onChange={handleEditChange}
-                  placeholder="Phone number"
-                  className="bg-white text-black"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-password" className="text-black">
-                  Password (leave blank to keep unchanged)
-                </Label>
-                <Input
-                  id="edit-password"
-                  name="password"
-                  type="password"
-                  value={selectedFirstAid?.password}
-                  onChange={handleEditChange}
-                  placeholder="••••••••"
-                  className="bg-white text-black"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-hospital" className="text-black">
-                  Hospital
-                </Label>
-                <Select
-                  value={selectedFirstAid?.hospital}
-                  onValueChange={(value) =>
-                    setSelectedFirstAid({
-                      ...selectedFirstAid,
-                      hospital: value,
-                    })
-                  }
-                >
-                  <SelectTrigger
-                    id="edit-hospital"
+              <DialogDescription className="mt-2 text-sm text-gray-600">
+                Update the details of the first aid responder below and save
+                your changes.
+              </DialogDescription>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-firstName" className="text-black">
+                    First Name
+                  </Label>
+                  <Input
+                    id="edit-firstName"
+                    name="firstName"
+                    value={selectedFirstAid?.firstName || ""}
+                    onChange={handleEditChange}
+                    placeholder="First name"
                     className="bg-white text-black"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-lastName" className="text-black">
+                    Last Name
+                  </Label>
+                  <Input
+                    id="edit-lastName"
+                    name="lastName"
+                    value={selectedFirstAid?.lastName || ""}
+                    onChange={handleEditChange}
+                    placeholder="Last name"
+                    className="bg-white text-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-email" className="text-black">
+                    Email
+                  </Label>
+                  <Input
+                    id="edit-email"
+                    name="email"
+                    type="email"
+                    value={selectedFirstAid?.email || ""}
+                    onChange={handleEditChange}
+                    placeholder="Email address"
+                    className="bg-white text-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-phone" className="text-black">
+                    Phone
+                  </Label>
+                  <Input
+                    id="edit-phone"
+                    name="phone"
+                    value={selectedFirstAid?.phone || ""}
+                    onChange={handleEditChange}
+                    placeholder="Phone number"
+                    className="bg-white text-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-password" className="text-black">
+                    Password (leave blank to keep unchanged)
+                  </Label>
+                  <Input
+                    id="edit-password"
+                    name="password"
+                    type="password"
+                    value={selectedFirstAid?.password || ""}
+                    onChange={handleEditChange}
+                    placeholder="••••••••"
+                    className="bg-white text-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-hospital" className="text-black">
+                    Hospital
+                  </Label>
+                  <Select
+                    value={selectedFirstAid?.hospital || ""}
+                    onValueChange={(value) =>
+                      setSelectedFirstAid({
+                        ...selectedFirstAid,
+                        hospital: value,
+                      })
+                    }
                   >
-                    <SelectValue placeholder="Select Hospital" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-black">
-                    {hospitals.map((hospital) => (
-                      <SelectItem
-                        key={hospital._id}
-                        value={hospital.name}
-                        className="text-black"
-                      >
-                        {hospital.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <SelectTrigger
+                      id="edit-hospital"
+                      className="bg-white text-black"
+                    >
+                      <SelectValue placeholder="Select Hospital" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white text-black">
+                      {hospitals.map((hospital) => (
+                        <SelectItem
+                          key={hospital._id}
+                          value={hospital.name}
+                          className="text-black"
+                        >
+                          {hospital.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex space-x-2 justify-end mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setSelectedFirstAid(null);
+                      setEditModalOpen(false);
+                      if (triggerRef.current) {
+                        triggerRef.current.focus();
+                      }
+                    }}
+                    className="border-black text-black hover:bg-gray-500"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleEditSubmit}
+                    className="bg-white text-black hover:bg-gray-300"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
               </div>
-              <DialogFooter className="flex space-x-2 sm:justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditModalOpen(false)}
-                  className="border-black text-black hover:bg-gray-500"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-white text-black hover:bg-gray-300"
-                >
-                  Save Changes
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
+            </DialogPanel>
+          </div>
         </Dialog>
       </div>
     </div>

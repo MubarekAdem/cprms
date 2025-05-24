@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -27,7 +27,6 @@ import {
   Building2,
   CheckCircle,
   FileText,
-  Hospital,
   Loader2,
   Mail,
   MoreHorizontal,
@@ -39,16 +38,14 @@ import {
   User,
   UserPlus,
   Users,
-  Lock,
 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
+  DialogPanel,
   DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  DialogDescription,
+} from "@headlessui/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -83,6 +80,7 @@ export default function DoctorsDashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const triggerRef = useRef(null); // Store reference to DropdownMenuTrigger
 
   // Restrict access
   useEffect(() => {
@@ -238,6 +236,7 @@ export default function DoctorsDashboard() {
 
   // Handle Edit Save
   const handleEditSave = async () => {
+    setIsSubmitting(true);
     try {
       const res = await fetch(`/api/doctors/${editDoctor._id}`, {
         method: "PUT",
@@ -258,8 +257,15 @@ export default function DoctorsDashboard() {
       toast.success("Doctor updated successfully");
       fetchDoctors();
       setIsEditModalOpen(false);
+      setEditDoctor(null);
+      // Restore focus to the trigger button
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      }
     } catch (error) {
       toast.error("Error updating doctor: " + error.message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -426,8 +432,9 @@ export default function DoctorsDashboard() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8"
+                                  ref={triggerRef}
+                                  aria-label={`Open menu for ${doctor.name}`}
                                 >
-                                  <span className="sr-only">Open menu</span>
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -453,11 +460,11 @@ export default function DoctorsDashboard() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center">
+                        <TableCell colSpan={6} className="h-24 text-center">
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No doctors found matching `{searchTerm}`</p>
+                              <p>No doctors found matching "{searchTerm}"</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -650,34 +657,28 @@ export default function DoctorsDashboard() {
             </form>
           </CardContent>
         </Card>
-        {isEditModalOpen && (
-          <Dialog
-            open={isEditModalOpen}
-            onOpenChange={(open) => {
-              if (!open) {
-                setEditDoctor(null);
-                setIsEditModalOpen(false);
-              }
-            }}
-          >
-            <DialogContent
-              className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto"
-              onInteractOutside={(e) => {
-                e.preventDefault();
-              }}
-              onEscapeKeyDown={(e) => {
-                e.preventDefault();
-                setEditDoctor(null);
-                setIsEditModalOpen(false);
-              }}
-            >
-              <DialogHeader>
-                <DialogTitle className="flex items-center text-xl font-semibold text-black">
-                  <FileText className="mr-2 h-5 w-5 text-black" />
-                  Edit Doctor
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleEditSave} className="grid gap-4 py-4">
+        <Dialog
+          open={isEditModalOpen}
+          onClose={() => {
+            setIsEditModalOpen(false);
+            setEditDoctor(null);
+            if (triggerRef.current) {
+              triggerRef.current.focus();
+            }
+          }}
+          className="relative z-50"
+        >
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <DialogPanel className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
+              <DialogTitle className="flex items-center text-xl font-semibold text-black">
+                <User className="mr-2 h-5 w-5 text-black" />
+                Edit Doctor
+              </DialogTitle>
+              <DialogDescription className="mt-2 text-sm text-gray-600">
+                Update the details of the doctor below and save your changes.
+              </DialogDescription>
+              <div className="grid gap-4 py-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-firstName" className="text-black">
                     First Name
@@ -685,7 +686,7 @@ export default function DoctorsDashboard() {
                   <Input
                     id="edit-firstName"
                     name="firstName"
-                    value={editDoctor.firstName}
+                    value={editDoctor?.firstName || ""}
                     onChange={(e) =>
                       setEditDoctor({
                         ...editDoctor,
@@ -704,9 +705,12 @@ export default function DoctorsDashboard() {
                   <Input
                     id="edit-lastName"
                     name="lastName"
-                    value={editDoctor.lastName}
+                    value={editDoctor?.lastName || ""}
                     onChange={(e) =>
-                      setEditDoctor({ ...editDoctor, lastName: e.target.value })
+                      setEditDoctor({
+                        ...editDoctor,
+                        lastName: e.target.value,
+                      })
                     }
                     placeholder="Last name"
                     className="bg-white text-black"
@@ -720,9 +724,12 @@ export default function DoctorsDashboard() {
                     id="edit-email"
                     name="email"
                     type="email"
-                    value={editDoctor.email}
+                    value={editDoctor?.email || ""}
                     onChange={(e) =>
-                      setEditDoctor({ ...editDoctor, email: e.target.value })
+                      setEditDoctor({
+                        ...editDoctor,
+                        email: e.target.value,
+                      })
                     }
                     placeholder="Email address"
                     className="bg-white text-black"
@@ -735,9 +742,12 @@ export default function DoctorsDashboard() {
                   <Input
                     id="edit-phone"
                     name="phone"
-                    value={editDoctor.phone}
+                    value={editDoctor?.phone || ""}
                     onChange={(e) =>
-                      setEditDoctor({ ...editDoctor, phone: e.target.value })
+                      setEditDoctor({
+                        ...editDoctor,
+                        phone: e.target.value,
+                      })
                     }
                     placeholder="Phone number"
                     className="bg-white text-black"
@@ -751,9 +761,12 @@ export default function DoctorsDashboard() {
                     id="edit-password"
                     name="password"
                     type="password"
-                    value={editDoctor.password}
+                    value={editDoctor?.password || ""}
                     onChange={(e) =>
-                      setEditDoctor({ ...editDoctor, password: e.target.value })
+                      setEditDoctor({
+                        ...editDoctor,
+                        password: e.target.value,
+                      })
                     }
                     placeholder="••••••••"
                     className="bg-white text-black"
@@ -764,7 +777,7 @@ export default function DoctorsDashboard() {
                     Hospital
                   </Label>
                   <Select
-                    value={editDoctor.hospital}
+                    value={editDoctor?.hospital || ""}
                     onValueChange={(value) =>
                       setEditDoctor({ ...editDoctor, hospital: value })
                     }
@@ -788,26 +801,40 @@ export default function DoctorsDashboard() {
                     </SelectContent>
                   </Select>
                 </div>
-                <DialogFooter className="flex space-x-2 sm:justify-end">
+                <div className="flex space-x-2 justify-end mt-4">
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => setIsEditModalOpen(false)}
+                    onClick={() => {
+                      setIsEditModalOpen(false);
+                      setEditDoctor(null);
+                      if (triggerRef.current) {
+                        triggerRef.current.focus();
+                      }
+                    }}
                     className="border-black text-black hover:bg-gray-500"
                   >
                     Cancel
                   </Button>
                   <Button
-                    type="submit"
+                    onClick={handleEditSave}
                     className="bg-white text-black hover:bg-gray-300"
+                    disabled={isSubmitting}
                   >
-                    Save Changes
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
                   </Button>
-                </DialogFooter>
-              </form>
-            </DialogContent>
-          </Dialog>
-        )}
+                </div>
+              </div>
+            </DialogPanel>
+          </div>
+        </Dialog>
       </div>
     </div>
   );

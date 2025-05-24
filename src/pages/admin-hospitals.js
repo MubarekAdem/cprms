@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/Navbar";
@@ -38,10 +38,10 @@ import {
 } from "lucide-react";
 import {
   Dialog,
-  DialogContent,
-  DialogHeader,
+  DialogPanel,
   DialogTitle,
-} from "@/components/ui/dialog";
+  DialogDescription,
+} from "@headlessui/react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -160,6 +160,7 @@ export default function HospitalsDashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const showSkeleton = useDelayedLoading(status === "loading" || isLoading);
+  const triggerRef = useRef(null);
 
   // Restrict access
   useEffect(() => {
@@ -233,13 +234,14 @@ export default function HospitalsDashboard() {
       location: "",
       proofDocument: "",
     });
+    if (triggerRef.current) {
+      triggerRef.current.focus();
+    }
   };
 
   // Update Hospital
-  const handleUpdateHospital = async (e) => {
-    e.preventDefault();
+  const handleUpdateHospital = async () => {
     setIsSubmitting(true);
-
     try {
       const res = await fetch(`/api/hospitals/${editHospital.id}`, {
         method: "PUT",
@@ -375,13 +377,12 @@ export default function HospitalsDashboard() {
     return <DashboardSkeleton />;
   }
 
-  if (!session) return null; // Will redirect in useEffect
+  if (!session) return null;
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
-        {/* Stats Cards */}
         <div className="grid gap-6 md:grid-cols-3">
           <Card className="overflow-hidden border-none bg-gradient-to-br from-blue-500 to-cyan-600 text-white shadow-lg">
             <CardHeader className="pb-2">
@@ -392,17 +393,30 @@ export default function HospitalsDashboard() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-bold">{hospitals.length}</div>
-              <p className="mt-1 text-sm opacity-80">
-                Registered medical facilities
+              <p className="mt-1 text-sm opacity-80">Registered facilities</p>
+            </CardContent>
+          </Card>
+          <Card className="border-none shadow-md">
+            <CardHeader className="pb-2">
+              <CardTitle className="flex items-center text-lg font-medium">
+                <CheckCircle className="mr-2 h-5 w-5 text-primary" />
+                Verified Hospitals
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-3xl font-bold">
+                {Math.round(hospitals.length * 0.95)}
+              </div>
+              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                Fully verified credentials
               </p>
             </CardContent>
           </Card>
-
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
                 <MapPin className="mr-2 h-5 w-5 text-blue-500" />
-                Cities Coverage
+                Cities Covered
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -412,26 +426,7 @@ export default function HospitalsDashboard() {
               </p>
             </CardContent>
           </Card>
-
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-lg font-medium">
-                <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
-                Verified Hospitals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {Math.round(hospitals.length * 0.9)}
-              </div>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Fully verified facilities
-              </p>
-            </CardContent>
-          </Card>
         </div>
-
-        {/* Hospitals List */}
         <Card className="border-none shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <CardTitle className="text-xl font-bold">
@@ -510,8 +505,9 @@ export default function HospitalsDashboard() {
                                   variant="ghost"
                                   size="icon"
                                   className="h-8 w-8"
+                                  ref={triggerRef}
+                                  aria-label={`Open menu for ${hospital.name}`}
                                 >
-                                  <span className="sr-only">Open menu</span>
                                   <MoreHorizontal className="h-4 w-4" />
                                 </Button>
                               </DropdownMenuTrigger>
@@ -560,12 +556,10 @@ export default function HospitalsDashboard() {
             )}
           </CardContent>
         </Card>
-
-        {/* Add Hospital Form */}
         <Card className="border-none shadow-md">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-cyan-50 dark:from-blue-900/20 dark:to-cyan-900/20">
+          <CardHeader className="bg-gradient-to-r from-primary/10 to-accent/10">
             <CardTitle className="flex items-center text-xl font-bold">
-              <Building2 className="mr-2 h-5 w-5 text-primary" />
+              <Plus className="mr-2 h-5 w-5 text-primary" />
               Add New Hospital
             </CardTitle>
           </CardHeader>
@@ -578,12 +572,11 @@ export default function HospitalsDashboard() {
                   name="name"
                   value={hospitalForm.name}
                   onChange={handleInputChange}
-                  placeholder="Enter hospital name"
+                  placeholder="Hospital Name"
                   required
                   className="w-full"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="id">Hospital ID</Label>
                 <Input
@@ -591,22 +584,21 @@ export default function HospitalsDashboard() {
                   name="id"
                   value={hospitalForm.id}
                   onChange={handleInputChange}
-                  placeholder="Enter hospital ID"
+                  placeholder="HOSP-12345"
                   required
                   className="w-full"
                 />
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <Select
                   value={hospitalForm.location}
                   onValueChange={(value) =>
-                    setHospitalForm({ ...hospitalForm, location: value })
+                    setHospitalForm((prev) => ({ ...prev, location: value }))
                   }
                 >
                   <SelectTrigger id="location" className="w-full">
-                    <SelectValue placeholder="Select a city" />
+                    <SelectValue placeholder="Select City" />
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((city) => (
@@ -617,7 +609,6 @@ export default function HospitalsDashboard() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label htmlFor="proofDocument">Proof Document</Label>
                 <div className="mt-1">
@@ -632,7 +623,6 @@ export default function HospitalsDashboard() {
                     />
                   </label>
                 </div>
-
                 {isUploading && (
                   <div className="mt-2">
                     <div className="flex items-center justify-between text-xs">
@@ -647,7 +637,6 @@ export default function HospitalsDashboard() {
                     </div>
                   </div>
                 )}
-
                 {hospitalForm.proofDocument && !isUploading && (
                   <div className="mt-2 flex items-center text-sm text-green-600 dark:text-green-400">
                     <CheckCircle className="mr-1 h-4 w-4" />
@@ -655,7 +644,6 @@ export default function HospitalsDashboard() {
                   </div>
                 )}
               </div>
-
               <div className="md:col-span-2 mt-4">
                 <Button
                   type="submit"
@@ -678,119 +666,134 @@ export default function HospitalsDashboard() {
             </form>
           </CardContent>
         </Card>
-
-        {/* Edit Hospital Modal */}
         <Dialog
           open={editModalOpen}
-          onOpenChange={(open) => {
-            if (!open) {
-              setEditHospital(null);
-              setEditModalOpen(false);
-            }
-          }}
+          onClose={closeEditModal}
+          className="relative z-50"
         >
-          <DialogContent
-            className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto"
-            onInteractOutside={(e) => {
-              e.preventDefault();
-            }}
-            onEscapeKeyDown={(e) => {
-              e.preventDefault();
-              setEditHospital(null);
-              setEditModalOpen(false);
-            }}
-          >
-            <DialogHeader>
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <DialogPanel className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
               <DialogTitle className="flex items-center text-xl font-semibold text-black">
-                <Building2 className="mr-2 h-5 w-5 text-black" />
+                <FileText className="mr-2 h-5 w-5 text-black" />
                 Edit Hospital
               </DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleUpdateHospital} className="grid gap-4 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name" className="text-black">
-                  Hospital Name
-                </Label>
-                <Input
-                  id="edit-name"
-                  name="name"
-                  value={hospitalForm.name}
-                  onChange={handleInputChange}
-                  placeholder="Hospital name"
-                  className="bg-white text-black"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-id" className="text-black">
-                  Hospital ID
-                </Label>
-                <Input
-                  id="edit-id"
-                  name="id"
-                  value={hospitalForm.id}
-                  onChange={handleInputChange}
-                  placeholder="Hospital ID"
-                  disabled
-                  className="bg-gray-100 dark:bg-gray-800 text-black"
-                />
-                <p className="text-xs text-gray-500">ID cannot be changed</p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="edit-location" className="text-black">
-                  Location
-                </Label>
-                <Select
-                  value={hospitalForm.location}
-                  onValueChange={(value) =>
-                    setHospitalForm((prev) => ({ ...prev, location: value }))
-                  }
-                >
-                  <SelectTrigger
-                    id="edit-location"
+              <DialogDescription className="mt-2 text-sm text-gray-600">
+                Update the details of the hospital below and save your changes.
+              </DialogDescription>
+              <div className="grid gap-4 py-4">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-name" className="text-black">
+                    Hospital Name
+                  </Label>
+                  <Input
+                    id="edit-name"
+                    name="name"
+                    value={hospitalForm.name}
+                    onChange={handleInputChange}
+                    placeholder="Hospital Name"
                     className="bg-white text-black"
+                    autoFocus
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-id" className="text-black">
+                    Hospital ID
+                  </Label>
+                  <Input
+                    id="edit-id"
+                    name="id"
+                    value={hospitalForm.id}
+                    onChange={handleInputChange}
+                    placeholder="HOSP-12345"
+                    className="bg-white text-black"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-location" className="text-black">
+                    Location
+                  </Label>
+                  <Select
+                    value={hospitalForm.location}
+                    onValueChange={(value) =>
+                      setHospitalForm((prev) => ({ ...prev, location: value }))
+                    }
                   >
-                    <SelectValue placeholder="Select a city" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-white text-black">
-                    {cities.map((city) => (
-                      <SelectItem
-                        key={city._id}
-                        value={city.name}
-                        className="text-black"
+                    <SelectTrigger
+                      id="edit-location"
+                      className="bg-white text-black"
+                    >
+                      <SelectValue placeholder="Select City" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-white text-black">
+                      {cities.map((city) => (
+                        <SelectItem
+                          key={city._id}
+                          value={city.name}
+                          className="text-black"
+                        >
+                          {city.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-proofDocument" className="text-black">
+                    Proof Document
+                  </Label>
+                  <div className="mt-1">
+                    <label className="flex w-full cursor-pointer items-center rounded-md border border-dashed border-gray-300 p-3 text-sm text-gray-500 hover:border-primary/50 dark:border-gray-700">
+                      <Upload className="mr-2 h-4 w-4" />
+                      <span>Upload new document</span>
+                      <input
+                        id="edit-proofDocument"
+                        type="file"
+                        className="sr-only"
+                        onChange={handleFileUpload}
+                      />
+                    </label>
+                  </div>
+                  {hospitalForm.proofDocument && (
+                    <div className="mt-2 flex items-center text-sm text-blue-600 dark:text-blue-400">
+                      <FileText className="mr-1 h-4 w-4" />
+                      <a
+                        href={hospitalForm.proofDocument}
+                        target="_blank"
+                        rel="noopener noreferrer"
                       >
-                        {city.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex space-x-2 justify-end mt-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setEditModalOpen(false)}
-                  className="border-black text-black hover:bg-gray-500"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  type="submit"
-                  className="bg-white text-black hover:bg-gray-300"
-                >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
-                    </>
-                  ) : (
-                    "Save Changes"
+                        View Current Document
+                      </a>
+                    </div>
                   )}
-                </Button>
+                </div>
+                <div className="flex space-x-2 justify-end mt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={closeEditModal}
+                    className="border-black text-black hover:bg-gray-500"
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handleUpdateHospital}
+                    className="bg-white text-black hover:bg-gray-300"
+                    disabled={isSubmitting || isUploading}
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      "Save Changes"
+                    )}
+                  </Button>
+                </div>
               </div>
-            </form>
-          </DialogContent>
+            </DialogPanel>
+          </div>
         </Dialog>
       </div>
     </div>
