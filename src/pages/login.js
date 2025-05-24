@@ -29,9 +29,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
-
-// Ensure all components are imported correctly
-// If any component is undefined, it will cause the "Element type is invalid" error
+import Image from "next/image";
 
 export default function Login() {
   const [form, setForm] = useState({ email: "", password: "" });
@@ -308,8 +306,38 @@ export default function Login() {
               </CardContent>
             </form>
             <CardFooter className="flex flex-col space-y-4">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full"
+                onClick={handleGoogleSignIn}
+                disabled={isGoogleLoading}
+              >
+                {isGoogleLoading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Image
+                    src="/google.svg"
+                    alt="Google"
+                    width={20}
+                    height={20}
+                    className="mr-2"
+                  />
+                )}
+                Sign in with Google
+              </Button>
               <div className="text-center text-sm">
-                Don&apos;t have an account?{" "}
+                Don't have an account?{" "}
                 <Link
                   href="/signup"
                   className="text-primary hover:text-primary/80"
