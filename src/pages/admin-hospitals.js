@@ -41,7 +41,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -54,6 +53,93 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
 import { useDelayedLoading } from "@/hooks/use-delayed-loading";
+
+// Static JSON data for Ethiopian cities
+const ethiopianCities = [
+  { city: "Addis Ababa", region: "Addis Ababa (Chartered City)" },
+  { city: "Dire Dawa", region: "Dire Dawa (Chartered City)" },
+  { city: "Mek'ele", region: "Tigray" },
+  { city: "Gondar", region: "Amhara" },
+  { city: "Bahir Dar", region: "Amhara" },
+  { city: "Adama (Nazret)", region: "Oromia" },
+  { city: "Hawassa", region: "Sidama" },
+  { city: "Jimma", region: "Oromia" },
+  { city: "Jijiga", region: "Somali" },
+  { city: "Dessie", region: "Amhara" },
+  { city: "Bishoftu (Debre Zeit)", region: "Oromia" },
+  { city: "Shashamane", region: "Oromia" },
+  {
+    city: "Arba Minch",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Harar", region: "Harari" },
+  { city: "Asosa", region: "Benishangul-Gumuz" },
+  { city: "Gambella", region: "Gambella" },
+  { city: "Semera", region: "Afar" },
+  { city: "Debre Markos", region: "Amhara" },
+  { city: "Debre Berhan", region: "Amhara" },
+  { city: "Kombolcha", region: "Amhara" },
+  {
+    city: "Dilla",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  {
+    city: "Hosaena",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Nekemte", region: "Oromia" },
+  { city: "Ambo", region: "Oromia" },
+  { city: "Woliso", region: "Oromia" },
+  { city: "Sebeta", region: "Oromia" },
+  { city: "Adigrat", region: "Tigray" },
+  { city: "Axum", region: "Tigray" },
+  { city: "Shire (Inda Selassie)", region: "Tigray" },
+  { city: "Lalibela", region: "Amhara" },
+  { city: "Woldia", region: "Amhara" },
+  { city: "Bonga", region: "South West Ethiopia Peoples' Region (SWEPR)" },
+  {
+    city: "Mizan Teferi",
+    region: "South West Ethiopia Peoples' Region (SWEPR)",
+  },
+  {
+    city: "Sawla",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Gode", region: "Somali" },
+  { city: "Kebri Dahar", region: "Somali" },
+  { city: "Asella", region: "Oromia" },
+  { city: "Robe", region: "Oromia" },
+  { city: "Metu", region: "Oromia" },
+  { city: "Yirgalem", region: "Sidama" },
+  { city: "Alemaya", region: "Oromia" },
+  { city: "Mojo", region: "Oromia" },
+  { city: "Ziway", region: "Oromia" },
+  {
+    city: "Butajira",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  {
+    city: "Wolaita Sodo",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Gimbi", region: "Oromia" },
+  { city: "Agaro", region: "Oromia" },
+  { city: "Chiro (Asebe Teferi)", region: "Oromia" },
+  { city: "Finote Selam", region: "Amhara" },
+  { city: "Dejen", region: "Amhara" },
+  { city: "Mota", region: "Amhara" },
+  { city: "Adwa", region: "Tigray" },
+  { city: "Humera", region: "Tigray" },
+  { city: "Debre Tabor", region: "Amhara" },
+  { city: "Burayu", region: "Oromia" },
+  { city: "Hagere Hiwot", region: "Amhara" },
+  {
+    city: "Durame",
+    region: "Southern Nations, Nationalities, and Peoples' Region (SNNPR)",
+  },
+  { city: "Goba", region: "Oromia" },
+  { city: "Meki", region: "Oromia" },
+];
 
 export default function HospitalsDashboard() {
   const { data: session, status } = useSession();
@@ -84,23 +170,14 @@ export default function HospitalsDashboard() {
     }
   }, [session, status, router]);
 
-  // Fetch cities
+  // Load cities from JSON
   useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        const res = await fetch("/api/cities");
-        if (!res.ok) throw new Error("Failed to fetch cities");
-        const data = await res.json();
-        if (Array.isArray(data)) {
-          setCities(data);
-        } else {
-          throw new Error("Invalid data format");
-        }
-      } catch (error) {
-        toast.error("Error fetching cities: " + error.message);
-      }
-    };
-    fetchCities();
+    // Map JSON to match expected structure (name)
+    const formattedCities = ethiopianCities.map((city, index) => ({
+      _id: index.toString(),
+      name: city.city,
+    }));
+    setCities(formattedCities);
   }, []);
 
   // Fetch hospitals
@@ -462,14 +539,11 @@ export default function HospitalsDashboard() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
+                        <TableCell colSpan={5} className="h-24 text-center">
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>
-                                No hospitals found matching &quot;{searchTerm}
-                                &quot;
-                              </p>
+                              <p>No hospitals found matching "{searchTerm}"</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -536,7 +610,7 @@ export default function HospitalsDashboard() {
                   </SelectTrigger>
                   <SelectContent>
                     {cities.map((city) => (
-                      <SelectItem key={city.id || city._id} value={city.name}>
+                      <SelectItem key={city._id} value={city.name}>
                         {city.name}
                       </SelectItem>
                     ))}
@@ -682,7 +756,7 @@ export default function HospitalsDashboard() {
                   <SelectContent className="bg-white text-black">
                     {cities.map((city) => (
                       <SelectItem
-                        key={city.id || city._id}
+                        key={city._id}
                         value={city.name}
                         className="text-black"
                       >
@@ -693,7 +767,7 @@ export default function HospitalsDashboard() {
                 </Select>
               </div>
 
-              <DialogFooter className="flex space-x-2 sm:justify-end">
+              <div className="flex space-x-2 justify-end mt-4">
                 <Button
                   variant="outline"
                   onClick={() => setEditModalOpen(false)}
@@ -714,7 +788,7 @@ export default function HospitalsDashboard() {
                     "Save Changes"
                   )}
                 </Button>
-              </DialogFooter>
+              </div>
             </form>
           </DialogContent>
         </Dialog>
