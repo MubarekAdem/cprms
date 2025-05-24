@@ -499,18 +499,6 @@ export default function Home() {
               >
                 Privacy
               </Link>
-              <Link
-                href="/terms"
-                className="text-sm text-gray-400 hover:text-primary"
-              >
-                Terms
-              </Link>
-              <Link
-                href="#contact"
-                className="text-sm text-gray-400 hover:text-primary"
-              >
-                Contact
-              </Link>
             </div>
           </div>
         </div>
