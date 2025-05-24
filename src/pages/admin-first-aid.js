@@ -729,7 +729,7 @@ export default function FirstAidDashboard() {
                     className="bg-white text-black"
                   />
                 </div>
-                <div className="space-y-2">
+                {/* <div className="space-y-2">
                   <Label htmlFor="edit-password" className="text-black">
                     Password (leave blank to keep unchanged)
                   </Label>
@@ -742,7 +742,7 @@ export default function FirstAidDashboard() {
                     placeholder="••••••••"
                     className="bg-white text-black"
                   />
-                </div>
+                </div> */}
                 <div className="space-y-2">
                   <Label htmlFor="edit-hospital" className="text-black">
                     Hospital
