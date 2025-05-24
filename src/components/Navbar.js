@@ -110,7 +110,7 @@ export default function Navbar() {
   ];
 
   const defaultNavItems = [
-    { icon: LayoutDashboard, label: "NOTIFICATIONS", href: "/notifications" },
+    // { icon: LayoutDashboard, label: "NOTIFICATIONS", href: "/notifications" },
     { icon: User, label: "PROFILE", href: "/profile" },
   ];
 
