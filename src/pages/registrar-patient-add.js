@@ -103,9 +103,10 @@ export default function RegistrarPatientAdd() {
           console.log("Registrar data:", data);
           const registrar = data.find((r) => r.email === session.user.email);
           if (registrar) {
+            console.log("Found registrar:", registrar);
             setFormData((prev) => ({
               ...prev,
-              hospitalName: registrar.hospital,
+              hospitalName: registrar.hospital || "Unknown Hospital",
               registeredBy:
                 registrar.name || session.user.name || "Unknown Registrar",
               name: decodeURIComponent(name || prev.name),
@@ -114,7 +115,6 @@ export default function RegistrarPatientAdd() {
                 ? decodeURIComponent(birthDate)
                 : prev.rawBirthDate,
             }));
-            console.log("Updated formData:", formData);
           } else {
             console.warn("No registrar found for email:", session.user.email);
             toast.warning(
@@ -148,6 +148,9 @@ export default function RegistrarPatientAdd() {
         id,
         birthDate,
       });
+      if (!id || !birthDate) {
+        toast.warning("Missing national ID or birth date from QR scan.");
+      }
       setFormData((prev) => ({
         ...prev,
         name: name ? decodeURIComponent(name) : prev.name,
@@ -185,6 +188,44 @@ export default function RegistrarPatientAdd() {
     e.preventDefault();
     if (formData.password !== formData.repeatPassword) {
       toast.error("Passwords do not match.");
+      return;
+    }
+
+    // Validate required fields
+    const requiredFields = {
+      nationalId: formData.rawId,
+      diseaseName: formData.diseaseName,
+      diseaseDescription: formData.diseaseDescription,
+      medication: formData.medication,
+      hospitalName: formData.hospitalName,
+      doctorName: formData.doctorName,
+    };
+    const missingFields = Object.keys(requiredFields).filter(
+      (key) => !requiredFields[key]
+    );
+
+    // Additional fields for new patients
+    const newPatientFields = {
+      name: formData.name,
+      birthDate: formData.rawBirthDate,
+      phone: formData.phone,
+      address: formData.address,
+      gender: formData.gender,
+      emergencyNumber: formData.emergencyNumber,
+      bloodType: formData.bloodType,
+      password: formData.password,
+    };
+    const missingNewPatientFields = patientExists
+      ? []
+      : Object.keys(newPatientFields).filter((key) => !newPatientFields[key]);
+
+    if (missingFields.length > 0 || missingNewPatientFields.length > 0) {
+      toast.error(
+        `Please fill in all required fields: ${[
+          ...missingFields,
+          ...missingNewPatientFields,
+        ].join(", ")}`
+      );
       return;
     }
 
@@ -241,61 +282,67 @@ export default function RegistrarPatientAdd() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">Name *</Label>
                   <Input
                     id="name"
                     name="name"
                     value={formData.name || ""}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="rawId">National ID</Label>
+                  <Label htmlFor="rawId">National ID *</Label>
                   <Input
                     id="rawId"
                     name="rawId"
                     value={formData.rawId || ""}
                     onChange={handleInputChange}
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="rawBirthDate">Birth Date</Label>
+                  <Label htmlFor="rawBirthDate">Birth Date *</Label>
                   <Input
                     id="rawBirthDate"
                     name="rawBirthDate"
                     value={formData.rawBirthDate || ""}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">Phone *</Label>
                   <Input
                     id="phone"
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="address">Address</Label>
+                  <Label htmlFor="address">Address *</Label>
                   <Input
                     id="address"
                     name="address"
                     value={formData.address}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="gender">Gender</Label>
+                  <Label htmlFor="gender">Gender *</Label>
                   <Select
                     name="gender"
                     value={formData.gender}
                     onValueChange={(value) =>
                       setFormData({ ...formData, gender: value })
                     }
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select gender" />
@@ -307,22 +354,24 @@ export default function RegistrarPatientAdd() {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="emergencyNumber">Emergency Number</Label>
+                  <Label htmlFor="emergencyNumber">Emergency Number *</Label>
                   <Input
                     id="emergencyNumber"
                     name="emergencyNumber"
                     value={formData.emergencyNumber}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="bloodType">Blood Type</Label>
+                  <Label htmlFor="bloodType">Blood Type *</Label>
                   <Select
                     name="bloodType"
                     value={formData.bloodType}
                     onValueChange={(value) =>
                       setFormData({ ...formData, bloodType: value })
                     }
+                    required
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select blood type" />
@@ -348,36 +397,39 @@ export default function RegistrarPatientAdd() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="diseaseName">Disease Name</Label>
+                  <Label htmlFor="diseaseName">Disease Name *</Label>
                   <Input
                     id="diseaseName"
                     name="diseaseName"
                     value={formData.diseaseName}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="diseaseDescription">
-                    Disease Description
+                    Disease Description *
                   </Label>
                   <Input
                     id="diseaseDescription"
                     name="diseaseDescription"
                     value={formData.diseaseDescription}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="medication">Medication</Label>
+                  <Label htmlFor="medication">Medication *</Label>
                   <Input
                     id="medication"
                     name="medication"
                     value={formData.medication}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dateAdded">Date Added</Label>
+                  <Label htmlFor="dateAdded">Date Added *</Label>
                   <Input
                     id="dateAdded"
                     name="dateAdded"
@@ -385,55 +437,61 @@ export default function RegistrarPatientAdd() {
                     value={formData.dateAdded}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Password *</Label>
                   <Input
                     id="password"
                     name="password"
                     type="password"
                     value={formData.password}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="repeatPassword">Repeat Password</Label>
+                  <Label htmlFor="repeatPassword">Repeat Password *</Label>
                   <Input
                     id="repeatPassword"
                     name="repeatPassword"
                     type="password"
                     value={formData.repeatPassword}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="hospitalName">Hospital Name</Label>
+                  <Label htmlFor="hospitalName">Hospital Name *</Label>
                   <Input
                     id="hospitalName"
                     name="hospitalName"
                     value={formData.hospitalName}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="doctorName">Doctor Name</Label>
+                  <Label htmlFor="doctorName">Doctor Name *</Label>
                   <Input
                     id="doctorName"
                     name="doctorName"
                     value={formData.doctorName}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="registeredBy">Registrar's Name</Label>
+                  <Label htmlFor="registeredBy">Registrar's Name *</Label>
                   <Input
                     id="registeredBy"
                     name="registeredBy"
                     value={formData.registeredBy}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
               </div>
@@ -444,9 +502,7 @@ export default function RegistrarPatientAdd() {
                 >
                   Scan QR Code
                 </Button>
-                <Button type="submit" onClick={handleSubmit}>
-                  Register Patient
-                </Button>
+                <Button type="submit">Register Patient</Button>
               </CardFooter>
             </form>
           </CardContent>

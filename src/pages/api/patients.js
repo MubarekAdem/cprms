@@ -38,31 +38,45 @@ export default async function handler(req, res) {
         registrarHospital,
       } = req.body;
 
-      if (
-        !nationalId ||
-        !diseaseName ||
-        !diseaseDescription ||
-        !medication ||
-        !hospitalName ||
-        !doctorName
-      ) {
-        return res.status(400).json({ error: "Missing required fields" });
+      // Validate required fields
+      const requiredFields = {
+        nationalId,
+        diseaseName,
+        diseaseDescription,
+        medication,
+        hospitalName,
+        doctorName,
+      };
+      const missingFields = Object.keys(requiredFields).filter(
+        (key) => !requiredFields[key]
+      );
+      if (missingFields.length > 0) {
+        return res.status(400).json({
+          error: `Missing required fields: ${missingFields.join(", ")}`,
+        });
       }
 
       let patient = await Patient.findOne({ nationalId });
 
       if (!patient) {
-        if (
-          !birthDate ||
-          !phone ||
-          !address ||
-          !gender ||
-          !emergencyNumber ||
-          !bloodType ||
-          !password
-        ) {
+        const newPatientFields = {
+          name,
+          birthDate,
+          phone,
+          address,
+          gender,
+          emergencyNumber,
+          bloodType,
+          password,
+        };
+        const missingNewPatientFields = Object.keys(newPatientFields).filter(
+          (key) => !newPatientFields[key]
+        );
+        if (missingNewPatientFields.length > 0) {
           return res.status(400).json({
-            error: "Missing required fields for new patient registration",
+            error: `Missing required fields for new patient registration: ${missingNewPatientFields.join(
+              ", "
+            )}`,
           });
         }
 
