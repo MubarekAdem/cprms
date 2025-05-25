@@ -246,7 +246,7 @@ export default function ProfilePage() {
 
   if (status === "loading" || isLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-white">
+      <div className="flex items-center justify-center min-h-screen dark:bg-gray-900 bg-white">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -257,7 +257,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       <div className="container mx-auto py-10">
         <div className="grid gap-6">
           <div className="flex items-center space-x-4">
@@ -282,20 +282,20 @@ export default function ProfilePage() {
               </div>
             </label>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold dark:text-white text-gray-900">
                 {userData.firstName} {userData.lastName}
               </h1>
-              <p className="text-gray-600 flex items-center">
+              <p className="dark:text-gray-300 text-gray-600 flex items-center">
                 <Mail className="h-4 w-4 mr-2 text-primary" />
                 {userData.email}
               </p>
               {isUploading && (
                 <div className="mt-2">
-                  <div className="flex items-center justify-between text-xs">
+                  <div className="flex items-center justify-between text-xs dark:text-gray-300">
                     <span>Uploading...</span>
                     <span>{uploadProgress}%</span>
                   </div>
-                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-gray-200">
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full dark:bg-gray-700 bg-gray-200">
                     <div
                       className="h-full bg-primary transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}
@@ -304,7 +304,7 @@ export default function ProfilePage() {
                 </div>
               )}
               {userData.profilePicture && !isUploading && (
-                <div className="mt-2 flex items-center text-sm text-green-600">
+                <div className="mt-2 flex items-center text-sm text-green-600 dark:text-green-400">
                   <CheckCircle className="mr-1 h-4 w-4" />
                   Profile picture uploaded
                 </div>
@@ -312,13 +312,13 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          <Card className="border shadow-lg">
-            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10">
-              <CardTitle className="flex items-center text-xl font-bold text-gray-900">
+          <Card className="border dark:border-gray-700 shadow-lg dark:bg-gray-900/50 bg-white/50 backdrop-blur-sm">
+            <CardHeader className="bg-gradient-to-r from-primary/5 to-primary/10 dark:from-primary/10 dark:to-primary/20">
+              <CardTitle className="flex items-center text-xl font-bold dark:text-white text-gray-900">
                 <User className="h-5 w-5 mr-2 text-primary" />
                 Personal Information
               </CardTitle>
-              <CardDescription className="text-gray-600">
+              <CardDescription className="dark:text-gray-400 text-gray-600">
                 Your personal information on the platform
               </CardDescription>
             </CardHeader>
@@ -334,6 +334,7 @@ export default function ProfilePage() {
                         value={formData.firstName}
                         onChange={handleInputChange}
                         required
+                        className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -344,6 +345,7 @@ export default function ProfilePage() {
                         value={formData.lastName}
                         onChange={handleInputChange}
                         required
+                        className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -356,6 +358,7 @@ export default function ProfilePage() {
                         onChange={handleInputChange}
                         required
                         disabled
+                        className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                       />
                     </div>
                     <div className="space-y-2">
@@ -365,6 +368,7 @@ export default function ProfilePage() {
                         name="phone"
                         value={formData.phone}
                         onChange={handleInputChange}
+                        className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                       />
                     </div>
                   </div>
@@ -374,6 +378,7 @@ export default function ProfilePage() {
                       type="button"
                       variant="outline"
                       onClick={() => setIsEditing(false)}
+                      className="dark:border-gray-700"
                     >
                       Cancel
                     </Button>
@@ -382,32 +387,38 @@ export default function ProfilePage() {
               ) : (
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm font-medium text-gray-700">
+                    <div className="flex items-center text-sm font-medium dark:text-gray-300 text-gray-700">
                       <User className="h-4 w-4 mr-2 text-primary" />
                       First Name
                     </div>
-                    <div className="text-gray-900">{userData.firstName}</div>
+                    <div className="dark:text-white text-gray-900">
+                      {userData.firstName}
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm font-medium text-gray-700">
+                    <div className="flex items-center text-sm font-medium dark:text-gray-300 text-gray-700">
                       <User className="h-4 w-4 mr-2 text-primary" />
                       Last Name
                     </div>
-                    <div className="text-gray-900">{userData.lastName}</div>
+                    <div className="dark:text-white text-gray-900">
+                      {userData.lastName}
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm font-medium text-gray-700">
+                    <div className="flex items-center text-sm font-medium dark:text-gray-300 text-gray-700">
                       <Mail className="h-4 w-4 mr-2 text-primary" />
                       Email
                     </div>
-                    <div className="text-gray-900">{userData.email}</div>
+                    <div className="dark:text-white text-gray-900">
+                      {userData.email}
+                    </div>
                   </div>
                   <div className="space-y-2">
-                    <div className="flex items-center text-sm font-medium text-gray-700">
+                    <div className="flex items-center text-sm font-medium dark:text-gray-300 text-gray-700">
                       <Phone className="h-4 w-4 mr-2 text-primary" />
                       Phone Number
                     </div>
-                    <div className="text-gray-900">
+                    <div className="dark:text-white text-gray-900">
                       {userData.phone || "Not provided"}
                     </div>
                   </div>

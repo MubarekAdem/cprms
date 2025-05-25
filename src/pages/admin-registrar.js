@@ -508,7 +508,7 @@ export default function RegistrarsDashboard() {
                   name="firstName"
                   value={registrarForm.firstName}
                   onChange={handleInputChange}
-                  placeholder="John"
+                  placeholder="Abebe"
                   required
                   className="w-full"
                 />
@@ -520,7 +520,7 @@ export default function RegistrarsDashboard() {
                   name="lastName"
                   value={registrarForm.lastName}
                   onChange={handleInputChange}
-                  placeholder="Doe"
+                  placeholder="Kebede"
                   required
                   className="w-full"
                 />

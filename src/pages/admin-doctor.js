@@ -497,7 +497,7 @@ export default function DoctorsDashboard() {
                   name="firstName"
                   value={doctorForm.firstName}
                   onChange={handleInputChange}
-                  placeholder="John"
+                  placeholder="Abebe"
                   required
                   className="w-full"
                 />
@@ -509,7 +509,7 @@ export default function DoctorsDashboard() {
                   name="lastName"
                   value={doctorForm.lastName}
                   onChange={handleInputChange}
-                  placeholder="Doe"
+                  placeholder="Kebede"
                   required
                   className="w-full"
                 />

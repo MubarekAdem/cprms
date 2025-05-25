@@ -319,7 +319,7 @@ export default function Signup() {
                           <Input
                             id="firstName"
                             name="firstName"
-                            placeholder="John"
+                            placeholder="Abebe"
                             className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                             value={form.firstName}
                             onChange={handleChange}
@@ -334,7 +334,7 @@ export default function Signup() {
                           <Input
                             id="lastName"
                             name="lastName"
-                            placeholder="Doe"
+                            placeholder="Kebede"
                             className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                             value={form.lastName}
                             onChange={handleChange}
