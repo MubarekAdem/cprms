@@ -60,7 +60,7 @@ export const authOptions = {
   ],
   callbacks: {
     async signIn({ user, account, profile }) {
-      console.log("SignIn callback:", { user, account, profile });
+      // console.log("SignIn callback:", { user, account, profile });
 
       if (account?.provider === "google") {
         try {
@@ -81,7 +81,7 @@ export const authOptions = {
             // Use existing user's role
             user.role = existingUser.role;
             user.id = existingUser._id;
-            console.log("Found existing user:", existingUser);
+            // console.log("Found existing user:", existingUser);
           } else {
             // Create new user if doesn't exist
             const newUser = await User.create({
@@ -91,21 +91,21 @@ export const authOptions = {
               phone: user.phone || "",
               role: "None", // Set default role for new users
             });
-            console.log("Created new user:", newUser);
+            // console.log("Created new user:", newUser);
             user.role = "None";
             user.id = newUser._id;
           }
 
           return true;
         } catch (error) {
-          console.error("Error during Google sign in:", error);
+          // console.error("Error during Google sign in:", error);
           return false;
         }
       }
       return true;
     },
     async jwt({ token, user, account, profile }) {
-      console.log("JWT callback - Input:", { token, user, account, profile });
+      // console.log("JWT callback - Input:", { token, user, account, profile });
 
       if (user) {
         token.role = user.role;
@@ -118,18 +118,18 @@ export const authOptions = {
         }
       }
 
-      console.log("JWT callback - Output token:", token);
+      // console.log("JWT callback - Output token:", token);
       return token;
     },
     async session({ session, token, user }) {
-      console.log("Session callback - Input:", { session, token, user });
+      // console.log("Session callback - Input:", { session, token, user });
 
       if (token) {
         session.user.role = token.role;
         session.user.id = token.id;
       }
 
-      console.log("Session callback - Output session:", session);
+      // console.log("Session callback - Output session:", session);
       return session;
     },
   },

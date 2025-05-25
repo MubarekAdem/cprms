@@ -1,6 +1,8 @@
 import { connectToDB } from "@/lib/mongodb";
 import Registrar from "@/models/Registrar";
+import User from "@/models/User";
 import { ObjectId } from "mongodb";
+import bcrypt from "bcrypt";
 
 export default async function handler(req, res) {
   await connectToDB();
@@ -11,33 +13,96 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "Invalid registrar ID" });
   }
 
-  try {
-    if (req.method === "PUT") {
-      // Update registrar details
-      const updatedRegistrar = await Registrar.findByIdAndUpdate(id, req.body, {
-        new: true,
-      });
+  if (req.method === "PUT") {
+    try {
+      const { firstName, lastName, email, phone, password, hospital } =
+        req.body;
+
+      // Validate required fields
+      if (!firstName || !lastName || !email || !phone || !hospital) {
+        return res.status(400).json({ error: "Missing required fields" });
+      }
+
+      // Prepare update data for Registrar collection
+      const updateData = {
+        name: `${firstName} ${lastName}`,
+        email,
+        phone,
+        hospital,
+      };
+
+      // Prepare update data for User collection
+      let userUpdateData = { firstName, lastName, email, phone };
+
+      // Hash password if provided
+      if (password) {
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        userUpdateData.password = hashedPassword;
+      }
+
+      // Update Registrar collection
+      const updatedRegistrar = await Registrar.findByIdAndUpdate(
+        id,
+        updateData,
+        {
+          new: true,
+        }
+      );
+
       if (!updatedRegistrar) {
         return res.status(404).json({ error: "Registrar not found" });
       }
-      return res.status(200).json({ registrar: updatedRegistrar });
-    }
 
-    if (req.method === "DELETE") {
-      // Delete registrar
-      const deletedRegistrar = await Registrar.findByIdAndDelete(id);
-      if (!deletedRegistrar) {
+      // Update User collection
+      try {
+        const updatedUser = await User.findOneAndUpdate(
+          { email },
+          userUpdateData,
+          { new: true }
+        );
+        if (!updatedUser) {
+          console.warn(`User with email ${email} not found for update`);
+        }
+      } catch (userError) {
+        console.error("User update failed:", userError);
+        return res
+          .status(500)
+          .json({ error: `Failed to update user: ${userError.message}` });
+      }
+
+      res.status(200).json(updatedRegistrar);
+    } catch (error) {
+      console.error("Error updating registrar:", error);
+      res.status(500).json({ error: "Error updating registrar" });
+    }
+  } else if (req.method === "DELETE") {
+    try {
+      const registrar = await Registrar.findById(id);
+      if (!registrar) {
         return res.status(404).json({ error: "Registrar not found" });
       }
-      return res
-        .status(200)
-        .json({ message: "Registrar deleted successfully" });
-    }
 
+      // Delete from Registrar collection
+      await Registrar.findByIdAndDelete(id);
+
+      // Delete from User collection
+      const deletedUser = await User.findOneAndDelete({
+        email: registrar.email,
+      });
+      if (!deletedUser) {
+        console.warn(
+          `User with email ${registrar.email} not found for deletion`
+        );
+      }
+
+      res.status(200).json({ message: "Registrar deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting registrar:", error);
+      res.status(500).json({ error: "Error deleting registrar" });
+    }
+  } else {
     res.setHeader("Allow", ["PUT", "DELETE"]);
-    return res.status(405).end(`Method ${req.method} Not Allowed`);
-  } catch (error) {
-    console.error("Error handling registrar:", error);
-    res.status(500).json({ error: "Internal Server Error" });
+    res.status(405).json({ error: `Method ${req.method} not allowed` });
   }
 }
