@@ -41,6 +41,12 @@ export default function Signup() {
     otp: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isNavLoading, setIsNavLoading] = useState({
+    about: false,
+    contact: false,
+    login: false,
+    signup: false,
+  });
   const [requiresOTP, setRequiresOTP] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -52,7 +58,6 @@ export default function Signup() {
       ...prevForm,
       [e.target.name]: e.target.value,
     }));
-    // Clear error when user types
     if (error) setError("");
   };
 
@@ -89,6 +94,16 @@ export default function Signup() {
     }
   };
 
+  const handleNavClick = async (path, key) => {
+    setIsNavLoading((prev) => ({ ...prev, [key]: true }));
+    try {
+      await router.push(path);
+    } finally {
+      setIsNavLoading((prev) => ({ ...prev, [key]: false }));
+      setMobileMenuOpen(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/20">
       {/* Navigation Bar */}
@@ -109,28 +124,66 @@ export default function Signup() {
               <Link
                 href="/about"
                 className="text-gray-600 hover:text-primary transition-colors"
+                onClick={() => handleNavClick("/about", "about")}
               >
-                About
+                {isNavLoading.about ? (
+                  <Loader2 className="h-4 w-4 animate-spin inline-block" />
+                ) : (
+                  "About"
+                )}
               </Link>
               <Link
                 href="/contact"
                 className="text-gray-600 hover:text-primary transition-colors"
+                onClick={() => handleNavClick("/contact", "contact")}
               >
-                Contact
+                {isNavLoading.contact ? (
+                  <Loader2 className="h-4 w-4 animate-spin inline-block" />
+                ) : (
+                  "Contact"
+                )}
               </Link>
-              <Link href="/login">
+              <Link
+                href="/login"
+                onClick={() => handleNavClick("/login", "login")}
+              >
                 <Button
                   variant="ghost"
                   className="text-primary hover:bg-primary/10"
+                  disabled={isNavLoading.login}
                 >
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Login
+                  {isNavLoading.login ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Login
+                    </>
+                  )}
                 </Button>
               </Link>
-              <Link href="/signup">
-                <Button className="bg-primary hover:bg-primary/90 text-white">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Sign Up
+              <Link
+                href="/signup"
+                onClick={() => handleNavClick("/signup", "signup")}
+              >
+                <Button
+                  className="bg-primary hover:bg-primary/90 text-white"
+                  disabled={isNavLoading.signup}
+                >
+                  {isNavLoading.signup ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Sign Up
+                    </>
+                  )}
                 </Button>
               </Link>
             </div>
@@ -159,30 +212,66 @@ export default function Signup() {
               <Link
                 href="/about"
                 className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-primary/10"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => handleNavClick("/about", "about")}
               >
-                About
+                {isNavLoading.about ? (
+                  <Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />
+                ) : (
+                  "About"
+                )}
               </Link>
               <Link
                 href="/contact"
                 className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-primary/10"
-                onClick={() => setMobileMenuOpen(false)}
+                onClick={() => handleNavClick("/contact", "contact")}
               >
-                Contact
+                {isNavLoading.contact ? (
+                  <Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />
+                ) : (
+                  "Contact"
+                )}
               </Link>
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)}>
+              <Link
+                href="/login"
+                onClick={() => handleNavClick("/login", "login")}
+              >
                 <Button
                   variant="ghost"
                   className="w-full justify-start text-primary hover:bg-primary/10"
+                  disabled={isNavLoading.login}
                 >
-                  <LogIn className="mr-2 h-4 w-4" />
-                  Login
+                  {isNavLoading.login ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="mr-2 h-4 w-4" />
+                      Login
+                    </>
+                  )}
                 </Button>
               </Link>
-              <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                <Button className="w-full justify-start bg-primary hover:bg-primary/90 text-white">
-                  <UserPlus className="mr-2 h-4 w-4" />
-                  Sign Up
+              <Link
+                href="/signup"
+                onClick={() => handleNavClick("/signup", "signup")}
+              >
+                <Button
+                  className="w-full justify-start bg-primary hover:bg-primary/90 text-white"
+                  disabled={isNavLoading.signup}
+                >
+                  {isNavLoading.signup ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Loading...
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="mr-2 h-4 w-4" />
+                      Sign Up
+                    </>
+                  )}
                 </Button>
               </Link>
             </div>
@@ -270,6 +359,7 @@ export default function Signup() {
                           type="tel"
                           placeholder="123-456-7890"
                           className="pl-10"
+                          value={form.phone}
                           onChange={handleChange}
                           required
                         />
@@ -324,8 +414,18 @@ export default function Signup() {
                 <Button
                   type="submit"
                   className="w-full bg-primary hover:bg-primary/90"
+                  disabled={isLoading}
                 >
-                  {requiresOTP ? "Verify" : "Sign Up"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {requiresOTP ? "Verifying..." : "Signing Up..."}
+                    </>
+                  ) : requiresOTP ? (
+                    "Verify"
+                  ) : (
+                    "Sign Up"
+                  )}
                 </Button>
               </CardContent>
             </form>
@@ -335,8 +435,13 @@ export default function Signup() {
                 <Link
                   href="/login"
                   className="text-primary hover:text-primary/80"
+                  onClick={() => handleNavClick("/login", "login")}
                 >
-                  Sign in
+                  {isNavLoading.login ? (
+                    <Loader2 className="h-4 w-4 animate-spin inline-block" />
+                  ) : (
+                    "Sign in"
+                  )}
                 </Link>
               </div>
             </CardFooter>

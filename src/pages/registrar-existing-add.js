@@ -19,10 +19,11 @@ import Navbar from "@/components/Navbar";
 
 const RegistrarExistingAdd = () => {
   const [patientExists, setPatientExists] = useState(false);
-
   const { data: session, status } = useSession();
   const router = useRouter();
   const { name, id, birthDate } = router.query;
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     diseaseName: "",
@@ -111,6 +112,28 @@ const RegistrarExistingAdd = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
+
+    // Validate required fields
+    const requiredFields = {
+      nationalId: formData.rawId,
+      diseaseName: formData.diseaseName,
+      diseaseDescription: formData.diseaseDescription,
+      medication: formData.medication,
+      hospitalName: formData.hospitalName,
+      doctorName: formData.doctorName,
+    };
+    const missingFields = Object.keys(requiredFields).filter(
+      (key) => !requiredFields[key]
+    );
+
+    if (missingFields.length > 0) {
+      toast.error(
+        `Please fill in all required fields: ${missingFields.join(", ")}`
+      );
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
       const res = await fetch("/api/patients", {
@@ -135,11 +158,22 @@ const RegistrarExistingAdd = () => {
         router.push("/registrar");
       } else {
         const errorData = await res.json();
-        toast.error(errorData.error);
+        toast.error(errorData.error || "Failed to register patient.");
       }
     } catch (error) {
       console.error("Error registering patient:", error);
       toast.error("Failed to register patient. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleScanQR = async () => {
+    setIsScanning(true);
+    try {
+      await router.push("/scan-qr-existing");
+    } finally {
+      setIsScanning(false);
     }
   };
 
@@ -157,66 +191,72 @@ const RegistrarExistingAdd = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Name</Label>
+                  <Label htmlFor="name">Name *</Label>
                   <Input
                     id="name"
                     name="name"
                     value={formData.name}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="rawId">National ID</Label>
+                  <Label htmlFor="rawId">National ID *</Label>
                   <Input
                     id="rawId"
                     name="rawId"
                     value={formData.rawId}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="rawBirthDate">Birth Date</Label>
+                  <Label htmlFor="rawBirthDate">Birth Date *</Label>
                   <Input
                     id="rawBirthDate"
                     name="rawBirthDate"
                     value={formData.rawBirthDate}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="diseaseName">Disease Name</Label>
+                  <Label htmlFor="diseaseName">Disease Name *</Label>
                   <Input
                     id="diseaseName"
                     name="diseaseName"
                     value={formData.diseaseName}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="diseaseDescription">
-                    Disease Description
+                    Disease Description *
                   </Label>
                   <Input
                     id="diseaseDescription"
                     name="diseaseDescription"
                     value={formData.diseaseDescription}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="medication">Medication</Label>
+                  <Label htmlFor="medication">Medication *</Label>
                   <Input
                     id="medication"
                     name="medication"
                     value={formData.medication}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="dateAdded">Date Added</Label>
+                  <Label htmlFor="dateAdded">Date Added *</Label>
                   <Input
                     id="dateAdded"
                     name="dateAdded"
@@ -224,50 +264,70 @@ const RegistrarExistingAdd = () => {
                     value={formData.dateAdded}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="hospitalName">Hospital Name</Label>
+                  <Label htmlFor="hospitalName">Hospital Name *</Label>
                   <Input
                     id="hospitalName"
                     name="hospitalName"
                     value={formData.hospitalName}
                     readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="doctorName">Doctor Name</Label>
+                  <Label htmlFor="doctorName">Doctor Name *</Label>
                   <Input
                     id="doctorName"
                     name="doctorName"
                     value={formData.doctorName}
                     onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="registeredBy">Registrar's Name</Label>
+                  <Label htmlFor="registeredBy">Registrar's Name *</Label>
                   <Input
                     id="registeredBy"
                     name="registeredBy"
                     value={formData.registeredBy}
+                    readOnly
                     className="bg-gray-200"
+                    required
                   />
                 </div>
               </div>
+              <CardFooter className="flex justify-between">
+                <Button
+                  variant="outline"
+                  onClick={handleScanQR}
+                  disabled={isScanning}
+                >
+                  {isScanning ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scanning...
+                    </>
+                  ) : (
+                    "Scan QR Code"
+                  )}
+                </Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Registering...
+                    </>
+                  ) : (
+                    "Register Patient"
+                  )}
+                </Button>
+              </CardFooter>
             </form>
           </CardContent>
-          <CardFooter className="flex justify-between">
-            <Button
-              variant="outline"
-              onClick={() => router.push("/scan-qr-existing")}
-            >
-              Scan QR Code
-            </Button>
-            <Button type="submit" onClick={handleSubmit}>
-              Register Patient
-            </Button>
-          </CardFooter>
         </Card>
       </div>
     </div>

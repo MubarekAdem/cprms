@@ -29,6 +29,8 @@ export default function RegistrarPatientAdd() {
   const router = useRouter();
   const { name, id, birthDate } = router.query;
   const [patientExists, setPatientExists] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
   const [formData, setFormData] = useState({
     name: name ? decodeURIComponent(name) : "",
     phone: "",
@@ -186,8 +188,10 @@ export default function RegistrarPatientAdd() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setIsSubmitting(true);
     if (formData.password !== formData.repeatPassword) {
       toast.error("Passwords do not match.");
+      setIsSubmitting(false);
       return;
     }
 
@@ -226,6 +230,7 @@ export default function RegistrarPatientAdd() {
           ...missingNewPatientFields,
         ].join(", ")}`
       );
+      setIsSubmitting(false);
       return;
     }
 
@@ -265,6 +270,17 @@ export default function RegistrarPatientAdd() {
     } catch (error) {
       console.error("Error registering patient:", error);
       toast.error("Failed to register patient. Please try again.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleScanQR = async () => {
+    setIsScanning(true);
+    try {
+      await router.push("/scan-qr");
+    } finally {
+      setIsScanning(false);
     }
   };
 
@@ -498,11 +514,28 @@ export default function RegistrarPatientAdd() {
               <CardFooter className="flex justify-between">
                 <Button
                   variant="outline"
-                  onClick={() => router.push("/scan-qr")}
+                  onClick={handleScanQR}
+                  disabled={isScanning}
                 >
-                  Scan QR Code
+                  {isScanning ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Scanning...
+                    </>
+                  ) : (
+                    "Scan QR Code"
+                  )}
                 </Button>
-                <Button type="submit">Register Patient</Button>
+                <Button type="submit" disabled={isSubmitting}>
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Registering...
+                    </>
+                  ) : (
+                    "Register Patient"
+                  )}
+                </Button>
               </CardFooter>
             </form>
           </CardContent>
