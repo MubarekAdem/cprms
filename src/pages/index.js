@@ -421,7 +421,7 @@ export default function Home() {
                     </Label>
                     <Input
                       id="firstName"
-                      placeholder="John"
+                      placeholder="Kebede"
                       className="bg-gray-800 border-gray-700 text-white"
                       value={formData.firstName}
                       onChange={handleInputChange}
@@ -434,7 +434,7 @@ export default function Home() {
                     </Label>
                     <Input
                       id="lastName"
-                      placeholder="Doe"
+                      placeholder="Abebe"
                       className="bg-gray-800 border-gray-700 text-white"
                       value={formData.lastName}
                       onChange={handleInputChange}
@@ -449,7 +449,7 @@ export default function Home() {
                   <Input
                     id="email"
                     type="email"
-                    placeholder="john.doe@example.com"
+                    placeholder="Email@example.com"
                     className="bg-gray-800 border-gray-700 text-white"
                     value={formData.email}
                     onChange={handleInputChange}
