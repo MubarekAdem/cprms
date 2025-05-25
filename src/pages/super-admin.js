@@ -330,7 +330,8 @@ export default function SuperAdminDashboard() {
                                       className="hover:bg-gray-50 dark:hover:bg-gray-800"
                                     >
                                       <TableCell className="font-medium">
-                                        {user.name || "N/A"}
+                                        {`${user.firstName} ${user.lastName}` ||
+                                          "N/A"}
                                       </TableCell>
                                       <TableCell>
                                         <div className="flex items-center">
