@@ -32,6 +32,7 @@ import {
   Shield,
   Users,
 } from "lucide-react";
+import ThemeToggle from "@/components/theme-toggle";
 
 export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -109,7 +110,7 @@ export default function Home() {
   // Loading state
   if (status === "loading" || status === "authenticated") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-900">
+      <div className="min-h-screen flex items-center justify-center dark:bg-gray-900 bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -127,12 +128,12 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 text-white">
+    <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 dark:text-white bg-background text-foreground">
       {/* Navigation */}
       <motion.nav
         initial={{ y: -100 }}
         animate={{ y: 0 }}
-        className="sticky top-0 z-50 bg-gray-900/80 backdrop-blur-lg border-b border-primary/20"
+        className="sticky top-0 z-50 dark:bg-gray-900/80 bg-background/80 backdrop-blur-lg border-b dark:border-primary/20 border-border"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
@@ -145,15 +146,16 @@ export default function Home() {
               </Link>
             </div>
             <div className="hidden md:flex items-center space-x-8">
+              <ThemeToggle />
               <Link
                 href="#about"
-                className="text-gray-300 hover:text-primary transition-colors"
+                className="dark:text-gray-300 text-muted-foreground hover:text-primary transition-colors"
               >
                 About
               </Link>
               <Link
                 href="#contact"
-                className="text-gray-300 hover:text-primary transition-colors"
+                className="dark:text-gray-300 text-muted-foreground hover:text-primary transition-colors"
               >
                 Contact
               </Link>
@@ -167,7 +169,7 @@ export default function Home() {
                 </Button>
               </Link>
               <Link href="/signup">
-                <Button className="bg-primary hover:bg-primary/90 text-white">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                   <UserPlus className="mr-2 h-4 w-4" />
                   Sign Up
                 </Button>
@@ -194,19 +196,19 @@ export default function Home() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="md:hidden bg-gray-900/90"
+              className="md:hidden dark:bg-gray-900/90 bg-background/90"
             >
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
                 <Link
                   href="#about"
-                  className="block px-3 py-2 text-gray-300 hover:text-primary hover:bg-primary/10"
+                  className="block px-3 py-2 dark:text-gray-300 text-muted-foreground hover:text-primary hover:bg-primary/10"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   About
                 </Link>
                 <Link
                   href="#contact"
-                  className="block px-3 py-2 text-gray-300 hover:text-primary hover:bg-primary/10"
+                  className="block px-3 py-2 dark:text-gray-300 text-muted-foreground hover:text-primary hover:bg-primary/10"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Contact
@@ -221,7 +223,7 @@ export default function Home() {
                   </Button>
                 </Link>
                 <Link href="/signup" onClick={() => setMobileMenuOpen(false)}>
-                  <Button className="w-full justify-start bg-primary hover:bg-primary/90 text-white">
+                  <Button className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground">
                     <UserPlus className="mr-2 h-4 w-4" />
                     Sign Up
                   </Button>
@@ -254,7 +256,7 @@ export default function Home() {
             Transforming Healthcare in Ethiopia
           </motion.h1>
           <motion.p
-            className="text-lg md:text-xl text-gray-300 mb-8 max-w-3xl mx-auto"
+            className="text-lg md:text-xl dark:text-gray-300 text-muted-foreground mb-8 max-w-3xl mx-auto"
             variants={fadeIn}
           >
             ETHIO-CPRMS is your all-in-one platform for seamless healthcare
@@ -270,7 +272,7 @@ export default function Home() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                <Button className="bg-primary hover:bg-primary/90 text-white px-8 py-3 text-lg rounded-full shadow-lg">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-8 py-3 text-lg rounded-full shadow-lg">
                   <UserPlus className="mr-2 h-5 w-5" />
                   Get Started
                   <ChevronRight className="ml-2 h-5 w-5" />
@@ -292,7 +294,7 @@ export default function Home() {
             </Link>
           </motion.div>
           <motion.div
-            className="flex justify-center items-center mt-12 text-gray-400"
+            className="flex justify-center items-center mt-12 dark:text-gray-400 text-muted-foreground"
             variants={fadeIn}
           >
             <Users className="h-6 w-6 mr-2" />
@@ -310,7 +312,7 @@ export default function Home() {
         whileInView="visible"
         viewport={{ once: true }}
         variants={fadeIn}
-        className="py-20 bg-gray-800/50 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
+        className="py-20 dark:bg-gray-800/50 bg-muted/50 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"
       >
         <motion.h2
           className="text-3xl md:text-4xl font-bold text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent"
@@ -321,15 +323,15 @@ export default function Home() {
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <motion.div variants={fadeIn}>
             <h3 className="text-2xl font-semibold mb-4">Our Mission</h3>
-            <p className="text-gray-300 mb-6">
+            <p className="dark:text-gray-300 text-muted-foreground mb-6">
               Founded in 2025, ETHIO-CPRMS is dedicated to simplifying
               healthcare management in Ethiopia. Our platform empowers patients
               and providers with intuitive tools to enhance communication and
               improve health outcomes.
             </p>
-            <p className="text-gray-300">
-              Combining expertise from healthcare and technology, we’re bridging
-              the gap between patients and providers, making healthcare
+            <p className="dark:text-gray-300 text-muted-foreground">
+              Combining expertise from healthcare and technology, we&apos;re
+              bridging the gap between patients and providers, making healthcare
               accessible and efficient.
             </p>
           </motion.div>
@@ -338,14 +340,14 @@ export default function Home() {
             variants={scaleIn}
           >
             <motion.div
-              className="bg-gray-900/80 backdrop-blur-sm rounded-xl p-6 shadow-lg"
+              className="dark:bg-gray-900/80 bg-background/80 backdrop-blur-sm rounded-xl p-6 shadow-lg"
               whileHover={{ y: -5 }}
             >
               <div className="flex justify-center mb-6">
                 <Heart className="h-12 w-12 text-primary" />
               </div>
               <h3 className="text-xl font-bold text-center mb-4">Our Vision</h3>
-              <p className="text-gray-300 text-center">
+              <p className="dark:text-gray-300 text-muted-foreground text-center">
                 To create a connected healthcare ecosystem where every Ethiopian
                 has access to quality care through technology.
               </p>
@@ -380,7 +382,7 @@ export default function Home() {
           ].map((value, index) => (
             <motion.div
               key={index}
-              className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-6 shadow-lg"
+              className="dark:bg-gray-900/50 bg-background/50 backdrop-blur-sm rounded-xl p-6 shadow-lg"
               variants={scaleIn}
               whileHover={{ y: -5 }}
             >
@@ -388,7 +390,9 @@ export default function Home() {
                 {value.icon}
               </div>
               <h3 className="text-xl font-semibold mb-2">{value.title}</h3>
-              <p className="text-gray-400">{value.desc}</p>
+              <p className="dark:text-gray-400 text-muted-foreground">
+                {value.desc}
+              </p>
             </motion.div>
           ))}
         </motion.div>
@@ -411,31 +415,27 @@ export default function Home() {
         </motion.h2>
         <div className="grid md:grid-cols-2 gap-12">
           <motion.div variants={fadeIn}>
-            <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-8 shadow-lg">
+            <div className="dark:bg-gray-900/50 bg-background/50 backdrop-blur-sm rounded-xl p-8 shadow-lg">
               <h3 className="text-2xl font-semibold mb-6">Send Us a Message</h3>
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="first-name" className="text-gray-300">
-                      First Name
-                    </Label>
+                    <Label htmlFor="first-name">First Name</Label>
                     <Input
                       id="firstName"
                       placeholder="Kebede"
-                      className="bg-gray-800 border-gray-700 text-white"
+                      className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                       value={formData.firstName}
                       onChange={handleInputChange}
                       required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="last-name" className="text-gray-300">
-                      Last Name
-                    </Label>
+                    <Label htmlFor="last-name">Last Name</Label>
                     <Input
                       id="lastName"
                       placeholder="Abebe"
-                      className="bg-gray-800 border-gray-700 text-white"
+                      className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                       value={formData.lastName}
                       onChange={handleInputChange}
                       required
@@ -443,27 +443,23 @@ export default function Home() {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="email" className="text-gray-300">
-                    Email
-                  </Label>
+                  <Label htmlFor="email">Email</Label>
                   <Input
                     id="email"
                     type="email"
                     placeholder="Email@example.com"
-                    className="bg-gray-800 border-gray-700 text-white"
+                    className="dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                     value={formData.email}
                     onChange={handleInputChange}
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="message" className="text-gray-300">
-                    Message
-                  </Label>
+                  <Label htmlFor="message">Message</Label>
                   <Textarea
                     id="message"
                     placeholder="Your message..."
-                    className="min-h-[120px] bg-gray-800 border-gray-700 text-white"
+                    className="min-h-[120px] dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                     value={formData.message}
                     onChange={handleInputChange}
                     required
@@ -471,7 +467,7 @@ export default function Home() {
                 </div>
                 <Button
                   type="submit"
-                  className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-full"
+                  className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-3 rounded-full"
                   disabled={isSubmitting}
                 >
                   {isSubmitting ? (
@@ -487,7 +483,7 @@ export default function Home() {
             </div>
           </motion.div>
           <motion.div className="space-y-8" variants={fadeIn}>
-            <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-8 shadow-lg">
+            <div className="dark:bg-gray-900/50 bg-background/50 backdrop-blur-sm rounded-xl p-8 shadow-lg">
               <h3 className="text-2xl font-semibold mb-6">
                 Contact Information
               </h3>
@@ -496,21 +492,25 @@ export default function Home() {
                   <Mail className="h-6 w-6 text-primary mr-4" />
                   <div>
                     <h4 className="font-medium">Email</h4>
-                    <p className="text-gray-400">support@ethio-cprms.com</p>
+                    <p className="dark:text-gray-400 text-muted-foreground">
+                      support@ethio-cprms.com
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <Phone className="h-6 w-6 text-primary mr-4" />
                   <div>
                     <h4 className="font-medium">Phone</h4>
-                    <p className="text-gray-400">+251 11 123 4567</p>
+                    <p className="dark:text-gray-400 text-muted-foreground">
+                      +251 11 123 4567
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-start">
                   <MapPin className="h-6 w-6 text-primary mr-4" />
                   <div>
                     <h4 className="font-medium">Office</h4>
-                    <p className="text-gray-400">
+                    <p className="dark:text-gray-400 text-muted-foreground">
                       Bole Road, Addis Ababa, Ethiopia
                     </p>
                   </div>
@@ -524,14 +524,18 @@ export default function Home() {
                   <Clock className="h-5 w-5 text-primary mr-3" />
                   <div>
                     <h4 className="font-medium">Monday - Friday</h4>
-                    <p className="text-gray-400">9:00 AM - 5:00 PM EAT</p>
+                    <p className="dark:text-gray-400 text-muted-foreground">
+                      9:00 AM - 5:00 PM EAT
+                    </p>
                   </div>
                 </div>
                 <div className="flex items-center">
                   <Clock className="h-5 w-5 text-primary mr-3" />
                   <div>
                     <h4 className="font-medium">Saturday</h4>
-                    <p className="text-gray-400">10:00 AM - 2:00 PM EAT</p>
+                    <p className="dark:text-gray-400 text-muted-foreground">
+                      10:00 AM - 2:00 PM EAT
+                    </p>
                   </div>
                 </div>
               </div>
@@ -546,20 +550,20 @@ export default function Home() {
         whileInView="visible"
         viewport={{ once: true }}
         variants={fadeIn}
-        className="py-6 bg-gray-900/80 backdrop-blur-lg border-t border-primary/20"
+        className="py-6 dark:bg-gray-900/80 bg-background/80 backdrop-blur-lg border-t dark:border-primary/20 border-border"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex items-center mb-4 md:mb-0">
               <Heart className="h-5 w-5 text-primary mr-2" />
-              <span className="text-sm text-gray-400">
+              <span className="text-sm dark:text-gray-400 text-muted-foreground">
                 © 2025 ETHIO-CPRMS. All rights reserved.
               </span>
             </div>
             <div className="flex space-x-6">
               <Link
                 href="/privacy"
-                className="text-sm text-gray-400 hover:text-primary"
+                className="text-sm dark:text-gray-400 text-muted-foreground hover:text-primary"
               >
                 Privacy
               </Link>

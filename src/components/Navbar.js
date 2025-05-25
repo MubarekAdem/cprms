@@ -21,6 +21,7 @@ import {
 import Link from "next/link";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { toast } from "sonner";
+import ThemeToggle from "@/components/theme-toggle";
 import {
   Dialog,
   DialogContent,
@@ -191,15 +192,18 @@ export default function Navbar() {
             </span>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => router.push("/profile")}
-          className="text-muted-foreground hover:text-primary"
-          aria-label="View profile"
-        >
-          <User className="h-5 w-5" />
-        </Button>
+        <div className="flex items-center space-x-2">
+          <ThemeToggle />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => router.push("/profile")}
+            className="text-muted-foreground hover:text-primary"
+            aria-label="View profile"
+          >
+            <User className="h-5 w-5" />
+          </Button>
+        </div>
       </div>
       <div className="space-y-4 flex-grow">
         {getNavItems().map((item) => (

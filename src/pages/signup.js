@@ -30,6 +30,7 @@ import {
   X,
 } from "lucide-react";
 import Link from "next/link";
+import ThemeToggle from "@/components/theme-toggle";
 
 export default function Signup() {
   const [form, setForm] = useState({
@@ -105,9 +106,9 @@ export default function Signup() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-primary/10 to-accent/20">
+    <div className="min-h-screen dark:bg-gradient-to-br dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
       {/* Navigation Bar */}
-      <nav className="border-b border-primary/10 bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
+      <nav className="border-b dark:border-primary/20 border-primary/10 dark:bg-gray-900/80 bg-white/80 backdrop-blur-sm sticky top-0 z-10 shadow-sm">
         <div className="container mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center">
@@ -121,9 +122,11 @@ export default function Signup() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
+              <ThemeToggle />
+
               <Link
-                href="/about"
-                className="text-gray-600 hover:text-primary transition-colors"
+                href="/#about"
+                className="dark:text-gray-300 text-gray-600 hover:text-primary transition-colors"
                 onClick={() => handleNavClick("/about", "about")}
               >
                 {isNavLoading.about ? (
@@ -133,8 +136,8 @@ export default function Signup() {
                 )}
               </Link>
               <Link
-                href="/contact"
-                className="text-gray-600 hover:text-primary transition-colors"
+                href="/#contact"
+                className="dark:text-gray-300 text-gray-600 hover:text-primary transition-colors"
                 onClick={() => handleNavClick("/contact", "contact")}
               >
                 {isNavLoading.contact ? (
@@ -207,11 +210,11 @@ export default function Signup() {
 
         {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div className="md:hidden">
+          <div className="md:hidden dark:bg-gray-900/90 bg-white/90">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
               <Link
                 href="/about"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-primary/10"
+                className="block px-3 py-2 rounded-md text-base font-medium dark:text-gray-300 text-gray-700 hover:text-primary hover:bg-primary/10"
                 onClick={() => handleNavClick("/about", "about")}
               >
                 {isNavLoading.about ? (
@@ -222,7 +225,7 @@ export default function Signup() {
               </Link>
               <Link
                 href="/contact"
-                className="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-primary hover:bg-primary/10"
+                className="block px-3 py-2 rounded-md text-base font-medium dark:text-gray-300 text-gray-700 hover:text-primary hover:bg-primary/10"
                 onClick={() => handleNavClick("/contact", "contact")}
               >
                 {isNavLoading.contact ? (
@@ -281,12 +284,12 @@ export default function Signup() {
 
       <div className="container mx-auto px-4 py-8">
         <div className="flex justify-center items-center min-h-[calc(100vh-4rem)]">
-          <Card className="w-full max-w-md">
+          <Card className="w-full max-w-md dark:bg-gray-900/50 bg-white/50 backdrop-blur-sm">
             <CardHeader className="space-y-1">
               <CardTitle className="text-2xl font-bold text-center">
                 {requiresOTP ? "Verify Email" : "Sign Up"}
               </CardTitle>
-              <CardDescription className="text-center">
+              <CardDescription className="text-center dark:text-gray-400">
                 {requiresOTP
                   ? "Enter the 4-digit code sent to your email"
                   : "Create an account to get started"}
@@ -310,7 +313,7 @@ export default function Signup() {
                             id="firstName"
                             name="firstName"
                             placeholder="John"
-                            className="pl-10"
+                            className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                             value={form.firstName}
                             onChange={handleChange}
                             required
@@ -325,7 +328,7 @@ export default function Signup() {
                             id="lastName"
                             name="lastName"
                             placeholder="Doe"
-                            className="pl-10"
+                            className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                             value={form.lastName}
                             onChange={handleChange}
                             required
@@ -342,7 +345,7 @@ export default function Signup() {
                           type="email"
                           name="email"
                           placeholder="m@example.com"
-                          className="pl-10"
+                          className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                           value={form.email}
                           onChange={handleChange}
                           required
@@ -358,7 +361,7 @@ export default function Signup() {
                           name="phone"
                           type="tel"
                           placeholder="123-456-7890"
-                          className="pl-10"
+                          className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                           value={form.phone}
                           onChange={handleChange}
                           required
@@ -374,7 +377,7 @@ export default function Signup() {
                           type={showPassword ? "text" : "password"}
                           name="password"
                           placeholder="••••••••"
-                          className="pl-10"
+                          className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                           value={form.password}
                           onChange={handleChange}
                           required
@@ -402,7 +405,7 @@ export default function Signup() {
                         id="otp"
                         name="otp"
                         placeholder="Enter 4-digit code"
-                        className="pl-10"
+                        className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
                         value={form.otp}
                         onChange={handleChange}
                         required
@@ -430,7 +433,7 @@ export default function Signup() {
               </CardContent>
             </form>
             <CardFooter className="flex flex-col space-y-4">
-              <div className="text-center text-sm">
+              <div className="text-center text-sm dark:text-gray-300">
                 Already have an account?{" "}
                 <Link
                   href="/login"
