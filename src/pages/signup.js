@@ -122,7 +122,9 @@ export default function Signup() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
-              <ThemeToggle />
+              <div className="dark:text-gray-300">
+                <ThemeToggle />
+              </div>
 
               <Link
                 href="/#about"
@@ -212,8 +214,13 @@ export default function Signup() {
         {mobileMenuOpen && (
           <div className="md:hidden dark:bg-gray-900/90 bg-white/90">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+              <div className="px-3 py-2">
+                <div className="dark:text-gray-300">
+                  <ThemeToggle />
+                </div>
+              </div>
               <Link
-                href="/about"
+                href="/#about"
                 className="block px-3 py-2 rounded-md text-base font-medium dark:text-gray-300 text-gray-700 hover:text-primary hover:bg-primary/10"
                 onClick={() => handleNavClick("/about", "about")}
               >
@@ -224,7 +231,7 @@ export default function Signup() {
                 )}
               </Link>
               <Link
-                href="/contact"
+                href="/#contact"
                 className="block px-3 py-2 rounded-md text-base font-medium dark:text-gray-300 text-gray-700 hover:text-primary hover:bg-primary/10"
                 onClick={() => handleNavClick("/contact", "contact")}
               >
