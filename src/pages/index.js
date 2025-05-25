@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { toast } from "sonner";
 import {
   Accordion,
   AccordionContent,
@@ -36,6 +37,13 @@ export default function Home() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    message: "",
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Redirect authenticated users
   useEffect(() => {
@@ -62,6 +70,39 @@ export default function Home() {
         return "/notifications";
       default:
         return "/notifications";
+    }
+  };
+
+  // Handle form input changes
+  const handleInputChange = (e) => {
+    setFormData({ ...formData, [e.target.id]: e.target.value });
+  };
+
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to send message");
+      }
+
+      toast.success("Message sent successfully!");
+      setFormData({ firstName: "", lastName: "", email: "", message: "" }); // Reset form
+    } catch (error) {
+      console.error("Error submitting form:", error);
+      toast.error(error.message || "Failed to send message. Please try again.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -207,7 +248,7 @@ export default function Home() {
             Healthcare of the Future
           </motion.div>
           <motion.h1
-            className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 bg-clip-text text-transparent bg-primary "
+            className="text-4xl md:text-6xl font-extrabold leading-tight mb-6 bg-clip-text text-transparent bg-primary"
             variants={fadeIn}
           >
             Transforming Healthcare in Ethiopia
@@ -372,16 +413,19 @@ export default function Home() {
           <motion.div variants={fadeIn}>
             <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl p-8 shadow-lg">
               <h3 className="text-2xl font-semibold mb-6">Send Us a Message</h3>
-              <form className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="first-name" className="text-gray-300">
                       First Name
                     </Label>
                     <Input
-                      id="first-name"
+                      id="firstName"
                       placeholder="John"
                       className="bg-gray-800 border-gray-700 text-white"
+                      value={formData.firstName}
+                      onChange={handleInputChange}
+                      required
                     />
                   </div>
                   <div className="space-y-2">
@@ -389,9 +433,12 @@ export default function Home() {
                       Last Name
                     </Label>
                     <Input
-                      id="last-name"
+                      id="lastName"
                       placeholder="Doe"
                       className="bg-gray-800 border-gray-700 text-white"
+                      value={formData.lastName}
+                      onChange={handleInputChange}
+                      required
                     />
                   </div>
                 </div>
@@ -404,6 +451,9 @@ export default function Home() {
                     type="email"
                     placeholder="john.doe@example.com"
                     className="bg-gray-800 border-gray-700 text-white"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    required
                   />
                 </div>
                 <div className="space-y-2">
@@ -414,10 +464,24 @@ export default function Home() {
                     id="message"
                     placeholder="Your message..."
                     className="min-h-[120px] bg-gray-800 border-gray-700 text-white"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    required
                   />
                 </div>
-                <Button className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-full">
-                  Send Message
+                <Button
+                  type="submit"
+                  className="w-full bg-primary hover:bg-primary/90 text-white py-3 rounded-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Sending...
+                    </>
+                  ) : (
+                    "Send Message"
+                  )}
                 </Button>
               </form>
             </div>
