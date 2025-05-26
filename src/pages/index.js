@@ -199,6 +199,8 @@ export default function Home() {
               className="md:hidden dark:bg-gray-900/90 bg-background/90"
             >
               <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3">
+                <ThemeToggle />
+
                 <Link
                   href="#about"
                   className="block px-3 py-2 dark:text-gray-300 text-muted-foreground hover:text-primary hover:bg-primary/10"

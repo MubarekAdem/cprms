@@ -61,7 +61,7 @@ export default function StaffDistributionChart() {
                     dataKey="value"
                     nameKey="name"
                     label={({ name, percent }) =>
-                      `${name}: ${(percent * 100).toFixed(0)}%`
+                      `${(percent * 100).toFixed(0)}%`
                     }
                   >
                     {data.map((entry, index) => (

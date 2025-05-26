@@ -214,40 +214,6 @@ export default function CitiesDashboard() {
               <p className="mt-1 text-sm opacity-80">Registered locations</p>
             </CardContent>
           </Card>
-
-          {/* <Card className="border-none shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-lg font-medium">
-                <Building2 className="mr-2 h-5 w-5 text-blue-500" />
-                Hospitals Coverage
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {Math.round(cities.length * 0.8)}
-              </div>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Partner medical facilities
-              </p>
-            </CardContent>
-          </Card> */}
-
-          {/* <Card className="border-none shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-lg font-medium">
-                <CheckCircle className="mr-2 h-5 w-5 text-green-500" />
-                Verified Cities
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {Math.round(cities.length * 0.9)}
-              </div>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Fully verified locations
-              </p>
-            </CardContent>
-          </Card> */}
         </div>
 
         {/* Cities List */}
@@ -307,7 +273,7 @@ export default function CitiesDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No cities found matching "{searchTerm}"</p>
+                              <p>No cities found matching {searchTerm} </p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">

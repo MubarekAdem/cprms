@@ -729,20 +729,7 @@ export default function FirstAidDashboard() {
                     className="bg-white text-black"
                   />
                 </div>
-                {/* <div className="space-y-2">
-                  <Label htmlFor="edit-password" className="text-black">
-                    Password (leave blank to keep unchanged)
-                  </Label>
-                  <Input
-                    id="edit-password"
-                    name="password"
-                    type="password"
-                    value={selectedFirstAid?.password || ""}
-                    onChange={handleEditChange}
-                    placeholder="••••••••"
-                    className="bg-white text-black"
-                  />
-                </div> */}
+
                 <div className="space-y-2">
                   <Label htmlFor="edit-hospital" className="text-black">
                     Hospital

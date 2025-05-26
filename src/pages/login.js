@@ -59,7 +59,7 @@ export default function Login() {
       case "doctor":
         return "/doctor";
       case "first-aid":
-        return "/notifications";
+        return "/";
       case "None":
       case undefined:
         return "/notifications";

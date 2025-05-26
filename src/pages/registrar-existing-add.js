@@ -289,7 +289,9 @@ const RegistrarExistingAdd = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="registeredBy">Registrar's Name *</Label>
+                  <Label htmlFor="registeredBy">
+                    Registrar`&apos;`s Name *
+                  </Label>
                   <Input
                     id="registeredBy"
                     name="registeredBy"

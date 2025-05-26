@@ -475,7 +475,7 @@ export default function RegistrarsDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No registrars found matching "{searchTerm}"</p>
+                              <p>No registrars found matching {searchTerm} </p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -738,20 +738,7 @@ export default function RegistrarsDashboard() {
                     className="bg-white text-black"
                   />
                 </div>
-                {/* <div className="space-y-2">
-                  <Label htmlFor="edit-password" className="text-black">
-                    Password (leave blank to keep unchanged)
-                  </Label>
-                  <Input
-                    id="edit-password"
-                    name="password"
-                    type="password"
-                    value={selectedRegistrar?.password || ""}
-                    onChange={handleEditInputChange}
-                    placeholder="••••••••"
-                    className="bg-white text-black"
-                  />
-                </div> */}
+
                 <div className="space-y-2">
                   <Label htmlFor="edit-hospital" className="text-black">
                     Hospital

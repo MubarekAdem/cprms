@@ -101,9 +101,7 @@ export default function HospitalMap() {
         <div className="absolute inset-0 bg-gray-100 dark:bg-gray-800 rounded-md overflow-hidden">
           {/* This would be replaced with an actual map component */}
           <div className="h-full w-full flex items-center justify-center flex-col">
-            <p className="text-muted-foreground text-sm">
-              Interactive map would be displayed here
-            </p>
+            <p className="text-muted-foreground text-sm"></p>
             <ul className="mt-4 text-sm">
               {hospitals.map((hospital) => (
                 <li key={hospital.id} className="flex items-center gap-2 mb-2">

@@ -464,7 +464,10 @@ export default function DoctorsDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No doctors found matching "{searchTerm}"</p>
+                              <p>
+                                No doctors found matching &ldquo;{searchTerm}{" "}
+                                &ldquo;
+                              </p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -753,25 +756,7 @@ export default function DoctorsDashboard() {
                     className="bg-white text-black"
                   />
                 </div>
-                {/* <div className="space-y-2">
-                  <Label htmlFor="edit-password" className="text-black">
-                    Password (leave blank to keep unchanged)
-                  </Label>
-                  <Input
-                    id="edit-password"
-                    name="password"
-                    type="password"
-                    value={editDoctor?.password || ""}
-                    onChange={(e) =>
-                      setEditDoctor({
-                        ...editDoctor,
-                        password: e.target.value,
-                      })
-                    }
-                    placeholder="••••••••"
-                    className="bg-white text-black"
-                  />
-                </div> */}
+
                 <div className="space-y-2">
                   <Label htmlFor="edit-hospital" className="text-black">
                     Hospital

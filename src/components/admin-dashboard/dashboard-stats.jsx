@@ -60,29 +60,29 @@ export default function DashboardStats() {
       title: "Total Hospitals",
       value: stats.hospitals,
       icon: Building2,
-      change: "+2%",
-      trend: "up",
+      change: "",
+      trend: "",
     },
     {
       title: "Total Doctors",
       value: stats.doctors,
       icon: UserRound,
-      change: "+5%",
-      trend: "up",
+      change: "",
+      trend: "",
     },
     {
       title: "Total Patients",
       value: stats.patients,
       icon: Users,
-      change: "+12%",
-      trend: "up",
+      change: "",
+      trend: "",
     },
     {
       title: "Medical Records",
       value: stats.medicalRecords,
       icon: FileText,
-      change: "+8%",
-      trend: "up",
+      change: "",
+      trend: "",
     },
   ];
 
@@ -111,7 +111,7 @@ export default function DashboardStats() {
                     stat.trend === "up" ? "text-green-500" : "text-red-500"
                   } flex items-center mt-1`}
                 >
-                  {stat.change} from last month
+                  {stat.change}
                 </p>
               </>
             )}

@@ -129,7 +129,7 @@ export default function Signup() {
               <Link
                 href="/#about"
                 className="dark:text-gray-300 text-gray-600 hover:text-primary transition-colors"
-                onClick={() => handleNavClick("/about", "about")}
+                onClick={() => handleNavClick("/#about", "about")}
               >
                 {isNavLoading.about ? (
                   <Loader2 className="h-4 w-4 animate-spin inline-block" />
@@ -140,7 +140,7 @@ export default function Signup() {
               <Link
                 href="/#contact"
                 className="dark:text-gray-300 text-gray-600 hover:text-primary transition-colors"
-                onClick={() => handleNavClick("/contact", "contact")}
+                onClick={() => handleNavClick("/#contact", "contact")}
               >
                 {isNavLoading.contact ? (
                   <Loader2 className="h-4 w-4 animate-spin inline-block" />
@@ -222,7 +222,7 @@ export default function Signup() {
               <Link
                 href="/#about"
                 className="block px-3 py-2 rounded-md text-base font-medium dark:text-gray-300 text-gray-700 hover:text-primary hover:bg-primary/10"
-                onClick={() => handleNavClick("/about", "about")}
+                onClick={() => handleNavClick("/#about", "about")}
               >
                 {isNavLoading.about ? (
                   <Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />
@@ -233,7 +233,7 @@ export default function Signup() {
               <Link
                 href="/#contact"
                 className="block px-3 py-2 rounded-md text-base font-medium dark:text-gray-300 text-gray-700 hover:text-primary hover:bg-primary/10"
-                onClick={() => handleNavClick("/contact", "contact")}
+                onClick={() => handleNavClick("/#contact", "contact")}
               >
                 {isNavLoading.contact ? (
                   <Loader2 className="h-4 w-4 animate-spin inline-block mr-2" />
