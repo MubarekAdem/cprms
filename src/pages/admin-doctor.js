@@ -673,7 +673,7 @@ export default function DoctorsDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No doctors found matching "{searchTerm}"</p>
+                              <p>No doctors found matching {searchTerm}</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">

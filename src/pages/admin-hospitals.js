@@ -475,22 +475,7 @@ export default function HospitalsDashboard() {
               <p className="mt-1 text-sm opacity-80">Registered facilities</p>
             </CardContent>
           </Card>
-          <Card className="border-none shadow-md">
-            <CardHeader className="pb-2">
-              <CardTitle className="flex items-center text-lg font-medium">
-                <CheckCircle className="mr-2 h-5 w-5 text-primary" />
-                Verified Hospitals
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold">
-                {Math.round(hospitals.length * 0.95)}
-              </div>
-              <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                Fully verified credentials
-              </p>
-            </CardContent>
-          </Card>
+
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
