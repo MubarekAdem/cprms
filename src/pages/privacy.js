@@ -88,7 +88,7 @@ export default function PrivacyPolicy() {
                 For any privacy-related concerns or questions, please contact
                 our Privacy Officer at:
               </p>
-              <p className="text-primary mt-2">privacy@healthconnect.com</p>
+              <p className="text-primary mt-2">ETHIO-CPRMS.COM</p>
             </section>
 
             <div className="pt-8 border-t border-primary/20">
