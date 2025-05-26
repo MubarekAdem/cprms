@@ -182,6 +182,10 @@ export default function HospitalsDashboard() {
     } else if (hospitalForm.name.length < 3) {
       errors.name = "Hospital name must be at least 3 characters";
       isValid = false;
+    } else if (!/^[A-Za-z0-9\s-]+$/.test(hospitalForm.name)) {
+      errors.name =
+        "Hospital name can only contain letters, numbers, spaces, and hyphens";
+      isValid = false;
     }
 
     // Hospital ID validation
@@ -372,7 +376,7 @@ export default function HospitalsDashboard() {
     }
   };
 
-  // Add Hospital
+  // Update handleSubmit to handle duplicate validation
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -386,15 +390,34 @@ export default function HospitalsDashboard() {
     try {
       const res = await fetch("/api/hospitals", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(hospitalForm),
       });
 
-      if (!res.ok) throw new Error("Failed to add hospital");
-
       const data = await res.json();
+
+      if (!res.ok) {
+        // Handle duplicate errors
+        if (data.error?.includes("duplicate key error")) {
+          if (data.error.includes("name")) {
+            setValidationErrors((prev) => ({
+              ...prev,
+              name: "A hospital with this name already exists",
+            }));
+            toast.error("A hospital with this name already exists");
+          } else if (data.error.includes("id")) {
+            setValidationErrors((prev) => ({
+              ...prev,
+              id: "This Hospital ID is already in use",
+            }));
+            toast.error("This Hospital ID is already in use");
+          }
+        } else {
+          throw new Error(data.error || "Failed to add hospital");
+        }
+        return;
+      }
+
       toast.success("Hospital added successfully");
       setHospitals((prev) => [...prev, data.hospital]);
       setHospitalForm({
@@ -403,6 +426,7 @@ export default function HospitalsDashboard() {
         location: "",
         proofDocument: "",
       });
+      setValidationErrors({});
     } catch (error) {
       toast.error("Error adding hospital: " + error.message);
     } finally {

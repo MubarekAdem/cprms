@@ -54,8 +54,9 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
 import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
+import { useDelayedLoading } from "@/hooks/use-delayed-loading";
 
 export default function RegistrarsDashboard() {
   const { data: session, status } = useSession();
@@ -80,7 +81,18 @@ export default function RegistrarsDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const showSkeleton = useDelayedLoading(status === "loading" || isLoading);
   const triggerRef = useRef(null);
+  const [validationErrors, setValidationErrors] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    hospital: "",
+    registrarId: "",
+    proofDocument: "",
+  });
 
   // Restrict access
   useEffect(() => {
@@ -189,7 +201,15 @@ export default function RegistrarsDashboard() {
           hospital: selectedRegistrar.hospital,
         }),
       });
-      if (!res.ok) throw new Error("Failed to update registrar");
+      const data = await res.json();
+      if (!res.ok) {
+        if (data.error && data.field) {
+          toast.error(data.message || data.error);
+        } else {
+          throw new Error(data.error || "Failed to update registrar");
+        }
+        return;
+      }
       await fetchRegistrars();
       handleCloseDialog();
       toast.success("Registrar updated successfully");
@@ -208,10 +228,100 @@ export default function RegistrarsDashboard() {
     }
   };
 
+  // Validate form
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // First Name validation
+    if (!registrarForm.firstName.trim()) {
+      errors.firstName = "First name is required";
+      isValid = false;
+    } else if (registrarForm.firstName.length < 2) {
+      errors.firstName = "First name must be at least 2 characters";
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(registrarForm.firstName)) {
+      errors.firstName = "First name can only contain letters and spaces";
+      isValid = false;
+    }
+
+    // Last Name validation
+    if (!registrarForm.lastName.trim()) {
+      errors.lastName = "Last name is required";
+      isValid = false;
+    } else if (registrarForm.lastName.length < 2) {
+      errors.lastName = "Last name must be at least 2 characters";
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(registrarForm.lastName)) {
+      errors.lastName = "Last name can only contain letters and spaces";
+      isValid = false;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!registrarForm.email.trim()) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!emailRegex.test(registrarForm.email)) {
+      errors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    // Phone validation
+    const phoneRegex = /^\+?[\d\s-]{10,}$/;
+    if (!registrarForm.phone.trim()) {
+      errors.phone = "Phone number is required";
+      isValid = false;
+    } else if (!phoneRegex.test(registrarForm.phone)) {
+      errors.phone = "Please enter a valid phone number";
+      isValid = false;
+    }
+
+    // Password validation
+    if (!registrarForm.password) {
+      errors.password = "Password is required";
+      isValid = false;
+    } else if (registrarForm.password.length < 8) {
+      errors.password = "Password must be at least 8 characters";
+      isValid = false;
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(registrarForm.password)) {
+      errors.password =
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+      isValid = false;
+    }
+
+    // Hospital validation
+    if (!registrarForm.hospital) {
+      errors.hospital = "Hospital is required";
+      isValid = false;
+    }
+
+    // Registrar ID validation
+    if (!registrarForm.registrarId.trim()) {
+      errors.registrarId = "Registrar ID is required";
+      isValid = false;
+    } else if (!/^[A-Za-z0-9-]+$/.test(registrarForm.registrarId)) {
+      errors.registrarId =
+        "Registrar ID can only contain letters, numbers, and hyphens";
+      isValid = false;
+    }
+
+    // Proof Document validation
+    if (!registrarForm.proofDocument) {
+      errors.proofDocument = "Proof document is required";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setRegistrarForm((prev) => ({ ...prev, [name]: value }));
+    // Clear validation error when user starts typing
+    setValidationErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   // Handle file upload with progress
@@ -265,9 +375,15 @@ export default function RegistrarsDashboard() {
     }
   };
 
-  // Add Registrar
+  // Handle form submission with proper error handling
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -277,8 +393,21 @@ export default function RegistrarsDashboard() {
         body: JSON.stringify(registrarForm),
       });
 
-      if (!res.ok)
-        throw new Error((await res.json()).error || "Failed to add registrar");
+      const data = await res.json();
+
+      if (!res.ok) {
+        // Handle field-specific errors (email, phone, registrarId)
+        if (data.error && data.field) {
+          setValidationErrors((prev) => ({
+            ...prev,
+            [data.field]: data.message || data.error,
+          }));
+          toast.error(data.message || data.error);
+        } else {
+          throw new Error(data.error || "Failed to add registrar");
+        }
+        return;
+      }
 
       toast.success("Registrar added successfully");
       fetchRegistrars();
@@ -293,6 +422,7 @@ export default function RegistrarsDashboard() {
         registrarId: "",
         proofDocument: "",
       });
+      setValidationErrors({});
     } catch (error) {
       toast.error("Error adding registrar: " + error.message);
     } finally {
@@ -300,7 +430,7 @@ export default function RegistrarsDashboard() {
     }
   };
 
-  if (status === "loading") {
+  if (showSkeleton) {
     return <DashboardSkeleton />;
   }
 
@@ -308,6 +438,7 @@ export default function RegistrarsDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <Toaster richColors position="top-right" />
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
         <div className="grid gap-6 md:grid-cols-3">
@@ -471,11 +602,11 @@ export default function RegistrarsDashboard() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={4} className="h-24 text-center">
+                        <TableCell colSpan={5} className="h-24 text-center">
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No registrars found matching {searchTerm} </p>
+                              <p>No registrars found matching "{searchTerm}"</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -510,8 +641,15 @@ export default function RegistrarsDashboard() {
                   onChange={handleInputChange}
                   placeholder="Abebe"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.firstName ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.firstName && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.firstName}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name</Label>
@@ -522,8 +660,15 @@ export default function RegistrarsDashboard() {
                   onChange={handleInputChange}
                   placeholder="Kebede"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.lastName ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.lastName && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.lastName}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
@@ -535,8 +680,15 @@ export default function RegistrarsDashboard() {
                   onChange={handleInputChange}
                   placeholder="registrar@example.com"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.email ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.email && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.email}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
@@ -547,8 +699,15 @@ export default function RegistrarsDashboard() {
                   onChange={handleInputChange}
                   placeholder="+1 (555) 123-4567"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.phone ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.phone && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.phone}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -560,8 +719,15 @@ export default function RegistrarsDashboard() {
                   onChange={handleInputChange}
                   placeholder="••••••••"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.password ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.password && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.password}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
@@ -598,6 +764,11 @@ export default function RegistrarsDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.hospital && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.hospital}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="registrarId">Registrar ID</Label>
@@ -608,8 +779,15 @@ export default function RegistrarsDashboard() {
                   onChange={handleInputChange}
                   placeholder="REG-12345"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.registrarId ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.registrarId && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.registrarId}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="proofDocument">Proof Document</Label>
@@ -644,6 +822,11 @@ export default function RegistrarsDashboard() {
                     <CheckCircle className="mr-1 h-4 w-4" />
                     Document uploaded successfully
                   </div>
+                )}
+                {validationErrors.proofDocument && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.proofDocument}
+                  </p>
                 )}
               </div>
               <div className="md:col-span-2 mt-4">
@@ -738,7 +921,6 @@ export default function RegistrarsDashboard() {
                     className="bg-white text-black"
                   />
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="edit-hospital" className="text-black">
                     Hospital

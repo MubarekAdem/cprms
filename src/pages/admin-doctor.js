@@ -55,7 +55,9 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { toast } from "sonner";
+import { toast, Toaster } from "sonner";
+import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
+import { useDelayedLoading } from "@/hooks/use-delayed-loading";
 
 export default function DoctorsDashboard() {
   const { data: session, status } = useSession();
@@ -80,9 +82,7 @@ export default function DoctorsDashboard() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const triggerRef = useRef(null); // Store reference to DropdownMenuTrigger
-
-  // Add validation state
+  const triggerRef = useRef(null);
   const [validationErrors, setValidationErrors] = useState({
     firstName: "",
     lastName: "",
@@ -93,6 +93,14 @@ export default function DoctorsDashboard() {
     doctorId: "",
     proofDocument: "",
   });
+  const [editValidationErrors, setEditValidationErrors] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    hospital: "",
+  });
+  const showSkeleton = useDelayedLoading(status === "loading" || isLoading);
 
   // Restrict access
   useEffect(() => {
@@ -110,7 +118,11 @@ export default function DoctorsDashboard() {
       const res = await fetch("/api/doctors");
       if (!res.ok) throw new Error("Failed to fetch doctors");
       const data = await res.json();
-      setDoctors(data);
+      if (Array.isArray(data)) {
+        setDoctors(data);
+      } else {
+        throw new Error("Invalid data format");
+      }
     } catch (error) {
       toast.error("Error fetching doctors: " + error.message);
     } finally {
@@ -129,7 +141,11 @@ export default function DoctorsDashboard() {
         const res = await fetch("/api/hospitals");
         if (!res.ok) throw new Error("Failed to fetch hospitals");
         const data = await res.json();
-        setHospitals(data);
+        if (Array.isArray(data)) {
+          setHospitals(data);
+        } else {
+          throw new Error("Invalid data format");
+        }
       } catch (error) {
         toast.error("Error fetching hospitals: " + error.message);
       }
@@ -149,8 +165,14 @@ export default function DoctorsDashboard() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setDoctorForm((prev) => ({ ...prev, [name]: value }));
-    // Clear validation error when user starts typing
     setValidationErrors((prev) => ({ ...prev, [name]: "" }));
+  };
+
+  // Handle edit form input changes
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setEditDoctor((prev) => ({ ...prev, [name]: value }));
+    setEditValidationErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   // Handle file upload with progress
@@ -186,6 +208,7 @@ export default function DoctorsDashboard() {
 
       const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/doctors/${data.path}`;
       setDoctorForm((prev) => ({ ...prev, proofDocument: proofDocumentUrl }));
+      setValidationErrors((prev) => ({ ...prev, proofDocument: "" }));
 
       setTimeout(() => {
         setUploadProgress(0);
@@ -201,7 +224,7 @@ export default function DoctorsDashboard() {
     }
   };
 
-  // Add validation function
+  // Validate add doctor form
   const validateForm = () => {
     const errors = {};
     let isValid = true;
@@ -213,6 +236,9 @@ export default function DoctorsDashboard() {
     } else if (doctorForm.firstName.length < 2) {
       errors.firstName = "First name must be at least 2 characters";
       isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(doctorForm.firstName)) {
+      errors.firstName = "First name can only contain letters and spaces";
+      isValid = false;
     }
 
     // Last Name validation
@@ -221,6 +247,9 @@ export default function DoctorsDashboard() {
       isValid = false;
     } else if (doctorForm.lastName.length < 2) {
       errors.lastName = "Last name must be at least 2 characters";
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(doctorForm.lastName)) {
+      errors.lastName = "Last name can only contain letters and spaces";
       isValid = false;
     }
 
@@ -283,7 +312,61 @@ export default function DoctorsDashboard() {
     return isValid;
   };
 
-  // Update handleSubmit to include validation
+  // Validate edit form
+  const validateEditForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    if (!editDoctor?.firstName?.trim()) {
+      errors.firstName = "First name is required";
+      isValid = false;
+    } else if (editDoctor.firstName.length < 2) {
+      errors.firstName = "First name must be at least 2 characters";
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(editDoctor.firstName)) {
+      errors.firstName = "First name must contain only letters and spaces";
+      isValid = false;
+    }
+
+    if (!editDoctor?.lastName?.trim()) {
+      errors.lastName = "Last name is required";
+      isValid = false;
+    } else if (editDoctor.lastName.length < 2) {
+      errors.lastName = "Last name must be at least 2 characters";
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(editDoctor.lastName)) {
+      errors.lastName = "Last name must contain only letters and spaces";
+      isValid = false;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!editDoctor?.email?.trim()) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!emailRegex.test(editDoctor.email)) {
+      errors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    const phoneRegex = /^\+?[\d\s-]{10,}$/;
+    if (!editDoctor?.phone?.trim()) {
+      errors.phone = "Phone number is required";
+      isValid = false;
+    } else if (!phoneRegex.test(editDoctor.phone)) {
+      errors.phone = "Please enter a valid phone number";
+      isValid = false;
+    }
+
+    if (!editDoctor?.hospital) {
+      errors.hospital = "Hospital is required";
+      isValid = false;
+    }
+
+    setEditValidationErrors(errors);
+    return isValid;
+  };
+
+  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
 
@@ -301,8 +384,20 @@ export default function DoctorsDashboard() {
         body: JSON.stringify(doctorForm),
       });
 
-      if (!res.ok)
-        throw new Error((await res.json()).error || "Failed to add doctor");
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error && data.field) {
+          setValidationErrors((prev) => ({
+            ...prev,
+            [data.field]: data.message || data.error,
+          }));
+          toast.error(data.message || data.error);
+        } else {
+          throw new Error(data.error || "Failed to add doctor");
+        }
+        return;
+      }
 
       toast.success("Doctor added successfully");
       fetchDoctors();
@@ -317,6 +412,7 @@ export default function DoctorsDashboard() {
         doctorId: "",
         proofDocument: "",
       });
+      setValidationErrors({});
     } catch (error) {
       toast.error("Error adding doctor: " + error.message);
     } finally {
@@ -333,11 +429,17 @@ export default function DoctorsDashboard() {
       lastName: lastNameParts.join(" "),
       password: "",
     });
+    setEditValidationErrors({});
     setIsEditModalOpen(true);
   };
 
   // Handle Edit Save
   const handleEditSave = async () => {
+    if (!validateEditForm()) {
+      toast.error("Please fix the validation errors before saving");
+      return;
+    }
+
     setIsSubmitting(true);
     try {
       const res = await fetch(`/api/doctors/${editDoctor._id}`, {
@@ -353,14 +455,25 @@ export default function DoctorsDashboard() {
         }),
       });
 
-      if (!res.ok)
-        throw new Error((await res.json()).error || "Failed to update doctor");
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (data.error && data.field) {
+          setEditValidationErrors((prev) => ({
+            ...prev,
+            [data.field]: data.message || data.error,
+          }));
+          toast.error(data.message || data.error);
+        } else {
+          throw new Error(data.error || "Failed to update doctor");
+        }
+        return;
+      }
 
       toast.success("Doctor updated successfully");
       fetchDoctors();
       setIsEditModalOpen(false);
       setEditDoctor(null);
-      // Restore focus to the trigger button
       if (triggerRef.current) {
         triggerRef.current.focus();
       }
@@ -377,9 +490,11 @@ export default function DoctorsDashboard() {
 
     try {
       const res = await fetch(`/api/doctors/${doctorId}`, { method: "DELETE" });
+      const data = await res.json();
 
-      if (!res.ok)
-        throw new Error((await res.json()).error || "Failed to delete doctor");
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to delete doctor");
+      }
 
       toast.success("Doctor deleted successfully");
       fetchDoctors();
@@ -388,23 +503,15 @@ export default function DoctorsDashboard() {
     }
   };
 
-  if (status === "loading") {
-    return (
-      <div className="flex h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="flex flex-col items-center space-y-4 text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <h3 className="text-lg font-medium text-gray-900 dark:text-gray-100">
-            Loading session...
-          </h3>
-        </div>
-      </div>
-    );
+  if (showSkeleton) {
+    return <DashboardSkeleton />;
   }
 
   if (!session) return null;
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
+      <Toaster richColors position="top-right" />
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
         <div className="grid gap-6 md:grid-cols-3">
@@ -566,10 +673,7 @@ export default function DoctorsDashboard() {
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>
-                                No doctors found matching &ldquo;{searchTerm}{" "}
-                                &ldquo;
-                              </p>
+                              <p>No doctors found matching "{searchTerm}"</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -778,11 +882,6 @@ export default function DoctorsDashboard() {
                     />
                   </label>
                 </div>
-                {validationErrors.proofDocument && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {validationErrors.proofDocument}
-                  </p>
-                )}
                 {isUploading && (
                   <div className="mt-2">
                     <div className="flex items-center justify-between text-xs">
@@ -802,6 +901,11 @@ export default function DoctorsDashboard() {
                     <CheckCircle className="mr-1 h-4 w-4" />
                     Document uploaded successfully
                   </div>
+                )}
+                {validationErrors.proofDocument && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.proofDocument}
+                  </p>
                 )}
               </div>
               <div className="md:col-span-2 mt-4">
@@ -831,6 +935,7 @@ export default function DoctorsDashboard() {
           onClose={() => {
             setIsEditModalOpen(false);
             setEditDoctor(null);
+            setEditValidationErrors({});
             if (triggerRef.current) {
               triggerRef.current.focus();
             }
@@ -856,16 +961,18 @@ export default function DoctorsDashboard() {
                     id="edit-firstName"
                     name="firstName"
                     value={editDoctor?.firstName || ""}
-                    onChange={(e) =>
-                      setEditDoctor({
-                        ...editDoctor,
-                        firstName: e.target.value,
-                      })
-                    }
+                    onChange={handleEditInputChange}
                     placeholder="First name"
-                    className="bg-white text-black"
+                    className={`bg-white text-black ${
+                      editValidationErrors.firstName ? "border-red-500" : ""
+                    }`}
                     autoFocus
                   />
+                  {editValidationErrors.firstName && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {editValidationErrors.firstName}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-lastName" className="text-black">
@@ -875,15 +982,17 @@ export default function DoctorsDashboard() {
                     id="edit-lastName"
                     name="lastName"
                     value={editDoctor?.lastName || ""}
-                    onChange={(e) =>
-                      setEditDoctor({
-                        ...editDoctor,
-                        lastName: e.target.value,
-                      })
-                    }
+                    onChange={handleEditInputChange}
                     placeholder="Last name"
-                    className="bg-white text-black"
+                    className={`bg-white text-black ${
+                      editValidationErrors.lastName ? "border-red-500" : ""
+                    }`}
                   />
+                  {editValidationErrors.lastName && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {editValidationErrors.lastName}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-email" className="text-black">
@@ -894,15 +1003,17 @@ export default function DoctorsDashboard() {
                     name="email"
                     type="email"
                     value={editDoctor?.email || ""}
-                    onChange={(e) =>
-                      setEditDoctor({
-                        ...editDoctor,
-                        email: e.target.value,
-                      })
-                    }
+                    onChange={handleEditInputChange}
                     placeholder="Email address"
-                    className="bg-white text-black"
+                    className={`bg-white text-black ${
+                      editValidationErrors.email ? "border-red-500" : ""
+                    }`}
                   />
+                  {editValidationErrors.email && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {editValidationErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-phone" className="text-black">
@@ -912,30 +1023,37 @@ export default function DoctorsDashboard() {
                     id="edit-phone"
                     name="phone"
                     value={editDoctor?.phone || ""}
-                    onChange={(e) =>
-                      setEditDoctor({
-                        ...editDoctor,
-                        phone: e.target.value,
-                      })
-                    }
+                    onChange={handleEditInputChange}
                     placeholder="Phone number"
-                    className="bg-white text-black"
+                    className={`bg-white text-black ${
+                      editValidationErrors.phone ? "border-red-500" : ""
+                    }`}
                   />
+                  {editValidationErrors.phone && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {editValidationErrors.phone}
+                    </p>
+                  )}
                 </div>
-
                 <div className="space-y-2">
                   <Label htmlFor="edit-hospital" className="text-black">
                     Hospital
                   </Label>
                   <Select
                     value={editDoctor?.hospital || ""}
-                    onValueChange={(value) =>
-                      setEditDoctor({ ...editDoctor, hospital: value })
-                    }
+                    onValueChange={(value) => {
+                      setEditDoctor({ ...editDoctor, hospital: value });
+                      setEditValidationErrors((prev) => ({
+                        ...prev,
+                        hospital: "",
+                      }));
+                    }}
                   >
                     <SelectTrigger
                       id="edit-hospital"
-                      className="bg-white text-black"
+                      className={`bg-white text-black ${
+                        editValidationErrors.hospital ? "border-red-500" : ""
+                      }`}
                     >
                       <SelectValue placeholder="Select Hospital" />
                     </SelectTrigger>
@@ -951,6 +1069,25 @@ export default function DoctorsDashboard() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {editValidationErrors.hospital && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {editValidationErrors.hospital}
+                    </p>
+                  )}
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-password" className="text-black">
+                    Password (Optional)
+                  </Label>
+                  <Input
+                    id="edit-password"
+                    name="password"
+                    type="password"
+                    value={editDoctor?.password || ""}
+                    onChange={handleEditInputChange}
+                    placeholder="Enter new password (leave blank to keep current)"
+                    className="bg-white text-black"
+                  />
                 </div>
                 <div className="flex space-x-2 justify-end mt-4">
                   <Button
@@ -959,6 +1096,7 @@ export default function DoctorsDashboard() {
                     onClick={() => {
                       setIsEditModalOpen(false);
                       setEditDoctor(null);
+                      setEditValidationErrors({});
                       if (triggerRef.current) {
                         triggerRef.current.focus();
                       }
