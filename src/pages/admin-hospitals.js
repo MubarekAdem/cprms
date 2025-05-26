@@ -162,6 +162,53 @@ export default function HospitalsDashboard() {
   const showSkeleton = useDelayedLoading(status === "loading" || isLoading);
   const triggerRef = useRef(null);
 
+  // Add validation state
+  const [validationErrors, setValidationErrors] = useState({
+    name: "",
+    id: "",
+    location: "",
+    proofDocument: "",
+  });
+
+  // Add validation function
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // Hospital Name validation
+    if (!hospitalForm.name.trim()) {
+      errors.name = "Hospital name is required";
+      isValid = false;
+    } else if (hospitalForm.name.length < 3) {
+      errors.name = "Hospital name must be at least 3 characters";
+      isValid = false;
+    }
+
+    // Hospital ID validation
+    if (!hospitalForm.id.trim()) {
+      errors.id = "Hospital ID is required";
+      isValid = false;
+    } else if (!/^[A-Za-z0-9-]+$/.test(hospitalForm.id)) {
+      errors.id = "Hospital ID can only contain letters, numbers, and hyphens";
+      isValid = false;
+    }
+
+    // Location validation
+    if (!hospitalForm.location) {
+      errors.location = "Location is required";
+      isValid = false;
+    }
+
+    // Proof Document validation
+    if (!hospitalForm.proofDocument) {
+      errors.proofDocument = "Proof document is required";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   // Restrict access
   useEffect(() => {
     if (status === "loading") return;
@@ -271,6 +318,8 @@ export default function HospitalsDashboard() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setHospitalForm((prev) => ({ ...prev, [name]: value }));
+    // Clear validation error when user starts typing
+    setValidationErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   // Handle file upload with progress
@@ -326,6 +375,12 @@ export default function HospitalsDashboard() {
   // Add Hospital
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -574,8 +629,15 @@ export default function HospitalsDashboard() {
                   onChange={handleInputChange}
                   placeholder="Hospital Name"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.name ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.name && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.name}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="id">Hospital ID</Label>
@@ -586,18 +648,31 @@ export default function HospitalsDashboard() {
                   onChange={handleInputChange}
                   placeholder="HOSP-12345"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.id ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.id && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.id}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="location">Location</Label>
                 <Select
                   value={hospitalForm.location}
-                  onValueChange={(value) =>
-                    setHospitalForm((prev) => ({ ...prev, location: value }))
-                  }
+                  onValueChange={(value) => {
+                    setHospitalForm((prev) => ({ ...prev, location: value }));
+                    setValidationErrors((prev) => ({ ...prev, location: "" }));
+                  }}
                 >
-                  <SelectTrigger id="location" className="w-full">
+                  <SelectTrigger
+                    id="location"
+                    className={`w-full ${
+                      validationErrors.location ? "border-red-500" : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Select City" />
                   </SelectTrigger>
                   <SelectContent>
@@ -608,11 +683,22 @@ export default function HospitalsDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.location && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.location}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="proofDocument">Proof Document</Label>
                 <div className="mt-1">
-                  <label className="flex w-full cursor-pointer items-center rounded-md border border-dashed border-gray-300 p-3 text-sm text-gray-500 hover:border-primary/50 dark:border-gray-700">
+                  <label
+                    className={`flex w-full cursor-pointer items-center rounded-md border border-dashed ${
+                      validationErrors.proofDocument
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    } p-3 text-sm text-gray-500 hover:border-primary/50 dark:border-gray-700`}
+                  >
                     <Upload className="mr-2 h-4 w-4" />
                     <span>Upload document</span>
                     <input
@@ -623,6 +709,11 @@ export default function HospitalsDashboard() {
                     />
                   </label>
                 </div>
+                {validationErrors.proofDocument && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.proofDocument}
+                  </p>
+                )}
                 {isUploading && (
                   <div className="mt-2">
                     <div className="flex items-center justify-between text-xs">

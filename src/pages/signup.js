@@ -54,16 +54,109 @@ export default function Signup() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
 
+  // Add validation state
+  const [validationErrors, setValidationErrors] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    otp: "",
+  });
+
+  // Add validation function
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // First Name validation
+    if (!form.firstName.trim()) {
+      errors.firstName = "First name is required";
+      isValid = false;
+    } else if (form.firstName.length < 2) {
+      errors.firstName = "First name must be at least 2 characters";
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(form.firstName)) {
+      errors.firstName = "First name can only contain letters and spaces";
+      isValid = false;
+    }
+
+    // Last Name validation
+    if (!form.lastName.trim()) {
+      errors.lastName = "Last name is required";
+      isValid = false;
+    } else if (form.lastName.length < 2) {
+      errors.lastName = "Last name must be at least 2 characters";
+      isValid = false;
+    } else if (!/^[A-Za-z\s]+$/.test(form.lastName)) {
+      errors.lastName = "Last name can only contain letters and spaces";
+      isValid = false;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!form.email.trim()) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!emailRegex.test(form.email)) {
+      errors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    // Phone validation
+    const phoneRegex = /^\+?[\d\s-]{10,}$/;
+    if (!form.phone.trim()) {
+      errors.phone = "Phone number is required";
+      isValid = false;
+    } else if (!phoneRegex.test(form.phone)) {
+      errors.phone = "Please enter a valid phone number";
+      isValid = false;
+    }
+
+    // Password validation
+    if (!form.password) {
+      errors.password = "Password is required";
+      isValid = false;
+    } else if (form.password.length < 8) {
+      errors.password = "Password must be at least 8 characters";
+      isValid = false;
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password)) {
+      errors.password =
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+      isValid = false;
+    }
+
+    // OTP validation (only when OTP is required)
+    if (requiresOTP && !form.otp) {
+      errors.otp = "OTP is required";
+      isValid = false;
+    } else if (requiresOTP && form.otp.length !== 4) {
+      errors.otp = "OTP must be 4 digits";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   const handleChange = (e) => {
     setForm((prevForm) => ({
       ...prevForm,
       [e.target.name]: e.target.value,
     }));
+    // Clear validation error when user starts typing
+    setValidationErrors((prev) => ({ ...prev, [e.target.name]: "" }));
     if (error) setError("");
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting");
+      return;
+    }
+
     setIsLoading(true);
     setError("");
 
@@ -320,12 +413,19 @@ export default function Signup() {
                             id="firstName"
                             name="firstName"
                             placeholder="Abebe"
-                            className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                            className={`pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                              validationErrors.firstName ? "border-red-500" : ""
+                            }`}
                             value={form.firstName}
                             onChange={handleChange}
                             required
                           />
                         </div>
+                        {validationErrors.firstName && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {validationErrors.firstName}
+                          </p>
+                        )}
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="lastName">Last Name</Label>
@@ -335,12 +435,19 @@ export default function Signup() {
                             id="lastName"
                             name="lastName"
                             placeholder="Kebede"
-                            className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                            className={`pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                              validationErrors.lastName ? "border-red-500" : ""
+                            }`}
                             value={form.lastName}
                             onChange={handleChange}
                             required
                           />
                         </div>
+                        {validationErrors.lastName && (
+                          <p className="text-sm text-red-500 mt-1">
+                            {validationErrors.lastName}
+                          </p>
+                        )}
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -352,12 +459,19 @@ export default function Signup() {
                           type="email"
                           name="email"
                           placeholder="m@example.com"
-                          className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                          className={`pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                            validationErrors.email ? "border-red-500" : ""
+                          }`}
                           value={form.email}
                           onChange={handleChange}
                           required
                         />
                       </div>
+                      {validationErrors.email && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {validationErrors.email}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone">Phone</Label>
@@ -368,12 +482,19 @@ export default function Signup() {
                           name="phone"
                           type="tel"
                           placeholder="123-456-7890"
-                          className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                          className={`pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                            validationErrors.phone ? "border-red-500" : ""
+                          }`}
                           value={form.phone}
                           onChange={handleChange}
                           required
                         />
                       </div>
+                      {validationErrors.phone && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {validationErrors.phone}
+                        </p>
+                      )}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="password">Password</Label>
@@ -384,7 +505,9 @@ export default function Signup() {
                           type={showPassword ? "text" : "password"}
                           name="password"
                           placeholder="••••••••"
-                          className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                          className={`pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                            validationErrors.password ? "border-red-500" : ""
+                          }`}
                           value={form.password}
                           onChange={handleChange}
                           required
@@ -401,6 +524,11 @@ export default function Signup() {
                           )}
                         </button>
                       </div>
+                      {validationErrors.password && (
+                        <p className="text-sm text-red-500 mt-1">
+                          {validationErrors.password}
+                        </p>
+                      )}
                     </div>
                   </>
                 ) : (
@@ -412,13 +540,20 @@ export default function Signup() {
                         id="otp"
                         name="otp"
                         placeholder="Enter 4-digit code"
-                        className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                        className={`pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                          validationErrors.otp ? "border-red-500" : ""
+                        }`}
                         value={form.otp}
                         onChange={handleChange}
                         required
                         maxLength={4}
                       />
                     </div>
+                    {validationErrors.otp && (
+                      <p className="text-sm text-red-500 mt-1">
+                        {validationErrors.otp}
+                      </p>
+                    )}
                   </div>
                 )}
                 <Button

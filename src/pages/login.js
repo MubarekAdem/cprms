@@ -41,6 +41,12 @@ export default function Login() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // Add validation state
+  const [validationErrors, setValidationErrors] = useState({
+    email: "",
+    password: "",
+  });
+
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
       const redirectPath = getRedirectPath(session.user.role);
@@ -68,8 +74,39 @@ export default function Login() {
     }
   };
 
+  // Add validation function
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!form.email.trim()) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!emailRegex.test(form.email)) {
+      errors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    // Password validation
+    if (!form.password) {
+      errors.password = "Password is required";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting");
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -79,7 +116,21 @@ export default function Login() {
       });
 
       if (res?.error) {
-        toast.error(res.error);
+        // Handle specific error messages
+        if (res.error === "Invalid credentials") {
+          setValidationErrors({
+            email: "Invalid email or password",
+            password: "Invalid email or password",
+          });
+          toast.error("Invalid email or password");
+        } else if (res.error === "User not found") {
+          setValidationErrors({
+            email: "No account found with this email",
+          });
+          toast.error("No account found with this email");
+        } else {
+          toast.error(res.error);
+        }
       } else {
         toast.success("Login successful!");
       }
@@ -105,6 +156,8 @@ export default function Login() {
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+    // Clear validation error when user starts typing
+    setValidationErrors((prev) => ({ ...prev, [e.target.name]: "" }));
   };
 
   const togglePasswordVisibility = () => {
@@ -251,12 +304,19 @@ export default function Login() {
                       type="email"
                       name="email"
                       placeholder="m@example.com"
-                      className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                      className={`pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                        validationErrors.email ? "border-red-500" : ""
+                      }`}
                       value={form.email}
                       onChange={handleChange}
                       required
                     />
                   </div>
+                  {validationErrors.email && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.email}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="password">Password</Label>
@@ -267,7 +327,9 @@ export default function Login() {
                       type={showPassword ? "text" : "password"}
                       name="password"
                       placeholder="••••••••"
-                      className="pl-10 pr-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white"
+                      className={`pl-10 pr-10 dark:bg-gray-800 dark:border-gray-700 dark:text-white ${
+                        validationErrors.password ? "border-red-500" : ""
+                      }`}
                       value={form.password}
                       onChange={handleChange}
                       required
@@ -284,6 +346,11 @@ export default function Login() {
                       )}
                     </button>
                   </div>
+                  {validationErrors.password && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {validationErrors.password}
+                    </p>
+                  )}
                 </div>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">

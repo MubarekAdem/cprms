@@ -82,6 +82,18 @@ export default function DoctorsDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const triggerRef = useRef(null); // Store reference to DropdownMenuTrigger
 
+  // Add validation state
+  const [validationErrors, setValidationErrors] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    hospital: "",
+    doctorId: "",
+    proofDocument: "",
+  });
+
   // Restrict access
   useEffect(() => {
     if (status === "loading") return;
@@ -137,6 +149,8 @@ export default function DoctorsDashboard() {
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setDoctorForm((prev) => ({ ...prev, [name]: value }));
+    // Clear validation error when user starts typing
+    setValidationErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   // Handle file upload with progress
@@ -187,9 +201,97 @@ export default function DoctorsDashboard() {
     }
   };
 
-  // Add Doctor
+  // Add validation function
+  const validateForm = () => {
+    const errors = {};
+    let isValid = true;
+
+    // First Name validation
+    if (!doctorForm.firstName.trim()) {
+      errors.firstName = "First name is required";
+      isValid = false;
+    } else if (doctorForm.firstName.length < 2) {
+      errors.firstName = "First name must be at least 2 characters";
+      isValid = false;
+    }
+
+    // Last Name validation
+    if (!doctorForm.lastName.trim()) {
+      errors.lastName = "Last name is required";
+      isValid = false;
+    } else if (doctorForm.lastName.length < 2) {
+      errors.lastName = "Last name must be at least 2 characters";
+      isValid = false;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!doctorForm.email.trim()) {
+      errors.email = "Email is required";
+      isValid = false;
+    } else if (!emailRegex.test(doctorForm.email)) {
+      errors.email = "Please enter a valid email address";
+      isValid = false;
+    }
+
+    // Phone validation
+    const phoneRegex = /^\+?[\d\s-]{10,}$/;
+    if (!doctorForm.phone.trim()) {
+      errors.phone = "Phone number is required";
+      isValid = false;
+    } else if (!phoneRegex.test(doctorForm.phone)) {
+      errors.phone = "Please enter a valid phone number";
+      isValid = false;
+    }
+
+    // Password validation
+    if (!doctorForm.password) {
+      errors.password = "Password is required";
+      isValid = false;
+    } else if (doctorForm.password.length < 8) {
+      errors.password = "Password must be at least 8 characters";
+      isValid = false;
+    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(doctorForm.password)) {
+      errors.password =
+        "Password must contain at least one uppercase letter, one lowercase letter, and one number";
+      isValid = false;
+    }
+
+    // Hospital validation
+    if (!doctorForm.hospital) {
+      errors.hospital = "Hospital is required";
+      isValid = false;
+    }
+
+    // Doctor ID validation
+    if (!doctorForm.doctorId.trim()) {
+      errors.doctorId = "Doctor ID is required";
+      isValid = false;
+    } else if (!/^[A-Za-z0-9-]+$/.test(doctorForm.doctorId)) {
+      errors.doctorId =
+        "Doctor ID can only contain letters, numbers, and hyphens";
+      isValid = false;
+    }
+
+    // Proof Document validation
+    if (!doctorForm.proofDocument) {
+      errors.proofDocument = "Proof document is required";
+      isValid = false;
+    }
+
+    setValidationErrors(errors);
+    return isValid;
+  };
+
+  // Update handleSubmit to include validation
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      toast.error("Please fix the validation errors before submitting");
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -502,8 +604,15 @@ export default function DoctorsDashboard() {
                   onChange={handleInputChange}
                   placeholder="Abebe"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.firstName ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.firstName && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.firstName}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name</Label>
@@ -514,8 +623,15 @@ export default function DoctorsDashboard() {
                   onChange={handleInputChange}
                   placeholder="Kebede"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.lastName ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.lastName && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.lastName}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
@@ -527,8 +643,15 @@ export default function DoctorsDashboard() {
                   onChange={handleInputChange}
                   placeholder="doctor@example.com"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.email ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.email && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.email}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
@@ -539,8 +662,15 @@ export default function DoctorsDashboard() {
                   onChange={handleInputChange}
                   placeholder="+1 (555) 123-4567"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.phone ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.phone && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.phone}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -552,8 +682,15 @@ export default function DoctorsDashboard() {
                   onChange={handleInputChange}
                   placeholder="••••••••"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.password ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.password && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.password}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
@@ -575,11 +712,17 @@ export default function DoctorsDashboard() {
                 <Label htmlFor="hospital">Hospital</Label>
                 <Select
                   value={doctorForm.hospital}
-                  onValueChange={(value) =>
-                    setDoctorForm({ ...doctorForm, hospital: value })
-                  }
+                  onValueChange={(value) => {
+                    setDoctorForm({ ...doctorForm, hospital: value });
+                    setValidationErrors((prev) => ({ ...prev, hospital: "" }));
+                  }}
                 >
-                  <SelectTrigger id="hospital" className="w-full">
+                  <SelectTrigger
+                    id="hospital"
+                    className={`w-full ${
+                      validationErrors.hospital ? "border-red-500" : ""
+                    }`}
+                  >
                     <SelectValue placeholder="Select Hospital" />
                   </SelectTrigger>
                   <SelectContent>
@@ -590,6 +733,11 @@ export default function DoctorsDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
+                {validationErrors.hospital && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.hospital}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="doctorId">Doctor ID</Label>
@@ -600,13 +748,26 @@ export default function DoctorsDashboard() {
                   onChange={handleInputChange}
                   placeholder="MED-12345"
                   required
-                  className="w-full"
+                  className={`w-full ${
+                    validationErrors.doctorId ? "border-red-500" : ""
+                  }`}
                 />
+                {validationErrors.doctorId && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.doctorId}
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="proofDocument">Proof Document</Label>
                 <div className="mt-1">
-                  <label className="flex w-full cursor-pointer items-center rounded-md border border-dashed border-gray-300 p-3 text-sm text-gray-500 hover:border-primary/50 dark:border-gray-700">
+                  <label
+                    className={`flex w-full cursor-pointer items-center rounded-md border border-dashed ${
+                      validationErrors.proofDocument
+                        ? "border-red-500"
+                        : "border-gray-300"
+                    } p-3 text-sm text-gray-500 hover:border-primary/50 dark:border-gray-700`}
+                  >
                     <Upload className="mr-2 h-4 w-4" />
                     <span>Upload document</span>
                     <input
@@ -617,6 +778,11 @@ export default function DoctorsDashboard() {
                     />
                   </label>
                 </div>
+                {validationErrors.proofDocument && (
+                  <p className="text-sm text-red-500 mt-1">
+                    {validationErrors.proofDocument}
+                  </p>
+                )}
                 {isUploading && (
                   <div className="mt-2">
                     <div className="flex items-center justify-between text-xs">
