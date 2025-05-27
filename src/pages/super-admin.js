@@ -30,14 +30,9 @@ export default function SuperAdminDashboard() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedRole, setSelectedRole] = useState("super-admin");
 
-  console.log("SuperAdminDashboard - Status:", status, "Session:", session);
-  console.log("Session user role:", session?.user?.role);
-  console.log("Router pathname:", router.pathname);
-
   useEffect(() => {
     if (status === "loading") {
       const timer = setTimeout(() => {
-        console.log("Status stuck on loading, forcing session update");
         update();
       }, 2000);
       return () => clearTimeout(timer);
@@ -47,11 +42,9 @@ export default function SuperAdminDashboard() {
   const fetchUsers = useCallback(async () => {
     setIsLoading(true);
     try {
-      console.log("Fetching users from: /api/users");
       const res = await fetch("/api/users");
       if (!res.ok) throw new Error(`Failed to fetch users: ${res.status}`);
       const data = await res.json();
-      console.log("Fetched users:", data);
       setUsers(data);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -63,11 +56,9 @@ export default function SuperAdminDashboard() {
 
   const fetchAdmins = useCallback(async () => {
     try {
-      console.log("Fetching admins from: /api/admins");
       const res = await fetch("/api/admins");
       if (!res.ok) throw new Error(`Failed to fetch admins: ${res.status}`);
       const data = await res.json();
-      console.log("Fetched admins:", data);
       setAdmins(data);
     } catch (error) {
       console.error("Error fetching admins:", error);
@@ -77,7 +68,6 @@ export default function SuperAdminDashboard() {
 
   const fetchRoleRequests = useCallback(async () => {
     try {
-      console.log("Fetching role requests from: /api/role-requests");
       const res = await fetch("/api/role-requests");
       if (!res.ok) {
         const errorData = await res.json();
@@ -86,7 +76,6 @@ export default function SuperAdminDashboard() {
         );
       }
       const data = await res.json();
-      console.log("Fetched role requests:", data);
       setRoleRequests(data);
     } catch (error) {
       console.error("Error fetching role requests:", error);
@@ -110,7 +99,6 @@ export default function SuperAdminDashboard() {
 
   const handleRequestAdminRole = async (userId) => {
     try {
-      console.log(`Requesting admin role for user ${userId}`);
       const res = await fetch("/api/role-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -131,13 +119,12 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  const handleRemoveRole = async (userId, role) => {
+  const handleRemoveRole = async (userId) => {
     try {
-      console.log(`Removing role ${role} for user ${userId}`);
       const res = await fetch(`/api/users/${userId}/remove-role`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role }),
+        body: JSON.stringify({ role: "admin" }),
       });
 
       if (!res.ok) {
@@ -146,37 +133,27 @@ export default function SuperAdminDashboard() {
           errorData.error || `Failed to remove role: ${res.status}`
         );
       }
-      toast.success(
-        `${
-          role.charAt(0).toUpperCase() + role.slice(1)
-        } role removed successfully`
-      );
+      toast.success("Admin role removed successfully");
       fetchUsers();
       fetchAdmins();
       fetchRoleRequests();
     } catch (error) {
-      console.error(`Error removing ${role} role:`, error);
-      toast.error(`Error removing ${role} role: ${error.message}`);
+      console.error("Error removing admin role:", error);
+      toast.error(`Error removing admin role: ${error.message}`);
     }
   };
 
-  // Group users by role
+  // Group users by role, only including admin-related roles
   const groupedUsers = filteredUsers.reduce((acc, user) => {
-    const role = user.role || "None";
+    const role =
+      user.role === "super-admin" || user.role === "admin" ? user.role : "None";
     if (!acc[role]) acc[role] = [];
     acc[role].push(user);
     return acc;
   }, {});
 
   // Define role order for display
-  const roleOrder = [
-    "super-admin",
-    "admin",
-    "doctor",
-    "first-aid",
-    "registrar",
-    "None",
-  ];
+  const roleOrder = ["super-admin", "admin", "None"];
 
   // Filter roles that have users
   const availableRoles = roleOrder.filter(
@@ -195,12 +172,6 @@ export default function SuperAdminDashboard() {
   }
 
   if (!session || session?.user?.role !== "super-admin") {
-    console.log(
-      "Unauthorized - Session:",
-      session,
-      "Role:",
-      session?.user?.role
-    );
     return <p className="text-center text-red-500 mt-10">Unauthorized</p>;
   }
 
@@ -362,29 +333,16 @@ export default function SuperAdminDashboard() {
                                         )}
                                       </TableCell>
                                       <TableCell className="text-right space-x-2">
-                                        {[
-                                          "admin",
-                                          "doctor",
-                                          "first-aid",
-                                          "registrar",
-                                        ].includes(user.role) ? (
+                                        {user.role === "admin" ? (
                                           <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() =>
-                                              handleRemoveRole(
-                                                user._id,
-                                                user.role
-                                              )
+                                              handleRemoveRole(user._id)
                                             }
                                             disabled={pendingRequest}
                                           >
-                                            Remove{" "}
-                                            {user.role.charAt(0).toUpperCase() +
-                                              user.role
-                                                .slice(1)
-                                                .toLowerCase()}{" "}
-                                            Role
+                                            Remove Admin Role
                                           </Button>
                                         ) : (
                                           <Button
