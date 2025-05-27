@@ -3,8 +3,9 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/router";
-import Navbar from "@/components/Navbar";
+import { Smartphone, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Table,
@@ -17,6 +18,7 @@ import {
 import { AlertCircle, Loader2, Mail, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
 
 export default function NotificationsDashboard() {
   const { data: session, status } = useSession();
@@ -72,67 +74,11 @@ export default function NotificationsDashboard() {
 
     if (
       status === "authenticated" &&
-      (!session?.user?.role ||
-        session?.user?.role === "None" ||
-        session?.user?.role === "first-aid")
+      (!session?.user?.role || session?.user?.role === "None")
     ) {
       fetchRequests();
     }
   }, [session, status, router]);
-
-  const handleApproveRequest = async (requestId) => {
-    try {
-      console.log(`Approving role request ${requestId}`);
-      const res = await fetch(`/api/role-requests/${requestId}/approve`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error(
-          `Failed to approve request ${requestId}: ${res.status}, Response: ${errorText}`
-        );
-        throw new Error(
-          `Failed to approve request: ${res.status} - ${errorText}`
-        );
-      }
-      const data = await res.json();
-      console.log(`Approval response:`, data);
-      toast.success("Role request approved successfully");
-      setRequests(requests.filter((req) => req._id !== requestId));
-    } catch (error) {
-      console.error("Error approving role request:", error);
-      toast.error("Error approving role request: " + error.message);
-    }
-  };
-
-  const handleRejectRequest = async (requestId) => {
-    try {
-      console.log(`Rejecting role request ${requestId}`);
-      const res = await fetch(`/api/role-requests/${requestId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        console.error(
-          `Failed to reject request ${requestId}: ${res.status}, Response: ${errorText}`
-        );
-        throw new Error(
-          `Failed to reject request: ${res.status} - ${errorText}`
-        );
-      }
-      const data = await res.json();
-      console.log(`Rejection response:`, data);
-      toast.success("Role request rejected successfully");
-      setRequests(requests.filter((req) => req._id !== requestId));
-    } catch (error) {
-      console.error("Error rejecting role request:", error);
-      toast.error("Error rejecting role request: " + error.message);
-    }
-  };
 
   // Show loading state while checking authentication
   if (status === "loading") {
@@ -146,6 +92,47 @@ export default function NotificationsDashboard() {
   // Redirect if not authenticated
   if (status === "unauthenticated") {
     return null; // The useEffect will handle the redirect
+  }
+
+  // Show mobile app prompt for first-aid role
+  if (session?.user?.role === "first-aid") {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <Card className="border-none shadow-md max-w-md w-full">
+          <CardHeader>
+            <CardTitle className="text-xl font-bold text-center">
+              Use Our Mobile App
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col items-center text-center space-y-4">
+            <Smartphone className="h-12 w-12 text-primary" />
+            <p className="text-gray-600 dark:text-gray-300">
+              Please use our mobile app to access first-aid features.
+            </p>
+            <div className="flex space-x-4">
+              <a
+                href="https://www.apple.com/app-store/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-primary hover:underline"
+              >
+                <Download className="h-5 w-5" />
+                <span>App Store</span>
+              </a>
+              <a
+                href="https://play.google.com/store"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center space-x-2 text-primary hover:underline"
+              >
+                <Download className="h-5 w-5" />
+                <span>Google Play</span>
+              </a>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   // Check for unauthorized roles
@@ -164,6 +151,7 @@ export default function NotificationsDashboard() {
     return <p className="text-center text-red-500 mt-10">Unauthorized</p>;
   }
 
+  // Rest of the original code for other roles
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
       <Navbar />
