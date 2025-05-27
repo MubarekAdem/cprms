@@ -97,7 +97,6 @@ export default function Navbar() {
 
   const doctorNavItems = [
     { icon: Stethoscope, label: "DASHBOARD", href: "/doctor" },
-    { icon: FileText, label: "PATIENTS", href: "/doctor-patients" },
   ];
 
   const registrarNavItems = [

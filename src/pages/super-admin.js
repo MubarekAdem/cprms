@@ -131,27 +131,32 @@ export default function SuperAdminDashboard() {
     }
   };
 
-  const handleRemoveAdmin = async (userId) => {
+  const handleRemoveRole = async (userId, role) => {
     try {
-      console.log(`Removing admin role for user ${userId}`);
-      const res = await fetch(`/api/users/${userId}/remove-admin`, {
+      console.log(`Removing role ${role} for user ${userId}`);
+      const res = await fetch(`/api/users/${userId}/remove-role`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ role }),
       });
 
       if (!res.ok) {
         const errorData = await res.json();
         throw new Error(
-          errorData.error || `Failed to remove admin role: ${res.status}`
+          errorData.error || `Failed to remove role: ${res.status}`
         );
       }
-      toast.success("Admin role removed successfully");
+      toast.success(
+        `${
+          role.charAt(0).toUpperCase() + role.slice(1)
+        } role removed successfully`
+      );
       fetchUsers();
       fetchAdmins();
       fetchRoleRequests();
     } catch (error) {
-      console.error("Error removing admin role:", error);
-      toast.error(`Error removing admin role: ${error.message}`);
+      console.error(`Error removing ${role} role:`, error);
+      toast.error(`Error removing ${role} role: ${error.message}`);
     }
   };
 
@@ -357,16 +362,29 @@ export default function SuperAdminDashboard() {
                                         )}
                                       </TableCell>
                                       <TableCell className="text-right space-x-2">
-                                        {user.role === "admin" ? (
+                                        {[
+                                          "admin",
+                                          "doctor",
+                                          "first-aid",
+                                          "registrar",
+                                        ].includes(user.role) ? (
                                           <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() =>
-                                              handleRemoveAdmin(user._id)
+                                              handleRemoveRole(
+                                                user._id,
+                                                user.role
+                                              )
                                             }
                                             disabled={pendingRequest}
                                           >
-                                            Remove Admin
+                                            Remove{" "}
+                                            {user.role.charAt(0).toUpperCase() +
+                                              user.role
+                                                .slice(1)
+                                                .toLowerCase()}{" "}
+                                            Role
                                           </Button>
                                         ) : (
                                           <Button
