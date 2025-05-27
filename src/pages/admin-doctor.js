@@ -1075,20 +1075,7 @@ export default function DoctorsDashboard() {
                     </p>
                   )}
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-password" className="text-black">
-                    Password (Optional)
-                  </Label>
-                  <Input
-                    id="edit-password"
-                    name="password"
-                    type="password"
-                    value={editDoctor?.password || ""}
-                    onChange={handleEditInputChange}
-                    placeholder="Enter new password (leave blank to keep current)"
-                    className="bg-white text-black"
-                  />
-                </div>
+
                 <div className="flex space-x-2 justify-end mt-4">
                   <Button
                     type="button"

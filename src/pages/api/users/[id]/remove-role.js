@@ -61,23 +61,21 @@ export default async function handler(req, res) {
       await user.save();
       console.log(`Updated user ${id} role to None`);
 
-      // Remove the corresponding record from the role-specific collection
+      // Remove the corresponding record from the role-specific collection using email
       let deletedCount = 0;
       if (role === "doctor") {
-        // Try multiple field names to find the correct one
         const result = await Doctor.deleteOne({
           $or: [
-            { userId: id }, // Common field name
-            { user: id }, // Alternative field name
-            { _id: id }, // If the Doctor record uses the same ID as User
+            { email: user.email }, // Common field name
+            { userEmail: user.email }, // Alternative field name
           ],
         });
         deletedCount = result.deletedCount;
         console.log(
-          `Queried Doctors collection with { userId: ${id}, user: ${id}, _id: ${id} }`
+          `Queried Doctors collection with { email: ${user.email}, userEmail: ${user.email} }`
         );
         if (deletedCount === 0) {
-          console.warn(`No Doctor record found for user ${id}`);
+          console.warn(`No Doctor record found for email ${user.email}`);
           // Fetch all Doctor records to debug
           const allDoctors = await Doctor.find({});
           console.log(
@@ -86,14 +84,14 @@ export default async function handler(req, res) {
         }
       } else if (role === "first-aid") {
         const result = await FirstAid.deleteOne({
-          $or: [{ userId: id }, { user: id }, { _id: id }],
+          $or: [{ email: user.email }, { userEmail: user.email }],
         });
         deletedCount = result.deletedCount;
         console.log(
-          `Queried FirstAid collection with { userId: ${id}, user: ${id}, _id: ${id} }`
+          `Queried FirstAid collection with { email: ${user.email}, userEmail: ${user.email} }`
         );
         if (deletedCount === 0) {
-          console.warn(`No FirstAid record found for user ${id}`);
+          console.warn(`No FirstAid record found for email ${user.email}`);
           const allFirstAid = await FirstAid.find({});
           console.log(
             `Current FirstAid collection: ${JSON.stringify(
@@ -105,14 +103,14 @@ export default async function handler(req, res) {
         }
       } else if (role === "registrar") {
         const result = await Registrar.deleteOne({
-          $or: [{ userId: id }, { user: id }, { _id: id }],
+          $or: [{ email: user.email }, { userEmail: user.email }],
         });
         deletedCount = result.deletedCount;
         console.log(
-          `Queried Registrars collection with { userId: ${id}, user: ${id}, _id: ${id} }`
+          `Queried Registrars collection with { email: ${user.email}, userEmail: ${user.email} }`
         );
         if (deletedCount === 0) {
-          console.warn(`No Registrar record found for user ${id}`);
+          console.warn(`No Registrar record found for email ${user.email}`);
           const allRegistrars = await Registrar.find({});
           console.log(
             `Current Registrars collection: ${JSON.stringify(
@@ -124,7 +122,7 @@ export default async function handler(req, res) {
         }
       }
       console.log(
-        `Deleted ${deletedCount} record(s) from ${role} collection for user ${id}`
+        `Deleted ${deletedCount} record(s) from ${role} collection for email ${user.email}`
       );
 
       // Clean up any pending RoleRequest documents for this user

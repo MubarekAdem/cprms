@@ -54,8 +54,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
-import { toast, Toaster } from "sonner";
+import { toast } from "sonner";
 import { DashboardSkeleton } from "@/components/admin-dashboard/dashboard-skeleton";
 import { useDelayedLoading } from "@/hooks/use-delayed-loading";
 
@@ -82,27 +81,10 @@ export default function FirstAidDashboard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const triggerRef = useRef(null);
-  const [validationErrors, setValidationErrors] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    password: "",
-    hospital: "",
-    firstAidId: "",
-    proofDocument: "",
-  });
-  const [editValidationErrors, setEditValidationErrors] = useState({
-    firstName: "",
-    lastName: "",
-    email: "",
-    phone: "",
-    hospital: "",
-  });
   const showSkeleton = useDelayedLoading(status === "loading" || isLoading);
+  const triggerRef = useRef(null);
 
-  // Restrict access to admin
+  // Restrict access
   useEffect(() => {
     if (status === "loading") return;
     if (!session || session.user.role !== "admin") {
@@ -161,18 +143,72 @@ export default function FirstAidDashboard() {
       responder.hospital?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Delete first aid responder
+  const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this first aid responder?"))
+      return;
+
+    try {
+      const res = await fetch(`/api/first-aid/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete first aid responder");
+      setFirstAids(firstAids.filter((responder) => responder._id !== id));
+      toast.success("First aid responder deleted successfully");
+    } catch (error) {
+      toast.error("Error deleting first aid responder: " + error.message);
+    }
+  };
+
+  // Open edit modal
+  const openEditModal = (responder) => {
+    const [firstName, ...lastNameParts] = responder.name.split(" ");
+    setSelectedFirstAid({
+      ...responder,
+      firstName,
+      lastName: lastNameParts.join(" "),
+    });
+    setEditModalOpen(true);
+  };
+
+  // Handle edit form input
+  const handleEditChange = (e) => {
+    const { name, value } = e.target;
+    setSelectedFirstAid((prev) => ({ ...prev, [name]: value }));
+  };
+
+  // Update first aid responder
+  const handleEditSubmit = async () => {
+    setIsSubmitting(true);
+    try {
+      const res = await fetch(`/api/first-aid/${selectedFirstAid._id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          firstName: selectedFirstAid.firstName,
+          lastName: selectedFirstAid.lastName,
+          email: selectedFirstAid.email,
+          phone: selectedFirstAid.phone,
+          hospital: selectedFirstAid.hospital,
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to update first aid responder");
+      await fetchFirstAids();
+      setEditModalOpen(false);
+      setSelectedFirstAid(null);
+      if (triggerRef.current) {
+        triggerRef.current.focus();
+      }
+      toast.success("First aid responder updated successfully");
+    } catch (error) {
+      toast.error("Error updating first aid responder: " + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Handle form input changes
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFirstAidForm((prev) => ({ ...prev, [name]: value }));
-    setValidationErrors((prev) => ({ ...prev, [name]: "" }));
-  };
-
-  // Handle edit form input changes
-  const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setSelectedFirstAid((prev) => ({ ...prev, [name]: value }));
-    setEditValidationErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
   // Handle file upload with progress
@@ -208,7 +244,6 @@ export default function FirstAidDashboard() {
 
       const proofDocumentUrl = `https://pnglcnwerkxshicljpet.supabase.co/storage/v1/object/public/first-aid/${data.path}`;
       setFirstAidForm((prev) => ({ ...prev, proofDocument: proofDocumentUrl }));
-      setValidationErrors((prev) => ({ ...prev, proofDocument: "" }));
 
       setTimeout(() => {
         setUploadProgress(0);
@@ -224,157 +259,9 @@ export default function FirstAidDashboard() {
     }
   };
 
-  // Validate add form
-  const validateForm = () => {
-    const errors = {};
-    let isValid = true;
-
-    // First Name validation
-    if (!firstAidForm.firstName.trim()) {
-      errors.firstName = "First name is required";
-      isValid = false;
-    } else if (firstAidForm.firstName.length < 2) {
-      errors.firstName = "First name must be at least 2 characters";
-      isValid = false;
-    } else if (!/^[A-Za-z\s]+$/.test(firstAidForm.firstName)) {
-      errors.firstName = "First name can only contain letters and spaces";
-      isValid = false;
-    }
-
-    // Last Name validation
-    if (!firstAidForm.lastName.trim()) {
-      errors.lastName = "Last name is required";
-      isValid = false;
-    } else if (firstAidForm.lastName.length < 2) {
-      errors.lastName = "Last name must be at least 2 characters";
-      isValid = false;
-    } else if (!/^[A-Za-z\s]+$/.test(firstAidForm.lastName)) {
-      errors.lastName = "Last name can only contain letters and spaces";
-      isValid = false;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!firstAidForm.email.trim()) {
-      errors.email = "Email is required";
-      isValid = false;
-    } else if (!emailRegex.test(firstAidForm.email)) {
-      errors.email = "Please enter a valid email address";
-      isValid = false;
-    }
-
-    // Phone validation
-    const phoneRegex = /^\+?[\d\s-]{10,}$/;
-    if (!firstAidForm.phone.trim()) {
-      errors.phone = "Phone number is required";
-      isValid = false;
-    } else if (!phoneRegex.test(firstAidForm.phone)) {
-      errors.phone = "Please enter a valid phone number";
-      isValid = false;
-    }
-
-    // Password validation
-    if (!firstAidForm.password) {
-      errors.password = "Password is required";
-      isValid = false;
-    } else if (firstAidForm.password.length < 8) {
-      errors.password = "Password must be at least 8 characters";
-      isValid = false;
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(firstAidForm.password)) {
-      errors.password =
-        "Password must contain at least one uppercase letter, one lowercase letter, and one number";
-      isValid = false;
-    }
-
-    // Hospital validation
-    if (!firstAidForm.hospital) {
-      errors.hospital = "Hospital is required";
-      isValid = false;
-    }
-
-    // First Aid ID validation
-    if (!firstAidForm.firstAidId.trim()) {
-      errors.firstAidId = "First Aid ID is required";
-      isValid = false;
-    } else if (!/^[A-Za-z0-9-]+$/.test(firstAidForm.firstAidId)) {
-      errors.firstAidId =
-        "First Aid ID can only contain letters, numbers, and hyphens";
-      isValid = false;
-    }
-
-    // Proof Document validation
-    if (!firstAidForm.proofDocument) {
-      errors.proofDocument = "Proof document is required";
-      isValid = false;
-    }
-
-    setValidationErrors(errors);
-    return isValid;
-  };
-
-  // Validate edit form
-  const validateEditForm = () => {
-    const errors = {};
-    let isValid = true;
-
-    if (!selectedFirstAid?.firstName?.trim()) {
-      errors.firstName = "First name is required";
-      isValid = false;
-    } else if (selectedFirstAid.firstName.length < 2) {
-      errors.firstName = "First name must be at least 2 characters";
-      isValid = false;
-    } else if (!/^[A-Za-z\s]+$/.test(selectedFirstAid.firstName)) {
-      errors.firstName = "First name can only contain letters and spaces";
-      isValid = false;
-    }
-
-    if (!selectedFirstAid?.lastName?.trim()) {
-      errors.lastName = "Last name is required";
-      isValid = false;
-    } else if (selectedFirstAid.lastName.length < 2) {
-      errors.lastName = "Last name must be at least 2 characters";
-      isValid = false;
-    } else if (!/^[A-Za-z\s]+$/.test(selectedFirstAid.lastName)) {
-      errors.lastName = "Last name can only contain letters and spaces";
-      isValid = false;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!selectedFirstAid?.email?.trim()) {
-      errors.email = "Email is required";
-      isValid = false;
-    } else if (!emailRegex.test(selectedFirstAid.email)) {
-      errors.email = "Please enter a valid email address";
-      isValid = false;
-    }
-
-    const phoneRegex = /^\+?[\d\s-]{10,}$/;
-    if (!selectedFirstAid?.phone?.trim()) {
-      errors.phone = "Phone number is required";
-      isValid = false;
-    } else if (!phoneRegex.test(selectedFirstAid.phone)) {
-      errors.phone = "Please enter a valid phone number";
-      isValid = false;
-    }
-
-    if (!selectedFirstAid?.hospital) {
-      errors.hospital = "Hospital is required";
-      isValid = false;
-    }
-
-    setEditValidationErrors(errors);
-    return isValid;
-  };
-
-  // Handle form submission
+  // Add First Aid Responder
   const handleSubmit = async (e) => {
     e.preventDefault();
-
-    if (!validateForm()) {
-      toast.error("Please fix the validation errors before submitting");
-      return;
-    }
-
     setIsSubmitting(true);
 
     try {
@@ -384,20 +271,10 @@ export default function FirstAidDashboard() {
         body: JSON.stringify(firstAidForm),
       });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (data.error && data.field) {
-          setValidationErrors((prev) => ({
-            ...prev,
-            [data.field]: data.message || data.error,
-          }));
-          toast.error(data.message || data.error);
-        } else {
-          throw new Error(data.error || "Failed to add first aid responder");
-        }
-        return;
-      }
+      if (!res.ok)
+        throw new Error(
+          (await res.json()).error || "Failed to add first aid responder"
+        );
 
       toast.success("First aid responder added successfully");
       fetchFirstAids();
@@ -412,95 +289,10 @@ export default function FirstAidDashboard() {
         firstAidId: "",
         proofDocument: "",
       });
-      setValidationErrors({});
     } catch (error) {
       toast.error("Error adding first aid responder: " + error.message);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  // Open edit modal
-  const openEditModal = (responder) => {
-    const [firstName, ...lastNameParts] = responder.name.split(" ");
-    setSelectedFirstAid({
-      ...responder,
-      firstName,
-      lastName: lastNameParts.join(" "),
-      password: "",
-    });
-    setEditValidationErrors({});
-    setEditModalOpen(true);
-  };
-
-  // Handle edit submission
-  const handleEditSubmit = async () => {
-    if (!validateEditForm()) {
-      toast.error("Please fix the validation errors before saving");
-      return;
-    }
-
-    setIsSubmitting(true);
-    try {
-      const res = await fetch(`/api/first-aid/${selectedFirstAid._id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          firstName: selectedFirstAid.firstName,
-          lastName: selectedFirstAid.lastName,
-          email: selectedFirstAid.email,
-          phone: selectedFirstAid.phone,
-          password: selectedFirstAid.password,
-          hospital: selectedFirstAid.hospital,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        if (data.error && data.field) {
-          setEditValidationErrors((prev) => ({
-            ...prev,
-            [data.field]: data.message || data.error,
-          }));
-          toast.error(data.message || data.error);
-        } else {
-          throw new Error(data.error || "Failed to update first aid responder");
-        }
-        return;
-      }
-
-      toast.success("First aid responder updated successfully");
-      fetchFirstAids();
-      setEditModalOpen(false);
-      setSelectedFirstAid(null);
-      if (triggerRef.current) {
-        triggerRef.current.focus();
-      }
-    } catch (error) {
-      toast.error("Error updating first aid responder: " + error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  // Delete first aid responder
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this first aid responder?"))
-      return;
-
-    try {
-      const res = await fetch(`/api/first-aid/${id}`, { method: "DELETE" });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Failed to delete first aid responder");
-      }
-
-      toast.success("First aid responder deleted successfully");
-      fetchFirstAids();
-    } catch (error) {
-      toast.error("Error deleting first aid responder: " + error.message);
     }
   };
 
@@ -512,7 +304,6 @@ export default function FirstAidDashboard() {
 
   return (
     <div className="flex min-h-screen bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-      <Toaster richColors position="top-right" />
       <Navbar />
       <div className="flex-1 p-6 space-y-6">
         <div className="grid gap-6 md:grid-cols-3">
@@ -533,7 +324,7 @@ export default function FirstAidDashboard() {
           <Card className="border-none shadow-md">
             <CardHeader className="pb-2">
               <CardTitle className="flex items-center text-lg font-medium">
-                <Building2 className="mr-2 h-5 w-5 text-blue-500" />
+                <Building2 className="mr-2 h-5 w-5 text-primary" />
                 Hospitals Coverage
               </CardTitle>
             </CardHeader>
@@ -573,7 +364,6 @@ export default function FirstAidDashboard() {
                     <TableRow className="bg-gray-50 dark:bg-gray-800">
                       <TableHead className="font-medium">Name</TableHead>
                       <TableHead className="font-medium">Contact</TableHead>
-                      <TableHead className="font-medium">Role</TableHead>
                       <TableHead className="font-medium">Hospital</TableHead>
                       <TableHead className="font-medium">
                         Proof Document
@@ -604,14 +394,6 @@ export default function FirstAidDashboard() {
                                 {responder.phone}
                               </span>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant="outline"
-                              className="bg-blue-50 text-blue-700 hover:bg-blue-50 dark:bg-blue-900/30 dark:text-blue-300"
-                            >
-                              {responder.role}
-                            </Badge>
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center">
@@ -671,11 +453,11 @@ export default function FirstAidDashboard() {
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="h-24 text-center">
+                        <TableCell colSpan={5} className="h-24 text-center">
                           {searchTerm ? (
                             <div className="flex flex-col items-center justify-center text-gray-500">
                               <Search className="h-8 w-8 mb-2 text-gray-400" />
-                              <p>No responders found matching "{searchTerm}"</p>
+                              <p>No responders found matching {searchTerm}</p>
                             </div>
                           ) : (
                             <div className="flex flex-col items-center justify-center text-gray-500">
@@ -693,7 +475,7 @@ export default function FirstAidDashboard() {
           </CardContent>
         </Card>
         <Card className="border-none shadow-md">
-          <CardHeader className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20">
+          <CardHeader className="bg-gradient-to-r from-primary to-accent">
             <CardTitle className="flex items-center text-xl font-bold">
               <UserPlus className="mr-2 h-5 w-5 text-primary" />
               Add First Aid Responder
@@ -708,17 +490,10 @@ export default function FirstAidDashboard() {
                   name="firstName"
                   value={firstAidForm.firstName}
                   onChange={handleInputChange}
-                  placeholder="Abebe"
+                  placeholder="John"
                   required
-                  className={`w-full ${
-                    validationErrors.firstName ? "border-red-500" : ""
-                  }`}
+                  className="w-full"
                 />
-                {validationErrors.firstName && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {validationErrors.firstName}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last Name</Label>
@@ -727,17 +502,10 @@ export default function FirstAidDashboard() {
                   name="lastName"
                   value={firstAidForm.lastName}
                   onChange={handleInputChange}
-                  placeholder="Kebede"
+                  placeholder="Doe"
                   required
-                  className={`w-full ${
-                    validationErrors.lastName ? "border-red-500" : ""
-                  }`}
+                  className="w-full"
                 />
-                {validationErrors.lastName && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {validationErrors.lastName}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="email">Email Address</Label>
@@ -749,15 +517,8 @@ export default function FirstAidDashboard() {
                   onChange={handleInputChange}
                   placeholder="responder@example.com"
                   required
-                  className={`w-full ${
-                    validationErrors.email ? "border-red-500" : ""
-                  }`}
+                  className="w-full"
                 />
-                {validationErrors.email && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {validationErrors.email}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="phone">Phone Number</Label>
@@ -766,17 +527,10 @@ export default function FirstAidDashboard() {
                   name="phone"
                   value={firstAidForm.phone}
                   onChange={handleInputChange}
-                  placeholder="+251912345678"
+                  placeholder="+1 (555) 123-4567"
                   required
-                  className={`w-full ${
-                    validationErrors.phone ? "border-red-500" : ""
-                  }`}
+                  className="w-full"
                 />
-                {validationErrors.phone && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {validationErrors.phone}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
@@ -788,15 +542,8 @@ export default function FirstAidDashboard() {
                   onChange={handleInputChange}
                   placeholder="••••••••"
                   required
-                  className={`w-full ${
-                    validationErrors.password ? "border-red-500" : ""
-                  }`}
+                  className="w-full"
                 />
-                {validationErrors.password && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {validationErrors.password}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="role">Role</Label>
@@ -818,17 +565,11 @@ export default function FirstAidDashboard() {
                 <Label htmlFor="hospital">Hospital</Label>
                 <Select
                   value={firstAidForm.hospital}
-                  onValueChange={(value) => {
-                    setFirstAidForm({ ...firstAidForm, hospital: value });
-                    setValidationErrors((prev) => ({ ...prev, hospital: "" }));
-                  }}
+                  onValueChange={(value) =>
+                    setFirstAidForm({ ...firstAidForm, hospital: value })
+                  }
                 >
-                  <SelectTrigger
-                    id="hospital"
-                    className={`w-full ${
-                      validationErrors.hospital ? "border-red-500" : ""
-                    }`}
-                  >
+                  <SelectTrigger id="hospital" className="w-full">
                     <SelectValue placeholder="Select Hospital" />
                   </SelectTrigger>
                   <SelectContent>
@@ -839,11 +580,6 @@ export default function FirstAidDashboard() {
                     ))}
                   </SelectContent>
                 </Select>
-                {validationErrors.hospital && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {validationErrors.hospital}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="firstAidId">First Aid ID</Label>
@@ -854,26 +590,13 @@ export default function FirstAidDashboard() {
                   onChange={handleInputChange}
                   placeholder="FA-12345"
                   required
-                  className={`w-full ${
-                    validationErrors.firstAidId ? "border-red-500" : ""
-                  }`}
+                  className="w-full"
                 />
-                {validationErrors.firstAidId && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {validationErrors.firstAidId}
-                  </p>
-                )}
               </div>
               <div className="space-y-2">
                 <Label htmlFor="proofDocument">Proof Document</Label>
                 <div className="mt-1">
-                  <label
-                    className={`flex w-full cursor-pointer items-center rounded-md border border-dashed ${
-                      validationErrors.proofDocument
-                        ? "border-red-500"
-                        : "border-gray-300"
-                    } p-3 text-sm text-gray-500 hover:border-primary/50 dark:border-gray-700`}
-                  >
+                  <label className="flex w-full cursor-pointer items-center rounded-md border border-dashed border-gray-300 p-3 text-sm text-gray-500 hover:border-primary/50 dark:border-gray-700">
                     <Upload className="mr-2 h-4 w-4" />
                     <span>Upload document</span>
                     <input
@@ -904,11 +627,6 @@ export default function FirstAidDashboard() {
                     Document uploaded successfully
                   </div>
                 )}
-                {validationErrors.proofDocument && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {validationErrors.proofDocument}
-                  </p>
-                )}
               </div>
               <div className="md:col-span-2 mt-4">
                 <Button
@@ -937,7 +655,6 @@ export default function FirstAidDashboard() {
           onClose={() => {
             setSelectedFirstAid(null);
             setEditModalOpen(false);
-            setEditValidationErrors({});
             if (triggerRef.current) {
               triggerRef.current.focus();
             }
@@ -948,7 +665,7 @@ export default function FirstAidDashboard() {
           <div className="fixed inset-0 flex items-center justify-center p-4">
             <DialogPanel className="sm:max-w-md bg-white text-black border border-white p-6 rounded-lg shadow-lg max-h-[90vh] overflow-y-auto">
               <DialogTitle className="flex items-center text-xl font-semibold text-black">
-                <User className="mr-2 h-5 w-5 text-black" />
+                <FileText className="mr-2 h-5 w-5 text-black" />
                 Edit First Aid Responder
               </DialogTitle>
               <DialogDescription className="mt-2 text-sm text-gray-600">
@@ -966,16 +683,9 @@ export default function FirstAidDashboard() {
                     value={selectedFirstAid?.firstName || ""}
                     onChange={handleEditChange}
                     placeholder="First name"
-                    className={`bg-white text-black ${
-                      editValidationErrors.firstName ? "border-red-500" : ""
-                    }`}
+                    className="bg-white text-black"
                     autoFocus
                   />
-                  {editValidationErrors.firstName && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {editValidationErrors.firstName}
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-lastName" className="text-black">
@@ -987,15 +697,8 @@ export default function FirstAidDashboard() {
                     value={selectedFirstAid?.lastName || ""}
                     onChange={handleEditChange}
                     placeholder="Last name"
-                    className={`bg-white text-black ${
-                      editValidationErrors.lastName ? "border-red-500" : ""
-                    }`}
+                    className="bg-white text-black"
                   />
-                  {editValidationErrors.lastName && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {editValidationErrors.lastName}
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-email" className="text-black">
@@ -1008,15 +711,8 @@ export default function FirstAidDashboard() {
                     value={selectedFirstAid?.email || ""}
                     onChange={handleEditChange}
                     placeholder="Email address"
-                    className={`bg-white text-black ${
-                      editValidationErrors.email ? "border-red-500" : ""
-                    }`}
+                    className="bg-white text-black"
                   />
-                  {editValidationErrors.email && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {editValidationErrors.email}
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-phone" className="text-black">
@@ -1028,15 +724,8 @@ export default function FirstAidDashboard() {
                     value={selectedFirstAid?.phone || ""}
                     onChange={handleEditChange}
                     placeholder="Phone number"
-                    className={`bg-white text-black ${
-                      editValidationErrors.phone ? "border-red-500" : ""
-                    }`}
+                    className="bg-white text-black"
                   />
-                  {editValidationErrors.phone && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {editValidationErrors.phone}
-                    </p>
-                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="edit-hospital" className="text-black">
@@ -1044,22 +733,16 @@ export default function FirstAidDashboard() {
                   </Label>
                   <Select
                     value={selectedFirstAid?.hospital || ""}
-                    onValueChange={(value) => {
+                    onValueChange={(value) =>
                       setSelectedFirstAid({
                         ...selectedFirstAid,
                         hospital: value,
-                      });
-                      setEditValidationErrors((prev) => ({
-                        ...prev,
-                        hospital: "",
-                      }));
-                    }}
+                      })
+                    }
                   >
                     <SelectTrigger
                       id="edit-hospital"
-                      className={`bg-white text-black ${
-                        editValidationErrors.hospital ? "border-red-500" : ""
-                      }`}
+                      className="bg-white text-black"
                     >
                       <SelectValue placeholder="Select Hospital" />
                     </SelectTrigger>
@@ -1075,25 +758,6 @@ export default function FirstAidDashboard() {
                       ))}
                     </SelectContent>
                   </Select>
-                  {editValidationErrors.hospital && (
-                    <p className="text-sm text-red-500 mt-1">
-                      {editValidationErrors.hospital}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="edit-password" className="text-black">
-                    Password (Optional)
-                  </Label>
-                  <Input
-                    id="edit-password"
-                    name="password"
-                    type="password"
-                    value={selectedFirstAid?.password || ""}
-                    onChange={handleEditChange}
-                    placeholder="Enter new password (leave blank to keep current)"
-                    className="bg-white text-black"
-                  />
                 </div>
                 <div className="flex space-x-2 justify-end mt-4">
                   <Button
@@ -1102,7 +766,6 @@ export default function FirstAidDashboard() {
                     onClick={() => {
                       setSelectedFirstAid(null);
                       setEditModalOpen(false);
-                      setEditValidationErrors({});
                       if (triggerRef.current) {
                         triggerRef.current.focus();
                       }
