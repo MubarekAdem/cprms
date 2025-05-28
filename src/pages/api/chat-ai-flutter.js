@@ -61,7 +61,7 @@ export default async function handler(req, res) {
       Medical History:
       ${formattedMedicalRecords}
 
-      Please provide a highlight very simple not more than 2 paragraphs response to the doctor's query: ${message}
+      Please provide a highlight very simple not more than 2 paragraphs response to the askers query: ${message}
       
       Consider the patient's complete medical history, current medications, and any potential drug interactions when answering.
     `;

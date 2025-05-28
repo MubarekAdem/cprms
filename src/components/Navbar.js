@@ -87,12 +87,12 @@ export default function Navbar() {
   }, [session, status]);
 
   const navItems = [
+    { icon: LayoutDashboard, label: "DASHBOARD", href: "/admin-dashboard" },
     { icon: UserCog, label: "DOCTORS", href: "/admin-doctor" },
     { icon: UserCog, label: "FIRST AIDS", href: "/admin-first-aid" },
     { icon: UserCog, label: "REGISTRARS", href: "/admin-registrar" },
     { icon: Hospital, label: "HOSPITALS", href: "/admin-hospitals" },
     { icon: MapPin, label: "CITIES", href: "/admin-cities" },
-    { icon: LayoutDashboard, label: "DASHBOARD", href: "/admin-dashboard" },
   ];
 
   const doctorNavItems = [

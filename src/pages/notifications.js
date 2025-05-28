@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import { useRouter } from "next/router";
-import { Smartphone, Download } from "lucide-react";
-import { Button } from "@/components/ui/button";
-
+import { Smartphone, Download, LogOut } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import Navbar from "@/components/Navbar";
 import {
   Table,
   TableBody,
@@ -15,16 +15,79 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { AlertCircle, Loader2, Mail, User } from "lucide-react";
+import { AlertCircle, Loader2, Mail } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import Navbar from "@/components/Navbar";
 
 export default function NotificationsDashboard() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [requests, setRequests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Logout function
+  const handleLogout = async () => {
+    try {
+      await signOut({ callbackUrl: "/login" });
+    } catch (error) {
+      console.error("Error during logout:", error);
+      toast.error("Error logging out: " + error.message);
+    }
+  };
+
+  const handleApproveRequest = async (requestId) => {
+    try {
+      console.log(`Approving role request ${requestId}`);
+      const res = await fetch(`/api/role-requests/${requestId}/approve`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(
+          `Failed to approve request ${requestId}: ${res.status}, Response: ${errorText}`
+        );
+        throw new Error(
+          `Failed to approve request: ${res.status} - ${errorText}`
+        );
+      }
+      const data = await res.json();
+      console.log(`Approval response:`, data);
+      toast.success("Role request approved successfully");
+      setRequests(requests.filter((req) => req._id !== requestId));
+    } catch (error) {
+      console.error("Error approving role request:", error);
+      toast.error("Error approving role request: " + error.message);
+    }
+  };
+
+  const handleRejectRequest = async (requestId) => {
+    try {
+      console.log(`Rejecting role request ${requestId}`);
+      const res = await fetch(`/api/role-requests/${requestId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error(
+          `Failed to reject request ${requestId}: ${res.status}, Response: ${errorText}`
+        );
+        throw new Error(
+          `Failed to reject request: ${res.status} - ${errorText}`
+        );
+      }
+      const data = await res.json();
+      console.log(`Rejection response:`, data);
+      toast.success("Role request rejected successfully");
+      setRequests(requests.filter((req) => req._id !== requestId));
+    } catch (error) {
+      console.error("Error rejecting role request:", error);
+      toast.error("Error rejecting role request: " + error.message);
+    }
+  };
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -129,6 +192,15 @@ export default function NotificationsDashboard() {
                 <span>Google Play</span>
               </a>
             </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="mt-4 flex items-center space-x-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span>Logout</span>
+            </Button>
           </CardContent>
         </Card>
       </div>
@@ -217,25 +289,27 @@ export default function NotificationsDashboard() {
                         </TableCell>
                         <TableCell>{request._id}</TableCell>
                         <TableCell>
-                          <Badge variant="secondary">{request.status}</Badge>
-                        </TableCell>
-                        <TableCell className="text-right space-x-2">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleApproveRequest(request._id)}
-                            disabled={request.status !== "pending"}
+                          <Badge
+                            variant="secondary Grand"
+                            className="text-right space-x-2"
                           >
-                            Approve
-                          </Button>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleRejectRequest(request._id)}
-                            disabled={request.status !== "pending"}
-                          >
-                            Reject
-                          </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleApproveRequest(request._id)}
+                              disabled={request.status !== "pending"}
+                            >
+                              Approve
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleRejectRequest(request._id)}
+                              disabled={request.status !== "pending"}
+                            >
+                              Reject
+                            </Button>
+                          </Badge>
                         </TableCell>
                       </TableRow>
                     ))}
