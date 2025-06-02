@@ -141,7 +141,7 @@ export default function Home() {
               <Link href="/" className="flex items-center">
                 <Heart className="h-8 w-8 text-primary" />
                 <span className="ml-2 font-bold text-xl text-primary">
-                  ETHIO-CPRMS
+                  ETHIO-HRMS
                 </span>
               </Link>
             </div>
@@ -261,7 +261,7 @@ export default function Home() {
             className="text-lg md:text-xl dark:text-gray-300 text-muted-foreground mb-8 max-w-3xl mx-auto"
             variants={fadeIn}
           >
-            ETHIO-CPRMS is your all-in-one platform for seamless healthcare
+            ETHIO-HRMS is your all-in-one platform for seamless healthcare
             management, connecting patients and providers with cutting-edge
             technology.
           </motion.p>
@@ -320,15 +320,15 @@ export default function Home() {
           className="text-3xl md:text-4xl font-bold text-center mb-12 bg-clip-text text-transparent bg-gradient-to-r from-primary to-accent"
           variants={fadeIn}
         >
-          About ETHIO-CPRMS
+          About ETHIO-HRMS
         </motion.h2>
         <div className="grid md:grid-cols-2 gap-12 items-center">
           <motion.div variants={fadeIn}>
             <h3 className="text-2xl font-semibold mb-4">Our Mission</h3>
             <p className="dark:text-gray-300 text-muted-foreground mb-6">
-              Founded in 2025, ETHIO-CPRMS is dedicated to simplifying
-              healthcare management in Ethiopia. Our platform empowers patients
-              and providers with intuitive tools to enhance communication and
+              Founded in 2025, ETHIO-HRMS is dedicated to simplifying healthcare
+              management in Ethiopia. Our platform empowers patients and
+              providers with intuitive tools to enhance communication and
               improve health outcomes.
             </p>
             <p className="dark:text-gray-300 text-muted-foreground">
@@ -350,8 +350,8 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold text-center mb-4">Our Vision</h3>
               <p className="dark:text-gray-300 text-muted-foreground text-center">
-                To create a connected healthcare ecosystem where every Ethiopian
-                has access to quality care through technology.
+                To create an efficient healthcare ecosystem where every
+                Ethiopian has access to quality care through technology.
               </p>
             </motion.div>
             <div className="absolute top-0 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
@@ -495,7 +495,7 @@ export default function Home() {
                   <div>
                     <h4 className="font-medium">Email</h4>
                     <p className="dark:text-gray-400 text-muted-foreground">
-                      support@ethio-cprms.com
+                      support@ethio-HRMS.com
                     </p>
                   </div>
                 </div>
@@ -559,7 +559,7 @@ export default function Home() {
             <div className="flex items-center mb-4 md:mb-0">
               <Heart className="h-5 w-5 text-primary mr-2" />
               <span className="text-sm dark:text-gray-400 text-muted-foreground">
-                © 2025 ETHIO-CPRMS. All rights reserved.
+                © 2025 ETHIO-HRMS. All rights reserved.
               </span>
             </div>
             <div className="flex space-x-6">
